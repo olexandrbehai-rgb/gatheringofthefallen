@@ -1,17 +1,19 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import tshirtImg from "@/assets/merch-tshirt.png";
-import hoodieImg from "@/assets/merch-hoodie.png";
-import posterImg from "@/assets/merch-poster.png";
+import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
+import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
+import bomberImg from "@assets/bomber.png_1776018973002.jpg";
+import capImg from "@assets/cap.png_1776018973002.jpg";
+import logoBlack from "@assets/photo_2026-03-13_15-33-34_1776018973004.jpg";
+import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 import { GlitchButton } from "@/components/GlitchButton";
 
 const PRODUCTS = [
-  { id: 1, name: "Футболка \"Signal Decay\"", price: "799 грн", image: tshirtImg, status: "IN STOCK" },
-  { id: 2, name: "Худі \"Bunker Issue\"", price: "1499 грн", image: hoodieImg, status: "LOW SUPPLY" },
-  { id: 3, name: "Плакат \"Last Broadcast\"", price: "349 грн", image: posterImg, status: "IN STOCK" },
-  { id: 4, name: "Патч \"Gathering Emblem\"", price: "199 грн", image: tshirtImg, status: "IN STOCK" }, // using tshirt as placeholder
-  { id: 5, name: "Кепка \"Wasteland\"", price: "599 грн", image: hoodieImg, status: "PRE-ORDER" }, // using hoodie as placeholder
-  { id: 6, name: "Значок \"Fallen\"", price: "99 грн", image: posterImg, status: "IN STOCK" } // using poster as placeholder
+  { id: 1, name: "Футболка \"Gathering Of The Fallen\"", price: "799 грн", image: tshirtImg, status: "В НАЯВНОСТІ" },
+  { id: 2, name: "Худі \"Gathering Of The Fallen\"", price: "1499 грн", image: hoodieImg, status: "В НАЯВНОСТІ" },
+  { id: 3, name: "Бомбер \"GF\"", price: "2499 грн", image: bomberImg, status: "ОБМЕЖЕНИЙ ТИРАЖ" },
+  { id: 4, name: "Кепка \"Gathering Of The Fallen\"", price: "599 грн", image: capImg, status: "В НАЯВНОСТІ" },
+  { id: 5, name: "Логотип (принт/постер)", price: "349 грн", image: logoBlack, status: "В НАЯВНОСТІ" },
 ];
 
 export default function Merch() {
@@ -29,27 +31,37 @@ export default function Merch() {
           </GlitchButton>
         </Link>
       </div>
+
+      <div className="rusted-border overflow-hidden mb-12 group">
+        <img 
+          src={merchAllImg} 
+          alt="Колекція мерчу Gathering Of The Fallen" 
+          loading="lazy"
+          className="w-full h-auto object-cover group-hover:brightness-110 transition-all duration-500"
+        />
+      </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {PRODUCTS.map((product) => (
           <motion.div 
             key={product.id}
             whileHover={{ scale: 1.02 }}
-            className="rusted-border bg-[#0a0a0a] group flex flex-col h-full"
+            className="rusted-border bg-black/60 group flex flex-col h-full backdrop-blur-sm"
           >
             <div className="aspect-square w-full overflow-hidden border-b border-border relative bg-[#111] flex items-center justify-center">
-              <div className="absolute inset-0 bg-primary/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-primary/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none"></div>
               <img 
                 src={product.image} 
                 alt={product.name} 
-                className="w-[80%] h-[80%] object-contain filter grayscale sepia-[0.3] group-hover:grayscale-0 transition-all duration-500"
+                loading="lazy"
+                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
               />
             </div>
             <div className="p-6 flex flex-col flex-1">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-bold text-lg text-foreground tracking-wider font-mono">{product.name}</h3>
-                  <div className="text-primary font-mono mt-1">{product.price}</div>
+                  <div className="text-primary font-mono mt-1 text-xl">{product.price}</div>
                 </div>
               </div>
               <div className="mt-auto pt-6 flex items-center justify-between">

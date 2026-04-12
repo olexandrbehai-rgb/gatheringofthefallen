@@ -302,3 +302,17 @@
   border: 1px solid #8a2be2;
   box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2);
 }
+
+.neon-glow-img {
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6)) drop-shadow(0 0 20px rgba(0, 240, 255, 0.3));
+  animation: img-neon-pulse 2s infinite alternate;
+}
+
+@keyframes img-neon-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6)) drop-shadow(0 0 20px rgba(0, 240, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.4)) drop-shadow(0 0 12px rgba(0, 240, 255, 0.2));
+  }
+}

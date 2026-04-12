@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import bandImage from "@/assets/band-ruins.png";
+import gurtImg from "@assets/гурт_1776018973007.jpg";
+import gurt2Img from "@assets/гурт_2_1776018973007.jpg";
 
 export default function About() {
   return (
@@ -7,23 +8,34 @@ export default function About() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="container mx-auto px-4 py-12 md:py-24 max-w-4xl"
+      className="container mx-auto px-4 py-12 md:py-24 max-w-5xl"
     >
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">ПРО ГУРТ</h1>
       
-      <div className="mb-16 rusted-border p-2 bg-black/40">
-        <img 
-          src={bandImage} 
-          alt="Gathering Of The Fallen у руїнах" 
-          className="w-full h-auto object-cover opacity-80 filter contrast-125 saturate-50"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        <div className="rusted-border p-2 bg-black/40 overflow-hidden group">
+          <img 
+            src={gurtImg} 
+            alt="Gathering Of The Fallen на сцені" 
+            loading="lazy"
+            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+        <div className="rusted-border p-2 bg-black/40 overflow-hidden group">
+          <img 
+            src={gurt2Img} 
+            alt="Gathering Of The Fallen" 
+            loading="lazy"
+            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
       </div>
       
       <div className="space-y-12 font-mono text-lg text-muted-foreground leading-relaxed">
         <div className="rusted-border bg-black/80 p-8 relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
-          <p className="text-xl md:text-2xl text-white font-bold italic">
-            "У світі, який упав, ми — Gathering Of The Fallen — збираємо полеглих. Ми — голос тих, хто залишився серед руїн. Наша музика — це гімн виживання, крик із темряви, що розриває тишу зруйнованого світу."
+          <p className="text-xl md:text-2xl text-white font-bold italic pl-4">
+            "У світі, який упав, ми — Gathering Of The Fallen — збираємо полеглих. Наша музика — це крик крізь руїни, кришталеві акорди, що піднімаються з попелу старого світу. Ми поєднуємо сирі людські емоції, історії та постапокаліптичний рок/метал. Приєднуйся до падших."
           </p>
         </div>
 
@@ -48,6 +60,18 @@ export default function About() {
           </p>
           <p>
             Наші концерти — це ритуали. Ми збираємося у вцілілих бункерах, занедбаних заводах та підземних станціях. Для нас музика — це не розвага. Це доказ того, що ми ще живі.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-primary text-2xl mb-4 uppercase tracking-widest border-b border-primary/20 pb-2">
+            &gt; Архівний запис 03: Місія
+          </h2>
+          <p className="mb-4">
+            Gathering Of The Fallen — це не просто гурт. Це рух. Ми збираємо тих, хто впав, і даємо їм голос. Кожна пісня — це маніфест виживання, кожен концерт — це доказ того, що мистецтво сильніше за руйнування.
+          </p>
+          <p>
+            Ми — голос тих, хто залишився серед руїн. Наша музика — це гімн виживання, крик із темряви, що розриває тишу зруйнованого світу.
           </p>
         </div>
       </div>
