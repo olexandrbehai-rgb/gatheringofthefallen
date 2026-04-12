@@ -16,7 +16,8 @@ interface OrderModalProps {
 }
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
-const PAYPAL_CLIENT_ID = "PAYPAL_CLIENT_ID_HERE";
+const PAYPAL_CLIENT_ID =
+  "EPPTtiHG2EWOr-rep0FJk6xizUyTRjUQbqdnxcuNFw0YUSXkshCmh8aWLTND7TpR8PW00YXgEn6qgAvE";
 
 type OrderStep = "form" | "payment" | "success";
 
@@ -46,71 +47,91 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     const w = window as any;
     if (!w.paypal) return;
 
-    w.paypal.Buttons({
-      style: {
-        layout: "vertical",
-        color: "black",
-        shape: "rect",
-        label: "pay",
-      },
-      createOrder: (_data: any, actions: any) => {
-        return actions.order.create({
-          purchase_units: [{
-            description: `${product.name} (${size}) x${quantity}`,
-            amount: {
-              currency_code: "CAD",
-              value: total.toFixed(2),
-            },
-          }],
-        });
-      },
-      onApprove: async (_data: any, actions: any) => {
-        const order = await actions.order.capture();
-        console.log("PayPal order completed:", order);
-
-        try {
-          await fetch("/api/order-notification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              product: product.name,
-              size,
-              quantity,
-              total: `${total.toFixed(2)} CAD`,
-              customer: {
-                firstName,
-                lastName,
-                email,
-                phone,
-                country,
-                city,
-                street,
-                postalCode,
-                comment,
+    w.paypal
+      .Buttons({
+        style: {
+          layout: "vertical",
+          color: "black",
+          shape: "rect",
+          label: "pay",
+        },
+        createOrder: (_data: any, actions: any) => {
+          return actions.order.create({
+            purchase_units: [
+              {
+                description: `${product.name} (${size}) x${quantity}`,
+                amount: {
+                  currency_code: "CAD",
+                  value: total.toFixed(2),
+                },
               },
-              paypalOrderId: order.id,
-              paypalStatus: order.status,
-            }),
+            ],
           });
-        } catch (e) {
-          console.log("Order notification sent (or queued)");
-        }
+        },
+        onApprove: async (_data: any, actions: any) => {
+          const order = await actions.order.capture();
+          console.log("PayPal order completed:", order);
 
-        setStep("success");
-      },
-      onError: (err: any) => {
-        console.error("PayPal error:", err);
-        alert("Помилка оплати. Спробуйте ще раз.");
-      },
-    }).render(paypalRef.current);
-  }, [product, size, quantity, total, firstName, lastName, email, phone, country, city, street, postalCode, comment]);
+          try {
+            await fetch("/api/order-notification", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                product: product.name,
+                size,
+                quantity,
+                total: `${total.toFixed(2)} CAD`,
+                customer: {
+                  firstName,
+                  lastName,
+                  email,
+                  phone,
+                  country,
+                  city,
+                  street,
+                  postalCode,
+                  comment,
+                },
+                paypalOrderId: order.id,
+                paypalStatus: order.status,
+              }),
+            });
+          } catch (e) {
+            console.log("Order notification sent (or queued)");
+          }
+
+          setStep("success");
+        },
+        onError: (err: any) => {
+          console.error("PayPal error:", err);
+          alert("Помилка оплати. Спробуйте ще раз.");
+        },
+      })
+      .render(paypalRef.current);
+  }, [
+    product,
+    size,
+    quantity,
+    total,
+    firstName,
+    lastName,
+    email,
+    phone,
+    country,
+    city,
+    street,
+    postalCode,
+    comment,
+  ]);
 
   useEffect(() => {
     if (step !== "payment") return;
 
     paypalRendered.current = false;
 
-    const existingScript = document.querySelector('script[src*="paypal.com/sdk"]');
+    const existingScript = document.querySelector(
+      'script[src*="paypal.com/sdk"]',
+    );
     if (existingScript) {
       const w = window as any;
       if (w.paypal) {
@@ -125,7 +146,8 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     script.onload = () => setTimeout(renderPayPalButtons, 100);
     script.onerror = () => {
       if (paypalRef.current) {
-        paypalRef.current.innerHTML = '<p class="font-mono text-sm text-red-400">Не вдалося завантажити PayPal. Спробуйте оновити сторінку.</p>';
+        paypalRef.current.innerHTML =
+          '<p class="font-mono text-sm text-red-400">Не вдалося завантажити PayPal. Спробуйте оновити сторінку.</p>';
       }
     };
     document.body.appendChild(script);
@@ -164,9 +186,14 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
           <div className="flex items-center justify-between p-6 border-b border-secondary/30">
             <h2 className="font-creepster text-2xl text-primary flex items-center gap-2">
               <ShoppingCart size={24} />
-              {step === "success" ? "ЗАМОВЛЕННЯ ОПЛАЧЕНО" : "ЗАМОВИТИ ЧЕРЕЗ КУЗНЮ"}
+              {step === "success"
+                ? "ЗАМОВЛЕННЯ ОПЛАЧЕНО"
+                : "ЗАМОВИТИ ЧЕРЕЗ КУЗНЮ"}
             </h2>
-            <button onClick={onClose} className="text-muted-foreground hover:text-primary transition-colors">
+            <button
+              onClick={onClose}
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
               <X size={24} />
             </button>
           </div>
@@ -175,15 +202,25 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
             {step === "form" && (
               <div className="space-y-5">
                 <div className="flex gap-4 items-center p-4 bg-black/40 border border-border/50 rounded">
-                  <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-20 h-20 object-cover rounded"
+                  />
                   <div>
-                    <h3 className="font-mono font-bold text-foreground">{product.name}</h3>
-                    <div className="text-primary font-creepster text-2xl">{product.price} CAD</div>
+                    <h3 className="font-mono font-bold text-foreground">
+                      {product.name}
+                    </h3>
+                    <div className="text-primary font-creepster text-2xl">
+                      {product.price} CAD
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-mono text-sm text-secondary block mb-2">РОЗМІР</label>
+                  <label className="font-mono text-sm text-secondary block mb-2">
+                    РОЗМІР
+                  </label>
                   <div className="flex gap-2 flex-wrap">
                     {SIZES.map((s) => (
                       <button
@@ -202,7 +239,9 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <div>
-                  <label className="font-mono text-sm text-secondary block mb-2">КІЛЬКІСТЬ</label>
+                  <label className="font-mono text-sm text-secondary block mb-2">
+                    КІЛЬКІСТЬ
+                  </label>
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -210,7 +249,9 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                     >
                       -
                     </button>
-                    <span className="font-mono text-xl text-foreground w-8 text-center">{quantity}</span>
+                    <span className="font-mono text-xl text-foreground w-8 text-center">
+                      {quantity}
+                    </span>
                     <button
                       onClick={() => setQuantity(Math.min(10, quantity + 1))}
                       className="w-10 h-10 border border-border/50 text-foreground hover:border-primary transition-colors font-mono text-lg"
@@ -221,29 +262,83 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <div className="border-t border-border/30 pt-4">
-                  <h4 className="font-mono text-sm text-secondary mb-3">ДАНІ ПОКУПЦЯ</h4>
+                  <h4 className="font-mono text-sm text-secondary mb-3">
+                    ДАНІ ПОКУПЦЯ
+                  </h4>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <input type="text" placeholder="Ім'я *" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
-                      <input type="text" placeholder="Прізвище *" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
+                      <input
+                        type="text"
+                        placeholder="Ім'я *"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className={inputClass}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Прізвище *"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className={inputClass}
+                      />
                     </div>
-                    <input type="email" placeholder="Email *" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-                    <input type="tel" placeholder="Телефон *" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+                    <input
+                      type="email"
+                      placeholder="Email *"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={inputClass}
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Телефон *"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className={inputClass}
+                    />
                   </div>
                 </div>
 
                 <div className="border-t border-border/30 pt-4">
-                  <h4 className="font-mono text-sm text-secondary mb-3">АДРЕСА ДОСТАВКИ</h4>
+                  <h4 className="font-mono text-sm text-secondary mb-3">
+                    АДРЕСА ДОСТАВКИ
+                  </h4>
                   <div className="space-y-3">
-                    <input type="text" placeholder="Країна *" value={country} onChange={(e) => setCountry(e.target.value)} className={inputClass} />
-                    <input type="text" placeholder="Місто *" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
-                    <input type="text" placeholder="Вулиця, будинок, квартира *" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} />
-                    <input type="text" placeholder="Поштовий індекс *" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={inputClass} />
+                    <input
+                      type="text"
+                      placeholder="Країна *"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Місто *"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Вулиця, будинок, квартира *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Поштовий індекс *"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      className={inputClass}
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-mono text-sm text-secondary block mb-2">КОМЕНТАР ДО ЗАМОВЛЕННЯ</label>
+                  <label className="font-mono text-sm text-secondary block mb-2">
+                    КОМЕНТАР ДО ЗАМОВЛЕННЯ
+                  </label>
                   <textarea
                     placeholder="Додаткові побажання (необов'язково)"
                     value={comment}
@@ -255,7 +350,9 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
 
                 <div className="flex justify-between items-center p-4 bg-primary/10 border border-primary/30">
                   <span className="font-mono text-secondary">РАЗОМ:</span>
-                  <span className="font-creepster text-3xl text-primary">{total} CAD</span>
+                  <span className="font-creepster text-3xl text-primary">
+                    {total} CAD
+                  </span>
                 </div>
 
                 <GlitchButton
@@ -272,12 +369,18 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
               <div className="space-y-6">
                 <div className="p-4 bg-black/40 border border-border/50 rounded font-mono text-sm space-y-2">
                   <div className="text-secondary">ЗАМОВЛЕННЯ:</div>
-                  <div className="text-foreground">{product.name} ({size}) x{quantity}</div>
+                  <div className="text-foreground">
+                    {product.name} ({size}) x{quantity}
+                  </div>
                   <div className="text-primary text-xl">{total} CAD</div>
                   <div className="border-t border-border/30 pt-2 mt-2 text-muted-foreground text-xs space-y-1">
                     <div>{fullName}</div>
-                    <div>{email} | {phone}</div>
-                    <div>{street}, {city}, {postalCode}</div>
+                    <div>
+                      {email} | {phone}
+                    </div>
+                    <div>
+                      {street}, {city}, {postalCode}
+                    </div>
                     <div>{country}</div>
                     {comment && <div className="italic">"{comment}"</div>}
                   </div>
@@ -287,7 +390,10 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                   <p className="font-mono text-sm text-muted-foreground mb-4">
                     Оберіть спосіб оплати через PayPal:
                   </p>
-                  <div ref={paypalRef} className="min-h-[150px] flex items-center justify-center">
+                  <div
+                    ref={paypalRef}
+                    className="min-h-[150px] flex items-center justify-center"
+                  >
                     <div className="font-mono text-sm text-muted-foreground animate-pulse">
                       Завантаження PayPal...
                     </div>
@@ -295,7 +401,10 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <button
-                  onClick={() => { setStep("form"); paypalRendered.current = false; }}
+                  onClick={() => {
+                    setStep("form");
+                    paypalRendered.current = false;
+                  }}
                   className="w-full text-center font-mono text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   &lt; Повернутися до форми
@@ -316,17 +425,25 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 <p className="font-mono text-muted-foreground leading-relaxed">
                   Твій мерч уже кується в Кузні Повалених.
                   <br />
-                  Дякуємо, що підтримуєш <span className="text-primary">Gathering Of The Fallen</span>.
+                  Дякуємо, що підтримуєш{" "}
+                  <span className="text-primary">Gathering Of The Fallen</span>.
                 </p>
                 <p className="font-mono text-sm text-muted-foreground">
-                  Підтвердження надіслано на <span className="text-primary">{email}</span>
+                  Підтвердження надіслано на{" "}
+                  <span className="text-primary">{email}</span>
                 </p>
                 <div className="p-4 bg-black/40 border border-primary/30 font-mono text-sm text-left space-y-1">
                   <div className="text-secondary mb-1">ДЕТАЛІ ЗАМОВЛЕННЯ:</div>
-                  <div className="text-foreground">{product.name} ({size}) x{quantity}</div>
+                  <div className="text-foreground">
+                    {product.name} ({size}) x{quantity}
+                  </div>
                   <div className="text-primary text-lg">{total} CAD</div>
-                  <div className="text-muted-foreground text-xs mt-2">{fullName} | {phone}</div>
-                  <div className="text-muted-foreground text-xs">{street}, {city}, {postalCode}, {country}</div>
+                  <div className="text-muted-foreground text-xs mt-2">
+                    {fullName} | {phone}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {street}, {city}, {postalCode}, {country}
+                  </div>
                 </div>
                 <GlitchButton onClick={onClose} className="px-8 py-3">
                   ЗАКРИТИ
