@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "rj-d51ZD8YaPmoHuws5oV"
+uri = "file://artifacts/web/src/assets/merch-tshirt.png"
+type = "image"
+title = "Post-apocalyptic t-shirt mockup"
+
+[[generated]]
+id = "8viePHDB_O_iMTtcYzx9M"
+uri = "file://artifacts/web/src/assets/merch-hoodie.png"
+type = "image"
+title = "Post-apocalyptic hoodie mockup"
+
+[[generated]]
+id = "ZKS7dNhaG8XLuPdse5ey2"
+uri = "file://artifacts/web/src/assets/merch-poster.png"
+type = "image"
+title = "Post-apocalyptic poster mockup"
