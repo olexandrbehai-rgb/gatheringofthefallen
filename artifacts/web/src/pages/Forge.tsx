@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ShoppingCart } from "lucide-react";
 
 export default function Forge() {
   const [isProducing, setIsProducing] = useState(false);
@@ -63,7 +64,7 @@ export default function Forge() {
 
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center space-y-6">
           <GlitchButton 
             onClick={startProduction} 
             disabled={isProducing}
@@ -72,6 +73,18 @@ export default function Forge() {
             {isProducing ? 'ВИРОБНИЦТВО...' : 'ЗАПУСТИТИ ВИРОБНИЦТВО'}
           </GlitchButton>
         </div>
+      </div>
+
+      <div className="text-center">
+        <Link href="/merch">
+          <GlitchButton className="py-4 px-8 text-xl border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
+            <ShoppingCart size={20} className="inline mr-3" />
+            Замовити мерч через Кузню
+          </GlitchButton>
+        </Link>
+        <p className="font-mono text-sm text-muted-foreground mt-4">
+          Оплата через PayPal у канадських доларах (CAD)
+        </p>
       </div>
     </motion.div>
   );

@@ -8,20 +8,16 @@ router.post("/order-notification", async (req: Request, res: Response) => {
     const { product, size, quantity, total, customer, paypalOrderId, paypalStatus } = req.body;
 
     logger.info({
-      msg: "New order received",
+      msg: "New merch order received",
       product,
       size,
       quantity,
       total,
-      customer: {
-        name: customer?.name,
-        email: customer?.email,
-        city: customer?.city,
-        country: customer?.country,
-      },
+      customerEmail: customer?.email,
+      customerCountry: customer?.country,
+      customerCity: customer?.city,
       paypalOrderId,
       paypalStatus,
-      notifyEmail: "gatheringofthefallen@gmail.com",
     });
 
     res.json({

@@ -78,7 +78,7 @@ export default function Merch() {
                   onClick={() => setSelectedProduct(product)}
                   className="px-3 py-1 text-sm whitespace-nowrap"
                 >
-                  Замовити
+                  Замовити через Кузню
                 </GlitchButton>
               </div>
             </div>

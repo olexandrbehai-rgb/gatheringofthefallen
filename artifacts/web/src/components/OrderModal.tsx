@@ -15,7 +15,7 @@ interface OrderModalProps {
   onClose: () => void;
 }
 
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const SIZES = ["S", "M", "L", "XL", "XXL"];
 const PAYPAL_CLIENT_ID = "PAYPAL_CLIENT_ID_HERE";
 
 type OrderStep = "form" | "payment" | "success";
@@ -24,16 +24,20 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
   const [step, setStep] = useState<OrderStep>("form");
   const [size, setSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("Canada");
+  const [city, setCity] = useState("");
+  const [street, setStreet] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [comment, setComment] = useState("");
   const paypalRef = useRef<HTMLDivElement>(null);
   const paypalRendered = useRef(false);
 
   const total = product ? product.price * quantity : 0;
+  const fullName = `${firstName} ${lastName}`.trim();
 
   const renderPayPalButtons = useCallback(() => {
     if (!paypalRef.current || paypalRendered.current || !product) return;
@@ -73,7 +77,17 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
               size,
               quantity,
               total: `${total.toFixed(2)} CAD`,
-              customer: { name, email, address, city, postalCode, country },
+              customer: {
+                firstName,
+                lastName,
+                email,
+                phone,
+                country,
+                city,
+                street,
+                postalCode,
+                comment,
+              },
               paypalOrderId: order.id,
               paypalStatus: order.status,
             }),
@@ -89,7 +103,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
         alert("Помилка оплати. Спробуйте ще раз.");
       },
     }).render(paypalRef.current);
-  }, [product, size, quantity, total, name, email, address, city, postalCode, country]);
+  }, [product, size, quantity, total, firstName, lastName, email, phone, country, city, street, postalCode, comment]);
 
   useEffect(() => {
     if (step !== "payment") return;
@@ -109,12 +123,28 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
     script.async = true;
     script.onload = () => setTimeout(renderPayPalButtons, 100);
+    script.onerror = () => {
+      if (paypalRef.current) {
+        paypalRef.current.innerHTML = '<p class="font-mono text-sm text-red-400">Не вдалося завантажити PayPal. Спробуйте оновити сторінку.</p>';
+      }
+    };
     document.body.appendChild(script);
   }, [step, renderPayPalButtons]);
 
   if (!product) return null;
 
-  const isFormValid = name.trim() && email.trim() && address.trim() && city.trim() && postalCode.trim();
+  const isFormValid =
+    firstName.trim() &&
+    lastName.trim() &&
+    email.trim() &&
+    phone.trim() &&
+    country.trim() &&
+    city.trim() &&
+    street.trim() &&
+    postalCode.trim();
+
+  const inputClass =
+    "w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50";
 
   return (
     <AnimatePresence>
@@ -134,7 +164,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
           <div className="flex items-center justify-between p-6 border-b border-secondary/30">
             <h2 className="font-creepster text-2xl text-primary flex items-center gap-2">
               <ShoppingCart size={24} />
-              {step === "success" ? "ЗАМОВЛЕННЯ ОПЛАЧЕНО" : "ЗАМОВЛЕННЯ"}
+              {step === "success" ? "ЗАМОВЛЕННЯ ОПЛАЧЕНО" : "ЗАМОВИТИ ЧЕРЕЗ КУЗНЮ"}
             </h2>
             <button onClick={onClose} className="text-muted-foreground hover:text-primary transition-colors">
               <X size={24} />
@@ -143,12 +173,12 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
 
           <div className="p-6">
             {step === "form" && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div className="flex gap-4 items-center p-4 bg-black/40 border border-border/50 rounded">
                   <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
                   <div>
                     <h3 className="font-mono font-bold text-foreground">{product.name}</h3>
-                    <div className="text-primary font-mono text-xl">{product.price} CAD</div>
+                    <div className="text-primary font-creepster text-2xl">{product.price} CAD</div>
                   </div>
                 </div>
 
@@ -191,53 +221,36 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <div className="border-t border-border/30 pt-4">
-                  <h4 className="font-mono text-sm text-secondary mb-4">ДАНІ ДОСТАВКИ</h4>
+                  <h4 className="font-mono text-sm text-secondary mb-3">ДАНІ ПОКУПЦЯ</h4>
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="Ім'я та прізвище"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Адреса доставки"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                    />
                     <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="Місто"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Поштовий індекс"
-                        value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value)}
-                        className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                      />
+                      <input type="text" placeholder="Ім'я *" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
+                      <input type="text" placeholder="Прізвище *" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Країна"
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/60 border border-border/50 text-foreground font-mono text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground/50"
-                    />
+                    <input type="email" placeholder="Email *" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+                    <input type="tel" placeholder="Телефон *" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
                   </div>
+                </div>
+
+                <div className="border-t border-border/30 pt-4">
+                  <h4 className="font-mono text-sm text-secondary mb-3">АДРЕСА ДОСТАВКИ</h4>
+                  <div className="space-y-3">
+                    <input type="text" placeholder="Країна *" value={country} onChange={(e) => setCountry(e.target.value)} className={inputClass} />
+                    <input type="text" placeholder="Місто *" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
+                    <input type="text" placeholder="Вулиця, будинок, квартира *" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} />
+                    <input type="text" placeholder="Поштовий індекс *" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={inputClass} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-mono text-sm text-secondary block mb-2">КОМЕНТАР ДО ЗАМОВЛЕННЯ</label>
+                  <textarea
+                    placeholder="Додаткові побажання (необов'язково)"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={3}
+                    className={`${inputClass} resize-none`}
+                  />
                 </div>
 
                 <div className="flex justify-between items-center p-4 bg-primary/10 border border-primary/30">
@@ -250,19 +263,23 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                   disabled={!isFormValid}
                   className={`w-full py-4 text-lg ${!isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  ПЕРЕЙТИ ДО ОПЛАТИ
+                  ПЕРЕЙТИ ДО ОПЛАТИ PayPal
                 </GlitchButton>
               </div>
             )}
 
             {step === "payment" && (
               <div className="space-y-6">
-                <div className="p-4 bg-black/40 border border-border/50 rounded font-mono text-sm">
-                  <div className="text-secondary mb-2">ЗАМОВЛЕННЯ:</div>
+                <div className="p-4 bg-black/40 border border-border/50 rounded font-mono text-sm space-y-2">
+                  <div className="text-secondary">ЗАМОВЛЕННЯ:</div>
                   <div className="text-foreground">{product.name} ({size}) x{quantity}</div>
-                  <div className="text-primary text-xl mt-2">{total} CAD</div>
-                  <div className="text-muted-foreground mt-2 text-xs">
-                    Доставка: {name}, {city}, {country}
+                  <div className="text-primary text-xl">{total} CAD</div>
+                  <div className="border-t border-border/30 pt-2 mt-2 text-muted-foreground text-xs space-y-1">
+                    <div>{fullName}</div>
+                    <div>{email} | {phone}</div>
+                    <div>{street}, {city}, {postalCode}</div>
+                    <div>{country}</div>
+                    {comment && <div className="italic">"{comment}"</div>}
                   </div>
                 </div>
 
@@ -294,17 +311,22 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
               >
                 <CheckCircle size={64} className="mx-auto text-green-400" />
                 <h3 className="font-creepster text-3xl text-primary">
-                  Замовлення оплачено!
+                  Замовлення успішно оплачено!
                 </h3>
                 <p className="font-mono text-muted-foreground leading-relaxed">
-                  Твій мерч кується в Кузні Повалених.
+                  Твій мерч уже кується в Кузні Повалених.
                   <br />
+                  Дякуємо, що підтримуєш <span className="text-primary">Gathering Of The Fallen</span>.
+                </p>
+                <p className="font-mono text-sm text-muted-foreground">
                   Підтвердження надіслано на <span className="text-primary">{email}</span>
                 </p>
-                <div className="p-4 bg-black/40 border border-primary/30 font-mono text-sm text-left">
-                  <div className="text-secondary mb-1">ДЕТАЛІ:</div>
+                <div className="p-4 bg-black/40 border border-primary/30 font-mono text-sm text-left space-y-1">
+                  <div className="text-secondary mb-1">ДЕТАЛІ ЗАМОВЛЕННЯ:</div>
                   <div className="text-foreground">{product.name} ({size}) x{quantity}</div>
-                  <div className="text-primary">{total} CAD</div>
+                  <div className="text-primary text-lg">{total} CAD</div>
+                  <div className="text-muted-foreground text-xs mt-2">{fullName} | {phone}</div>
+                  <div className="text-muted-foreground text-xs">{street}, {city}, {postalCode}, {country}</div>
                 </div>
                 <GlitchButton onClick={onClose} className="px-8 py-3">
                   ЗАКРИТИ
