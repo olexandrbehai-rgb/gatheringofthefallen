@@ -31,21 +31,22 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
         >
-          <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 py-24">
+          <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
             <motion.img 
               src={logoImg} 
               alt="Gathering Of The Fallen" 
-              className="w-full max-w-2xl mx-auto mb-8 neon-glow-img"
+              className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
             />
             
             <motion.p 
-              className="font-mono text-xl md:text-2xl text-secondary mb-12 uppercase tracking-widest bg-secondary/10 inline-block px-6 py-2 border-l-4 border-secondary text-center"
+              className="font-mono text-xl md:text-2xl text-secondary mb-12 uppercase tracking-widest text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
+              style={{ textShadow: '0 0 10px rgba(138,43,226,0.8), 0 0 20px rgba(138,43,226,0.4)' }}
             >
               З руїн цивілізації. З попелу — вічність.
             </motion.p>
@@ -66,18 +67,6 @@ export default function Home() {
                   Перейти до мерчу
                 </GlitchButton>
               </Link>
-            </motion.div>
-
-            <motion.div 
-              className="max-w-2xl mx-auto rusted-border bg-black/40 backdrop-blur-sm p-8 text-left"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              <p className="font-mono text-muted-foreground leading-relaxed">
-                <span className="text-primary mr-2">&gt; SIGNAL ACQUIRED...</span>
-                У світі, який упав, ми — Gathering Of The Fallen — збираємо полеглих. Наша музика — це крик крізь руїни, кришталеві акорди, що піднімаються з попелу старого світу.
-              </p>
             </motion.div>
           </section>
 

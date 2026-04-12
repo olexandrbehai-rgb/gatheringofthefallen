@@ -309,11 +309,25 @@
   animation: img-neon-pulse 2s infinite alternate;
 }
 
+.neon-glow-img-strong {
+  filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 40px rgba(138, 43, 226, 0.6)) drop-shadow(0 0 60px rgba(0, 240, 255, 0.4));
+  animation: img-neon-pulse-strong 3s infinite alternate;
+}
+
 @keyframes img-neon-pulse {
   0%, 100% {
     filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6)) drop-shadow(0 0 20px rgba(0, 240, 255, 0.3));
   }
   50% {
     filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.4)) drop-shadow(0 0 12px rgba(0, 240, 255, 0.2));
+  }
+}
+
+@keyframes img-neon-pulse-strong {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 40px rgba(138, 43, 226, 0.6)) drop-shadow(0 0 60px rgba(0, 240, 255, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5)) drop-shadow(0 0 25px rgba(138, 43, 226, 0.4)) drop-shadow(0 0 40px rgba(0, 240, 255, 0.2));
   }
 }
