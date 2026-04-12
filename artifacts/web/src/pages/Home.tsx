@@ -1,153 +1,80 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "wouter";
 import { BootSequence } from "@/components/BootSequence";
-import { AnimatedFog } from "@/components/AnimatedFog";
-import { CRTScanline } from "@/components/CRTScanline";
-import { SecretLevel } from "@/components/SecretLevel";
-import { GlitchText } from "@/components/GlitchText";
-import { MusicPlayer } from "@/components/MusicPlayer";
-import { MerchSection } from "@/components/MerchSection";
-import { 
-  Youtube, 
-  Instagram, 
-  Facebook, 
-  Mail,
-  TerminalSquare
-} from "lucide-react";
-import { FaTiktok } from "react-icons/fa";
+import { GlitchButton } from "@/components/GlitchButton";
 
 export default function Home() {
-  const [booting, setBooting] = useState(true);
+  const [booting, setBooting] = useState(() => {
+    // Only boot on first visit per session
+    if (sessionStorage.getItem("booted")) return false;
+    return true;
+  });
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleBootComplete = () => {
+    sessionStorage.setItem("booted", "true");
+    setBooting(false);
   };
 
   return (
     <>
       <AnimatePresence>
-        {booting && <BootSequence onComplete={() => setBooting(false)} />}
+        {booting && <BootSequence onComplete={handleBootComplete} />}
       </AnimatePresence>
-
-      <AnimatedFog />
-      <CRTScanline />
-      <SecretLevel />
 
       {!booting && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="relative z-10 min-h-screen text-foreground"
+          className="container mx-auto px-4 py-24 min-h-[80vh] flex flex-col items-center justify-center space-y-24"
         >
-          {/* Header */}
-          <header className="py-12 border-b border-primary/20 bg-black/60 backdrop-blur-sm sticky top-0 z-40">
-            <div className="container mx-auto px-4 flex flex-col items-center">
-              <h1 className="font-nosifer text-4xl md:text-6xl lg:text-7xl text-center mb-6 neon-pulse text-foreground">
-                GATHERING OF THE FALLEN
-              </h1>
-              
-              <nav className="flex flex-wrap justify-center gap-6 text-sm md:text-base font-mono uppercase">
-                <button onClick={() => scrollTo('transmission')} className="text-muted-foreground hover:text-primary transition-colors">
-                  <GlitchText>&gt; TRANSMISSION</GlitchText>
-                </button>
-                <button onClick={() => scrollTo('discography')} className="text-muted-foreground hover:text-primary transition-colors">
-                  <GlitchText>&gt; DISCOGRAPHY</GlitchText>
-                </button>
-                <button onClick={() => scrollTo('factory')} className="text-muted-foreground hover:text-primary transition-colors">
-                  <GlitchText>&gt; THE FACTORY</GlitchText>
-                </button>
-                <button onClick={() => scrollTo('comms')} className="text-muted-foreground hover:text-primary transition-colors">
-                  <GlitchText>&gt; COMMS</GlitchText>
-                </button>
-              </nav>
-            </div>
-          </header>
-
-          <main className="container mx-auto px-4 py-24 space-y-32">
+          <div className="text-center w-full">
+            <h1 className="font-creepster text-5xl md:text-7xl lg:text-9xl text-center mb-6 neon-pulse text-foreground leading-tight py-4">
+              GATHERING OF THE FALLEN
+            </h1>
+            <p className="font-mono text-xl md:text-2xl text-secondary mb-12 uppercase tracking-widest bg-secondary/10 inline-block px-6 py-2 border-l-4 border-secondary">
+              З руїн цивілізації. З попелу — вічність.
+            </p>
             
-            {/* About Section */}
-            <section id="transmission" className="max-w-4xl mx-auto scroll-mt-32">
-              <div className="rusted-border bg-black/80 p-8 md:p-12 relative">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
-                <h2 className="font-metal text-3xl md:text-5xl text-primary mb-8 animate-[glitch-skew_3s_infinite]">
-                  [ DECRYPTED PROTOCOL ]
-                </h2>
-                <div className="space-y-6 text-lg font-mono leading-relaxed text-muted-foreground">
-                  <p>
-                    <span className="text-white">&gt; INITIALIZING... </span> 
-                    Ми граємо музику для кінця світу. When the skies turned to ash and the cities crumbled, only the sound remained.
-                  </p>
-                  <p>
-                    <span className="text-white">&gt; LOG ENTRY 44.9: </span>
-                    Survival through music. Art in times of decay. Ми знаходимо красу в руйнуванні, шукаємо світло в найтемніших бункерах. Every chord is a memory of what we lost. Every scream is a defiance against the silence.
-                  </p>
-                  <p className="text-secondary italic mt-8 border-l-2 border-secondary pl-4 py-2 bg-secondary/10">
-                    "З попелу ми повстанемо, щоб заспівати останню пісню."
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Music Section */}
-            <section id="discography" className="scroll-mt-32">
-              <h2 className="font-metal text-4xl md:text-5xl text-center mb-12 text-primary">
-                &lt; DISCOGRAPHY &gt;
-              </h2>
-              <MusicPlayer />
-            </section>
-
-            {/* Merch Section */}
-            <section id="factory" className="scroll-mt-32">
-              <h2 className="font-metal text-4xl md:text-5xl text-center mb-12 text-primary">
-                &lt; THE FACTORY &gt;
-              </h2>
-              <MerchSection />
-            </section>
-
-          </main>
-
-          {/* Footer */}
-          <footer id="comms" className="border-t border-primary/30 bg-[#050505] py-16 scroll-mt-32">
-            <div className="container mx-auto px-4">
-              <div className="max-w-2xl mx-auto rusted-border p-6 bg-black">
-                <div className="flex items-center gap-3 mb-6 text-primary border-b border-primary/20 pb-4">
-                  <TerminalSquare size={24} />
-                  <h3 className="font-bold text-xl uppercase tracking-widest">COMMUNICATION TERMINAL</h3>
-                </div>
-                
-                <div className="space-y-4 font-mono">
-                  <a href="https://youtube.com/@gathering-of-the-fallen" target="_blank" rel="noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-white transition-colors group">
-                    <Youtube className="group-hover:text-red-500" />
-                    <GlitchText>CONNECT // YOUTUBE</GlitchText>
-                  </a>
-                  <a href="https://www.instagram.com/alexats2025?igsh=bjQzZWc4ZzQ3OHc=" target="_blank" rel="noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-white transition-colors group">
-                    <Instagram className="group-hover:text-pink-500" />
-                    <GlitchText>CONNECT // INSTAGRAM</GlitchText>
-                  </a>
-                  <a href="https://www.tiktok.com/@kobzar25" target="_blank" rel="noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-white transition-colors group">
-                    <FaTiktok className="text-xl group-hover:text-cyan-400" />
-                    <GlitchText>CONNECT // TIKTOK</GlitchText>
-                  </a>
-                  <a href="https://www.facebook.com/share/1CYJR7yWJz/" target="_blank" rel="noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-white transition-colors group">
-                    <Facebook className="group-hover:text-blue-500" />
-                    <GlitchText>CONNECT // FACEBOOK</GlitchText>
-                  </a>
-                  <a href="mailto:gatheringofthefallen@gmail.com" className="flex items-center gap-4 text-muted-foreground hover:text-white transition-colors group">
-                    <Mail className="group-hover:text-primary" />
-                    <GlitchText>TRANSMIT // EMAIL</GlitchText>
-                  </a>
-                </div>
-                
-                <div className="mt-8 pt-4 border-t border-primary/20 text-xs text-primary/50 text-center">
-                  SYSTEM READY. AWAITING INPUT.
-                </div>
-              </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
+              <Link href="/music">
+                <GlitchButton className="text-lg py-4 px-8 w-full sm:w-auto">
+                  Слухати музику
+                </GlitchButton>
+              </Link>
+              <Link href="/merch">
+                <GlitchButton className="text-lg py-4 px-8 w-full sm:w-auto border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
+                  Перейти до мерчу
+                </GlitchButton>
+              </Link>
             </div>
-          </footer>
+
+            <div className="max-w-2xl mx-auto rusted-border bg-black/60 p-8 backdrop-blur-sm text-left">
+              <p className="font-mono text-muted-foreground leading-relaxed">
+                <span className="text-primary mr-2">&gt; SIGNAL ACQUIRED...</span>
+                Ми граємо музику для кінця світу. Коли все згоріло, залишився тільки звук. Шукаємо світло в найтемніших бункерах і збираємо полеглих серед попелу.
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-full max-w-5xl">
+            <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4">Останні релізи</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { title: "Забуте Я", type: "SINGLE", date: "2099.08.14" },
+                { title: "Із Попелу", type: "EP", date: "2099.05.22" },
+                { title: "Молодість", type: "SINGLE", date: "2099.02.10" }
+              ].map((release, i) => (
+                <Link key={i} href="/songs" className="block">
+                  <div className="rusted-border bg-[#0a0a0a] p-6 hover:bg-[#111] transition-colors group cursor-pointer h-full">
+                    <div className="text-xs text-secondary font-mono mb-2">{release.type} // {release.date}</div>
+                    <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors">{release.title}</h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </motion.div>
       )}
     </>

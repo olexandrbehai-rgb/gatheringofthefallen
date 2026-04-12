@@ -18,3 +18,9 @@ id = "ZKS7dNhaG8XLuPdse5ey2"
 uri = "file://artifacts/web/src/assets/merch-poster.png"
 type = "image"
 title = "Post-apocalyptic poster mockup"
+
+[[generated]]
+id = "zU85NSQ7hsBOyNhcRne5C"
+uri = "file://artifacts/web/src/assets/band-ruins.png"
+type = "image"
+title = "Band in post-apocalyptic ruins"

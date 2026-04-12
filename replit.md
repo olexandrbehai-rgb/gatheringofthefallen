@@ -18,31 +18,43 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Project: Gathering Of The Fallen - Band Website
 
-Post-apocalyptic themed single-page website for the band "Gathering Of The Fallen".
+Multi-page post-apocalyptic themed website for the Ukrainian rock/metal band "Gathering Of The Fallen".
+
+### Pages (7 separate routes)
+- `/` — Home: Hero section, slogan, CTA buttons, latest releases
+- `/about` — About: Band history, philosophy, lore with generated band image
+- `/music` — Music: Embedded YouTube players, salvaged radio player
+- `/songs` — Songs: Individual song cards with atmospheric Ukrainian descriptions (Із Попелу, Молодість, Емігрант, Старий Хорон, Життя, Частина мене, Забуте Я)
+- `/merch` — Merch: Product grid with prices in UAH (грн), generated product images
+- `/forge` — Forge ("Кузня Повалених"): Animated conveyor RUINS → CRYSTAL → MERCH
+- `/contacts` — Contacts: Terminal-style social links + contact form
 
 ### Features
-- **Boot Sequence**: Terminal-style loading screen with fake BIOS text
+- **Boot Sequence**: Terminal-style loading screen with fake BIOS text (home page only)
 - **Animated Fog Background**: Multi-layer CSS fog with SVG turbulence noise, ash particles
 - **CRT Scanlines**: Monitor scanline overlay with flicker effect
 - **Glitch Effects**: CSS keyframe glitch animations on hover (skew + color channel splitting)
-- **Neon Cyan Theme**: Primary accent #00FFFF with rust (#8B4513) secondary
-- **Music Player**: Salvaged radio UI with 3 tracks and Lore modals
-- **Merch Section (The Factory)**: Product cards with generated images
-- **About Section**: Ukrainian/English text styled as recovered data
 - **Secret Level**: Type "FALLEN" anywhere to unlock hidden lyrics overlay
-- **Communication Terminal Footer**: Social links (YouTube, Instagram, TikTok, Facebook, Email)
+- **Sticky Navigation**: Shared layout with nav bar across all pages
+- **Fully Ukrainian**: All UI text in Ukrainian language
 
 ### Typography
-- Headings: Metal Mania (Google Fonts)
-- Special accents: Nosifer (Google Fonts)
+- Headings: Creepster (Google Fonts) with neon glow
 - Body/Terminal: Share Tech Mono (Google Fonts)
 
 ### Color Palette
 - Background: near-black (#0a0a0a)
-- Primary: neon cyan (#00FFFF)
-- Secondary: rust (#8B4513)
+- Primary: crystal blue (#00f0ff / #00FFFF)
+- Secondary: deep purple (#8a2be2)
 - Destructive: red (#FF0000) for glitch effects
 - Dark mode only
+
+### Social Links
+- YouTube: @gathering-of-the-fallen
+- Instagram: @alexats2025
+- TikTok: @kobzar25
+- Facebook: /share/1CYJR7yWJz/
+- Email: gatheringofthefallen@gmail.com
 
 ## Key Commands
 
