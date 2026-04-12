@@ -23,7 +23,7 @@ Multi-page post-apocalyptic themed website for the Ukrainian rock/metal band "Ga
 ### Pages (7 separate routes)
 - `/` — Home: Hero section, slogan, CTA buttons, latest releases
 - `/about` — About: Band history, philosophy, lore with generated band image
-- `/music` — Music: Embedded YouTube players, salvaged radio player
+- `/music` — Music: 6 real YouTube embeds from @gathering-of-the-fallen channel (Through the Ashes, Молодість, Емігрант, Реквієм Народу, Пустеля Душ, Вогонь В Руках) with "Дивитися на YouTube" buttons
 - `/songs` — Songs: Individual song cards with atmospheric Ukrainian descriptions (Із Попелу, Молодість, Емігрант, Старий Хорон, Життя, Частина мене, Забуте Я)
 - `/merch` — Merch: Product grid with prices in UAH (грн), generated product images
 - `/forge` — Forge ("Кузня Повалених"): Animated conveyor RUINS → CRYSTAL → MERCH

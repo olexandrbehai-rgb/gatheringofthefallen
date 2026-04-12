@@ -68,7 +68,7 @@ export function SecretLevel() {
             
             <div className="mt-12">
               <a 
-                href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                href="https://www.youtube.com/@gathering-of-the-fallen" 
                 target="_blank" 
                 rel="noreferrer"
                 className="inline-block px-8 py-4 border border-destructive text-destructive hover:bg-destructive hover:text-black transition-colors font-bold text-2xl"
