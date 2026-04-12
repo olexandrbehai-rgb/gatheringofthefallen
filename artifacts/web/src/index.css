@@ -70,7 +70,7 @@
 
 /* Force dark mode */
 :root {
-  --background: 0 0% 4%; /* #0a0a0a */
+  --background: 0 0% 0%; /* transparent-like */
   --foreground: 0 0% 88%; /* #e0e0e0 */
   --border: 0 0% 15%; 
   --card: 0 0% 6%; /* #0f0f0f */
@@ -160,7 +160,8 @@
   }
 
   body {
-    @apply font-mono antialiased bg-background text-foreground overflow-x-hidden;
+    @apply font-mono antialiased text-foreground overflow-x-hidden;
+    background: transparent;
   }
 }
 

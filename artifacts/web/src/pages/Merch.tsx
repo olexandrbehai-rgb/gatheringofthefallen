@@ -46,9 +46,9 @@ export default function Merch() {
           <motion.div 
             key={product.id}
             whileHover={{ scale: 1.02 }}
-            className="rusted-border bg-black/60 group flex flex-col h-full backdrop-blur-sm"
+            className="rusted-border bg-black/40 backdrop-blur-sm group flex flex-col h-full"
           >
-            <div className="aspect-square w-full overflow-hidden border-b border-border relative bg-[#111] flex items-center justify-center">
+            <div className="aspect-square w-full overflow-hidden border-b border-border relative flex items-center justify-center">
               <div className="absolute inset-0 bg-primary/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none"></div>
               <img 
                 src={product.image} 

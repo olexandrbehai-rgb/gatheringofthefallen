@@ -69,7 +69,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div 
-              className="max-w-2xl mx-auto rusted-border bg-black/60 p-8 backdrop-blur-sm text-left"
+              className="max-w-2xl mx-auto rusted-border bg-black/40 backdrop-blur-sm p-8 text-left"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
@@ -114,7 +114,7 @@ export default function Home() {
                 <Link key={i} href="/songs" className="block">
                   <motion.div 
                     whileHover={{ scale: 1.03 }}
-                    className="rusted-border bg-black/60 p-6 hover:bg-[#111] transition-colors group cursor-pointer h-full backdrop-blur-sm"
+                    className="rusted-border bg-black/40 backdrop-blur-sm p-6 hover:bg-black/50 transition-colors group cursor-pointer h-full"
                   >
                     <div className="text-xs text-secondary font-mono mb-2">{release.type} // {release.date}</div>
                     <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors">{release.title}</h3>

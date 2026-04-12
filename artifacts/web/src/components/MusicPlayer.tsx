@@ -34,7 +34,7 @@ export function MusicPlayer() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto rusted-border bg-[#111] p-6 relative overflow-hidden">
+    <div className="w-full max-w-3xl mx-auto rusted-border bg-black/40 backdrop-blur-sm p-6 relative overflow-hidden">
       {/* Decorative radio elements */}
       <div className="absolute top-0 right-0 p-2 flex gap-2">
         <div className="w-3 h-3 rounded-full bg-red-900 shadow-[0_0_5px_#ff0000]"></div>

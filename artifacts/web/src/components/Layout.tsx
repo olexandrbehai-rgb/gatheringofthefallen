@@ -23,15 +23,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <>
       <div 
         className="fixed inset-0 z-[-2] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
+        style={{ 
+          backgroundImage: `url(${heroBg})`,
+          backgroundAttachment: 'fixed',
+        }}
       />
-      <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-black/80 via-black/70 to-black/90" />
+      <div 
+        className="fixed inset-0 z-[-1]"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(75,0,130,0.55), rgba(0,0,0,0.7))',
+        }}
+      />
       <AnimatedFog />
       <CRTScanline />
       <SecretLevel />
       
       <div className="min-h-screen text-foreground flex flex-col relative z-10">
-        <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-primary/20">
+        <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20">
           <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img src={logoImg} alt="Gathering Of The Fallen" className="h-12 md:h-14 w-auto neon-glow-img" />
@@ -54,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
 
-        <footer className="border-t border-primary/30 bg-[#050505] py-8 mt-16">
+        <footer className="border-t border-primary/30 bg-black/50 backdrop-blur-sm py-8 mt-16">
           <div className="container mx-auto px-4 text-center font-mono text-xs text-muted-foreground">
             <img src={logoImg} alt="GotF" className="h-8 mx-auto mb-4 opacity-50" />
             <p className="mb-2">&copy; {new Date().getFullYear()} GATHERING OF THE FALLEN</p>

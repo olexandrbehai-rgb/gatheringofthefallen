@@ -13,7 +13,7 @@ export default function About() {
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">ПРО ГУРТ</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-        <div className="rusted-border p-2 bg-black/40 overflow-hidden group">
+        <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
           <img 
             src={gurtImg} 
             alt="Gathering Of The Fallen на сцені" 
@@ -21,7 +21,7 @@ export default function About() {
             className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
           />
         </div>
-        <div className="rusted-border p-2 bg-black/40 overflow-hidden group">
+        <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
           <img 
             src={gurt2Img} 
             alt="Gathering Of The Fallen" 
@@ -32,14 +32,14 @@ export default function About() {
       </div>
       
       <div className="space-y-12 font-mono text-lg text-muted-foreground leading-relaxed">
-        <div className="rusted-border bg-black/80 p-8 relative">
+        <div className="rusted-border bg-black/50 backdrop-blur-sm p-8 relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
           <p className="text-xl md:text-2xl text-white font-bold italic pl-4">
             "У світі, який упав, ми — Gathering Of The Fallen — збираємо полеглих. Наша музика — це крик крізь руїни, кришталеві акорди, що піднімаються з попелу старого світу. Ми поєднуємо сирі людські емоції, історії та постапокаліптичний рок/метал. Приєднуйся до падших."
           </p>
         </div>
 
-        <div>
+        <div className="bg-black/30 backdrop-blur-sm p-6 rounded">
           <h2 className="text-primary text-2xl mb-4 uppercase tracking-widest border-b border-primary/20 pb-2">
             &gt; Архівний запис 01: Народження
           </h2>
@@ -51,7 +51,7 @@ export default function About() {
           </p>
         </div>
 
-        <div>
+        <div className="bg-black/30 backdrop-blur-sm p-6 rounded">
           <h2 className="text-primary text-2xl mb-4 uppercase tracking-widest border-b border-primary/20 pb-2">
             &gt; Архівний запис 02: Філософія
           </h2>
@@ -63,7 +63,7 @@ export default function About() {
           </p>
         </div>
 
-        <div>
+        <div className="bg-black/30 backdrop-blur-sm p-6 rounded">
           <h2 className="text-primary text-2xl mb-4 uppercase tracking-widest border-b border-primary/20 pb-2">
             &gt; Архівний запис 03: Місія
           </h2>

@@ -24,7 +24,7 @@ export default function Forge() {
         Тут, у глибинах бункера, у світлі неону та іскрах від зварювання, ми перетворюємо уламки старого світу на броню для тих, хто вижив.
       </p>
 
-      <div className="rusted-border bg-[#050505] p-8 mb-16 relative overflow-hidden">
+      <div className="rusted-border bg-black/40 backdrop-blur-sm p-8 mb-16 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
         
@@ -33,7 +33,7 @@ export default function Forge() {
           <motion.div 
             animate={isProducing ? { y: [0, 5, -5, 0], filter: ["grayscale(100%)", "grayscale(0%)"] } : {}}
             transition={{ duration: 0.5, repeat: isProducing ? Infinity : 0 }}
-            className={`w-full max-w-md border-2 border-dashed ${isProducing ? 'border-primary bg-primary/10' : 'border-muted bg-black'} p-6 text-center rounded-lg`}
+            className={`w-full max-w-md border-2 border-dashed ${isProducing ? 'border-primary bg-primary/10' : 'border-muted bg-black/30'} p-6 text-center rounded-lg`}
           >
             <h3 className="text-xl font-bold text-white mb-2">РУЇНИ</h3>
             <p className="text-sm text-muted-foreground">Металобрухт, попіл, залишки цивілізації</p>
@@ -44,7 +44,7 @@ export default function Forge() {
           <motion.div 
             animate={isProducing ? { scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] } : {}}
             transition={{ duration: 0.8, repeat: isProducing ? Infinity : 0 }}
-            className={`w-full max-w-md border-2 ${isProducing ? 'border-secondary bg-secondary/20 shadow-[0_0_30px_#8a2be240]' : 'border-muted bg-black'} p-6 text-center rounded-lg`}
+            className={`w-full max-w-md border-2 ${isProducing ? 'border-secondary bg-secondary/20 shadow-[0_0_30px_#8a2be240]' : 'border-muted bg-black/30'} p-6 text-center rounded-lg`}
           >
             <h3 className="text-xl font-bold text-white mb-2">КРИСТАЛІЗАЦІЯ</h3>
             <p className="text-sm text-muted-foreground">Очищення вогнем та звуком</p>
@@ -55,7 +55,7 @@ export default function Forge() {
           <motion.div 
             animate={isProducing ? { y: [0, -5, 0], boxShadow: ["0 0 0px #00f0ff", "0 0 20px #00f0ff", "0 0 0px #00f0ff"] } : {}}
             transition={{ duration: 1, repeat: isProducing ? Infinity : 0 }}
-            className={`w-full max-w-md border-2 ${isProducing ? 'border-primary bg-primary/20' : 'border-muted bg-black'} p-6 text-center rounded-lg`}
+            className={`w-full max-w-md border-2 ${isProducing ? 'border-primary bg-primary/20' : 'border-muted bg-black/30'} p-6 text-center rounded-lg`}
           >
             <h3 className="text-xl font-bold text-white mb-2">ЕКІПІРУВАННЯ</h3>
             <p className="text-sm text-muted-foreground">Готовий мерч для виживання</p>

@@ -17,7 +17,7 @@ export default function Music() {
           <span className="flex-1 h-px bg-secondary/30"></span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="rusted-border p-2 bg-black">
+          <div className="rusted-border p-2 bg-black/40 backdrop-blur-sm">
             <div className="aspect-video w-full bg-muted/20 relative">
               <iframe 
                 width="100%" 
@@ -34,7 +34,7 @@ export default function Music() {
               &gt; ТРАНСЛЯЦІЯ: ЗАБУТЕ Я (OFFICIAL VIDEO)
             </div>
           </div>
-          <div className="rusted-border p-2 bg-black">
+          <div className="rusted-border p-2 bg-black/40 backdrop-blur-sm">
             <div className="aspect-video w-full bg-muted/20 relative">
               <iframe 
                 width="100%" 

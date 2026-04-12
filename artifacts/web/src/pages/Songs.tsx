@@ -47,7 +47,7 @@ export default function Songs() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="rusted-border bg-[#0a0a0a] p-6 hover:bg-[#111] transition-all duration-300 hover:-translate-y-2 group relative overflow-hidden"
+            className="rusted-border bg-black/40 backdrop-blur-sm p-6 hover:bg-black/60 transition-all duration-300 hover:-translate-y-2 group relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <h3 className="font-creepster text-3xl text-white mb-4 group-hover:text-primary transition-colors">{song.title}</h3>
