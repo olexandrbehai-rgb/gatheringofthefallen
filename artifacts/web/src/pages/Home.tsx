@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { BootSequence } from "@/components/BootSequence";
 import { GlitchButton } from "@/components/GlitchButton";
-import logoImg from "@assets/logo_1776018973004.png";
+import logoImg from "@assets/logo_1776019192682.jpg";
 import gurtImg from "@assets/гурт_1776018973007.jpg";
 import gurt2Img from "@assets/гурт_2_1776018973007.jpg";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
