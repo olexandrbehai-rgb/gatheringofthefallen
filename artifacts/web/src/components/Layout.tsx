@@ -20,16 +20,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div 
-        className="fixed inset-0 z-[-2] bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 z-[-2]"
         style={{ 
           backgroundImage: `url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           backgroundAttachment: 'fixed',
+          backgroundColor: '#0a0a1e',
         }}
       />
       <div 
         className="fixed inset-0 z-[-1]"
         style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(75,0,130,0.55), rgba(0,0,0,0.7))',
+          background: 'linear-gradient(to bottom, rgba(10,10,30,0.6), rgba(75,0,130,0.4), rgba(10,10,30,0.65))',
         }}
       />
       <AnimatedFog />
