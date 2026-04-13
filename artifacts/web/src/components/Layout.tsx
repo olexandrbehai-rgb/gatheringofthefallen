@@ -18,27 +18,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <>
-      <div className="fixed inset-0" style={{ zIndex: -2, backgroundColor: '#0a0a1e' }}>
-        <img
-          src={heroBg}
-          alt=""
-          className="w-full h-full object-cover"
-          style={{ display: 'block', minHeight: '100vh', minWidth: '100vw' }}
-        />
-      </div>
-      <div 
+    <div className="relative min-h-screen">
+      <img
+        src={heroBg}
+        alt=""
+        aria-hidden="true"
+        className="fixed inset-0 w-full h-full object-cover"
+        style={{ zIndex: 0 }}
+      />
+
+      <div
         className="fixed inset-0"
         style={{
-          zIndex: -1,
-          background: 'linear-gradient(to bottom, rgba(10,10,30,0.6), rgba(75,0,130,0.4), rgba(10,10,30,0.65))',
+          zIndex: 1,
+          background: 'linear-gradient(to bottom, rgba(10,10,30,0.55), rgba(75,0,130,0.35), rgba(10,10,30,0.6))',
         }}
       />
+
       <AnimatedFog />
       <CRTScanline />
       <SecretLevel />
-      
-      <div className="min-h-screen text-foreground flex flex-col relative z-10">
+
+      <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
         <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20">
           <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -70,6 +71,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </footer>
       </div>
-    </>
+    </div>
   );
 }

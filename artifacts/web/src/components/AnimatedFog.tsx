@@ -3,7 +3,7 @@ export function AnimatedFog() {
     <>
       <div className="fog-layer fog-1"></div>
       <div className="fog-layer fog-2"></div>
-      <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         {Array.from({ length: 30 }).map((_, i) => (
           <div
             key={i}
