@@ -53,33 +53,64 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     postalCode.trim();
 
   useEffect(() => {
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+
     const w = window as any;
     if (w.paypal) {
       setSdkReady(true);
       return;
     }
 
-    const existing = document.querySelector('script[src*="paypal.com/sdk"]');
-    if (existing) {
-      const check = setInterval(() => {
+    const startPolling = () => {
+      pollTimer = setInterval(() => {
         if ((window as any).paypal) {
-          setSdkReady(true);
-          clearInterval(check);
+          if (!cancelled) setSdkReady(true);
+          if (pollTimer) clearInterval(pollTimer);
+          if (timeoutTimer) clearTimeout(timeoutTimer);
         }
-      }, 200);
-      return () => clearInterval(check);
+      }, 300);
+
+      timeoutTimer = setTimeout(() => {
+        if (pollTimer) clearInterval(pollTimer);
+        if (!cancelled && !(window as any).paypal) {
+          setSdkError(true);
+        }
+      }, 15000);
+    };
+
+    const existingScript = document.querySelector('script[src*="paypal.com/sdk"]');
+    if (existingScript) {
+      existingScript.remove();
     }
 
     const script = document.createElement("script");
-    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&intent=capture`;
     script.async = true;
+    script.setAttribute("data-namespace", "paypal_sdk");
     script.onload = () => {
-      setSdkReady(true);
+      if (!cancelled) {
+        const checkReady = setInterval(() => {
+          if ((window as any).paypal) {
+            setSdkReady(true);
+            clearInterval(checkReady);
+          }
+        }, 100);
+        setTimeout(() => clearInterval(checkReady), 5000);
+      }
     };
     script.onerror = () => {
-      setSdkError(true);
+      if (!cancelled) setSdkError(true);
     };
     document.head.appendChild(script);
+    startPolling();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+    };
   }, []);
 
   const renderButtons = useCallback(() => {
@@ -390,12 +421,49 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                   </p>
 
                   {sdkError && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded text-center">
+                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded text-center space-y-3">
                       <p className="font-mono text-sm text-red-400">
-                        Не вдалося завантажити PayPal SDK.
-                        <br />
-                        Відкрийте сайт у новій вкладці (не в iframe).
+                        Не вдалося завантажити PayPal.
                       </p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        PayPal блокує завантаження в iframe.
+                        <br />
+                        Відкрийте сайт у новій вкладці браузера.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSdkError(false);
+                          setSdkReady(false);
+                          buttonsRendered.current = false;
+                          const old = document.querySelector('script[src*="paypal.com/sdk"]');
+                          if (old) old.remove();
+                          const script = document.createElement("script");
+                          script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&intent=capture`;
+                          script.async = true;
+                          script.onload = () => {
+                            const check = setInterval(() => {
+                              if ((window as any).paypal) {
+                                setSdkReady(true);
+                                clearInterval(check);
+                              }
+                            }, 100);
+                            setTimeout(() => clearInterval(check), 5000);
+                          };
+                          script.onerror = () => setSdkError(true);
+                          document.head.appendChild(script);
+                        }}
+                        className="px-4 py-2 border border-primary/50 text-primary font-mono text-sm hover:bg-primary/10 transition-colors"
+                      >
+                        СПРОБУВАТИ ЗНОВУ
+                      </button>
+                      <a
+                        href={window.location.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 border border-secondary/50 text-secondary font-mono text-sm hover:bg-secondary/10 transition-colors"
+                      >
+                        ВІДКРИТИ В НОВІЙ ВКЛАДЦІ
+                      </a>
                     </div>
                   )}
 
