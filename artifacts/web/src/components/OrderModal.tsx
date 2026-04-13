@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, ShoppingCart, Send } from "lucide-react";
+import { X, CheckCircle, ShoppingCart } from "lucide-react";
 import { GlitchButton } from "./GlitchButton";
 
 interface Product {
@@ -16,8 +16,10 @@ interface OrderModalProps {
 }
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
+const PAYPAL_CLIENT_ID =
+  "EPPTtiHG2EWOr-rep0FJk6xizUyTRjUQbqdnxcuNFw0YUSXkshCmh8aWLTND7TpR8PW00YXgEn6qgAvE";
 
-type OrderStep = "form" | "sending" | "success";
+type OrderStep = "form" | "payment" | "success";
 
 export function OrderModal({ product, onClose }: OrderModalProps) {
   const [step, setStep] = useState<OrderStep>("form");
@@ -32,7 +34,10 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [comment, setComment] = useState("");
-  const [error, setError] = useState("");
+  const [sdkReady, setSdkReady] = useState(false);
+  const [sdkError, setSdkError] = useState(false);
+  const paypalContainerRef = useRef<HTMLDivElement>(null);
+  const buttonsRendered = useRef(false);
 
   const total = product ? product.price * quantity : 0;
   const fullName = `${firstName} ${lastName}`.trim();
@@ -47,45 +52,109 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     street.trim() &&
     postalCode.trim();
 
-  async function handleSubmit() {
-    if (!product || !isFormValid) return;
-
-    setStep("sending");
-    setError("");
-
-    try {
-      const res = await fetch("/api/order-notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product: product.name,
-          size,
-          quantity,
-          total: `${total.toFixed(2)} CAD`,
-          customer: {
-            firstName,
-            lastName,
-            email,
-            phone,
-            country,
-            city,
-            street,
-            postalCode,
-            comment,
-          },
-          paypalOrderId: null,
-          paypalStatus: "PENDING_CONTACT",
-        }),
-      });
-
-      if (!res.ok) throw new Error("Server error");
-
-      setStep("success");
-    } catch {
-      setError("Помилка відправки. Спробуйте ще раз або напишіть нам на пошту.");
-      setStep("form");
+  useEffect(() => {
+    const w = window as any;
+    if (w.paypal) {
+      setSdkReady(true);
+      return;
     }
-  }
+
+    const existing = document.querySelector('script[src*="paypal.com/sdk"]');
+    if (existing) {
+      const check = setInterval(() => {
+        if ((window as any).paypal) {
+          setSdkReady(true);
+          clearInterval(check);
+        }
+      }, 200);
+      return () => clearInterval(check);
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+    script.async = true;
+    script.onload = () => {
+      setSdkReady(true);
+    };
+    script.onerror = () => {
+      setSdkError(true);
+    };
+    document.head.appendChild(script);
+  }, []);
+
+  const renderButtons = useCallback(() => {
+    const w = window as any;
+    if (!w.paypal || !paypalContainerRef.current || !product || buttonsRendered.current) return;
+
+    buttonsRendered.current = true;
+
+    w.paypal.Buttons({
+      style: {
+        layout: "vertical",
+        color: "black",
+        shape: "rect",
+        label: "pay",
+        tagline: false,
+      },
+      createOrder: (_data: any, actions: any) => {
+        return actions.order.create({
+          purchase_units: [
+            {
+              description: `${product.name} (${size}) x${quantity}`,
+              amount: {
+                currency_code: "CAD",
+                value: total.toFixed(2),
+              },
+            },
+          ],
+        });
+      },
+      onApprove: async (_data: any, actions: any) => {
+        const order = await actions.order.capture();
+
+        try {
+          await fetch("/api/order-notification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              product: product.name,
+              size,
+              quantity,
+              total: `${total.toFixed(2)} CAD`,
+              customer: {
+                firstName,
+                lastName,
+                email,
+                phone,
+                country,
+                city,
+                street,
+                postalCode,
+                comment,
+              },
+              paypalOrderId: order.id,
+              paypalStatus: order.status,
+            }),
+          });
+        } catch {
+          console.log("Order notification queued");
+        }
+
+        setStep("success");
+      },
+      onError: (err: any) => {
+        console.error("PayPal error:", err);
+      },
+    }).render(paypalContainerRef.current);
+  }, [product, size, quantity, total, firstName, lastName, email, phone, country, city, street, postalCode, comment]);
+
+  useEffect(() => {
+    if (step === "payment" && sdkReady) {
+      buttonsRendered.current = false;
+      const timer = setTimeout(renderButtons, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [step, sdkReady, renderButtons]);
 
   if (!product) return null;
 
@@ -111,8 +180,10 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
             <h2 className="font-creepster text-2xl text-primary flex items-center gap-2">
               <ShoppingCart size={24} />
               {step === "success"
-                ? "ЗАЯВКУ НАДІСЛАНО"
-                : "ЗАМОВИТИ ЧЕРЕЗ КУЗНЮ"}
+                ? "ЗАМОВЛЕННЯ ОПЛАЧЕНО"
+                : step === "payment"
+                  ? "ОПЛАТА"
+                  : "ЗАМОВИТИ ЧЕРЕЗ КУЗНЮ"}
             </h2>
             <button
               onClick={onClose}
@@ -125,12 +196,6 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
           <div className="p-6">
             {step === "form" && (
               <div className="space-y-5">
-                <div className="p-3 bg-secondary/10 border border-secondary/30 rounded">
-                  <p className="font-mono text-xs text-secondary leading-relaxed">
-                    Заповніть форму — ми зв'яжемось з вами для підтвердження замовлення та оплати.
-                  </p>
-                </div>
-
                 <div className="flex gap-4 items-center p-4 bg-black/40 border border-border/50 rounded">
                   <img
                     src={product.image}
@@ -285,37 +350,81 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                   </span>
                 </div>
 
-                {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded">
-                    <p className="font-mono text-xs text-red-400">{error}</p>
-                  </div>
-                )}
-
                 <GlitchButton
-                  onClick={handleSubmit}
+                  onClick={() => setStep("payment")}
                   disabled={!isFormValid}
                   className={`w-full py-4 text-lg ${!isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <span className="flex items-center justify-center gap-2">
-                    <Send size={18} />
-                    НАДІСЛАТИ ЗАЯВКУ
-                  </span>
+                  ПЕРЕЙТИ ДО ОПЛАТИ
                 </GlitchButton>
-
-                <p className="font-mono text-xs text-muted-foreground/50 text-center leading-relaxed">
-                  Оплата відбудеться після підтвердження замовлення.
-                  <br />
-                  Ми зв'яжемось з вами протягом 24 годин.
-                </p>
               </div>
             )}
 
-            {step === "sending" && (
-              <div className="text-center py-12 space-y-4">
-                <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="font-mono text-sm text-muted-foreground animate-pulse">
-                  Надсилаємо заявку...
-                </p>
+            {step === "payment" && (
+              <div className="space-y-6">
+                <div className="p-4 bg-black/40 border border-border/50 rounded font-mono text-sm space-y-2">
+                  <div className="text-secondary">ЗАМОВЛЕННЯ:</div>
+                  <div className="text-foreground">
+                    {product.name} ({size}) x{quantity}
+                  </div>
+                  <div className="text-primary text-xl">{total} CAD</div>
+                  <div className="border-t border-border/30 pt-2 mt-2 text-muted-foreground text-xs space-y-1">
+                    <div>{fullName}</div>
+                    <div>
+                      {email} | {phone}
+                    </div>
+                    <div>
+                      {street}, {city}, {postalCode}
+                    </div>
+                    <div>{country}</div>
+                    {comment && <div className="italic">"{comment}"</div>}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-mono text-sm text-muted-foreground mb-2 text-center">
+                    Оберіть спосіб оплати:
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground/60 mb-4 text-center">
+                    PayPal, Visa, Mastercard, Amex або інша картка
+                  </p>
+
+                  {sdkError && (
+                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded text-center">
+                      <p className="font-mono text-sm text-red-400">
+                        Не вдалося завантажити PayPal SDK.
+                        <br />
+                        Відкрийте сайт у новій вкладці (не в iframe).
+                      </p>
+                    </div>
+                  )}
+
+                  {!sdkError && (
+                    <div
+                      ref={paypalContainerRef}
+                      className="min-h-[200px] flex items-center justify-center"
+                    >
+                      {!sdkReady && (
+                        <div className="text-center space-y-3">
+                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                          <p className="font-mono text-sm text-muted-foreground animate-pulse">
+                            Завантаження PayPal...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setStep("form");
+                    buttonsRendered.current = false;
+                  }}
+                  className="w-full text-center font-mono text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  &lt; Повернутися до форми
+                </button>
               </div>
             )}
 
@@ -327,15 +436,16 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
               >
                 <CheckCircle size={64} className="mx-auto text-green-400" />
                 <h3 className="font-creepster text-3xl text-primary">
-                  Заявку надіслано!
+                  Замовлення оплачено!
                 </h3>
                 <p className="font-mono text-muted-foreground leading-relaxed">
-                  Ми отримали ваше замовлення і зв'яжемось
+                  Твій мерч уже кується в Кузні Повалених.
                   <br />
-                  з вами найближчим часом для підтвердження та оплати.
+                  Дякуємо, що підтримуєш{" "}
+                  <span className="text-primary">Gathering Of The Fallen</span>.
                 </p>
                 <div className="p-4 bg-black/40 border border-primary/30 font-mono text-sm text-left space-y-1">
-                  <div className="text-secondary mb-1">ВАШЕ ЗАМОВЛЕННЯ:</div>
+                  <div className="text-secondary mb-1">ДЕТАЛІ ЗАМОВЛЕННЯ:</div>
                   <div className="text-foreground">
                     {product.name} ({size}) x{quantity}
                   </div>
@@ -350,9 +460,6 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                     {street}, {city}, {postalCode}, {country}
                   </div>
                 </div>
-                <p className="font-mono text-xs text-muted-foreground/60">
-                  Дякуємо, що підтримуєте Gathering Of The Fallen!
-                </p>
                 <GlitchButton onClick={onClose} className="px-8 py-3">
                   ЗАКРИТИ
                 </GlitchButton>

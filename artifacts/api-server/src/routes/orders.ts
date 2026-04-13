@@ -89,7 +89,7 @@ async function sendOrderEmail(order: OrderData, orderId: number) {
 
 router.post("/order-notification", async (req: Request, res: Response) => {
   try {
-    const { product, size, quantity, total, customer } = req.body;
+    const { product, size, quantity, total, customer, paypalOrderId, paypalStatus } = req.body;
 
     const dbResult = await pool.query(
       `INSERT INTO orders (product, size, quantity, total, first_name, last_name, email, phone, country, city, street, postal_code, comment, paypal_order_id, paypal_status)
@@ -100,19 +100,19 @@ router.post("/order-notification", async (req: Request, res: Response) => {
         customer?.firstName, customer?.lastName, customer?.email, customer?.phone,
         customer?.country, customer?.city, customer?.street, customer?.postalCode,
         customer?.comment || null,
-        null, "PENDING_CONTACT",
+        paypalOrderId || null, paypalStatus || "COMPLETED",
       ]
     );
 
     const orderId = dbResult.rows[0]?.id;
 
     logger.info({
-      msg: "New order request saved",
+      msg: "Order saved to database",
       orderId,
       product,
       total,
-      customerEmail: customer?.email,
-      status: "PENDING_CONTACT",
+      paypalOrderId,
+      paypalStatus,
     });
 
     let emailSent = false;
