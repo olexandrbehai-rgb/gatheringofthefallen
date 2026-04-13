@@ -131,21 +131,26 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
 
     paypalRendered.current = false;
 
+    const sdkUrl = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&enable-funding=card,paylater`;
+    const w = window as any;
+
     const existingScript = document.querySelector(
       'script[src*="paypal.com/sdk"]',
     );
+
     if (existingScript) {
-      const w = window as any;
       if (w.paypal) {
-        setTimeout(renderPayPalButtons, 100);
+        setTimeout(renderPayPalButtons, 200);
+        return;
       }
-      return;
+      existingScript.remove();
+      delete w.paypal;
     }
 
     const script = document.createElement("script");
-    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&enable-funding=card,paylater&components=buttons,funding-eligibility`;
+    script.src = sdkUrl;
     script.async = true;
-    script.onload = () => setTimeout(renderPayPalButtons, 100);
+    script.onload = () => setTimeout(renderPayPalButtons, 200);
     script.onerror = () => {
       if (paypalRef.current) {
         paypalRef.current.innerHTML =
