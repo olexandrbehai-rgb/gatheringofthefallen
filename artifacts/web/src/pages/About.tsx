@@ -12,13 +12,13 @@ export default function About() {
     >
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">ПРО ГУРТ</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 items-center">
         <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
           <img 
             src={gurtImg} 
             alt="Gathering Of The Fallen на сцені" 
             loading="lazy"
-            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
           />
         </div>
         <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
@@ -26,7 +26,7 @@ export default function About() {
             src={gurt2Img} 
             alt="Gathering Of The Fallen" 
             loading="lazy"
-            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
           />
         </div>
       </div>
