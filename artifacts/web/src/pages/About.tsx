@@ -12,23 +12,34 @@ export default function About() {
     >
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">ПРО ГУРТ</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 items-center">
-        <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
+      <div className="mb-16 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="photo-frame-neon overflow-hidden group"
+        >
           <img 
             src={gurtImg} 
             alt="Gathering Of The Fallen на сцені" 
             loading="lazy"
-            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto block group-hover:scale-[1.03] transition-transform duration-700"
           />
-        </div>
-        <div className="rusted-border p-2 bg-black/30 backdrop-blur-sm overflow-hidden group">
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="photo-frame-neon overflow-hidden group"
+        >
           <img 
             src={gurt2Img} 
-            alt="Gathering Of The Fallen" 
+            alt="Gathering Of The Fallen — учасники гурту" 
             loading="lazy"
-            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto block group-hover:scale-[1.03] transition-transform duration-700"
           />
-        </div>
+        </motion.div>
       </div>
       
       <div className="space-y-12 font-mono text-lg text-muted-foreground leading-relaxed">

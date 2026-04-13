@@ -331,3 +331,40 @@
     filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5)) drop-shadow(0 0 25px rgba(138, 43, 226, 0.4)) drop-shadow(0 0 40px rgba(0, 240, 255, 0.2));
   }
 }
+
+.photo-frame-neon {
+  position: relative;
+  border: 2px solid #8a2be2;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 10px rgba(138, 43, 226, 0.4),
+    0 0 30px rgba(138, 43, 226, 0.2),
+    inset 0 0 15px rgba(0, 240, 255, 0.1);
+  animation: photo-frame-glow 4s ease-in-out infinite alternate;
+}
+
+.photo-frame-neon::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes photo-frame-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 10px rgba(138, 43, 226, 0.4),
+      0 0 30px rgba(138, 43, 226, 0.2),
+      inset 0 0 15px rgba(0, 240, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 15px rgba(0, 240, 255, 0.5),
+      0 0 40px rgba(138, 43, 226, 0.3),
+      inset 0 0 20px rgba(0, 240, 255, 0.15);
+  }
+}
