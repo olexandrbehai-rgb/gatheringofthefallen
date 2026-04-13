@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, CreditCard, Zap } from "lucide-react";
 import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
 import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
 import bomberImg from "@assets/bomber.png_1776018973002.jpg";
@@ -129,16 +129,18 @@ export default function Merch() {
             <div className="p-5 flex flex-col flex-1">
               <h3 className="font-mono font-bold text-lg text-foreground tracking-wider mb-1">{product.name}</h3>
               <div className="text-primary font-creepster text-2xl mb-3">{product.price} CAD</div>
-              <div className="mt-auto flex items-center justify-between gap-2">
-                <span className="text-xs font-mono px-2 py-1 bg-secondary/20 text-secondary border border-secondary/50">
+              <div className="mt-auto space-y-2">
+                <span className="block text-xs font-mono px-2 py-1 bg-secondary/20 text-secondary border border-secondary/50 text-center">
                   {product.status}
                 </span>
-                <GlitchButton
+                <button
                   onClick={() => setSelectedProduct(product)}
-                  className="px-3 py-1 text-sm whitespace-nowrap"
+                  className="stripe-buy-btn w-full"
                 >
-                  Замовити через Кузню
-                </GlitchButton>
+                  <CreditCard size={16} />
+                  <Zap size={12} className="stripe-zap" />
+                  <span>ОПЛАТИТИ</span>
+                </button>
               </div>
             </div>
           </motion.div>
