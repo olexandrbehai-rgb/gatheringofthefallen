@@ -54,7 +54,9 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
           color: "black",
           shape: "rect",
           label: "pay",
+          tagline: false,
         },
+        fundingSource: undefined,
         createOrder: (_data: any, actions: any) => {
           return actions.order.create({
             purchase_units: [
@@ -141,7 +143,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     }
 
     const script = document.createElement("script");
-    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&enable-funding=card,paylater&components=buttons,funding-eligibility`;
     script.async = true;
     script.onload = () => setTimeout(renderPayPalButtons, 100);
     script.onerror = () => {
@@ -360,7 +362,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                   disabled={!isFormValid}
                   className={`w-full py-4 text-lg ${!isFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  ПЕРЕЙТИ ДО ОПЛАТИ PayPal
+                  ПЕРЕЙТИ ДО ОПЛАТИ
                 </GlitchButton>
               </div>
             )}
@@ -387,8 +389,11 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <div className="text-center">
-                  <p className="font-mono text-sm text-muted-foreground mb-4">
-                    Оберіть спосіб оплати через PayPal:
+                  <p className="font-mono text-sm text-muted-foreground mb-2">
+                    Оберіть спосіб оплати:
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground/60 mb-4">
+                    PayPal, Visa, Mastercard, Amex або інша картка
                   </p>
                   <div
                     ref={paypalRef}
