@@ -7,9 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Music from "@/pages/Music";
-import Songs from "@/pages/Songs";
 import Merch from "@/pages/Merch";
-import Forge from "@/pages/Forge";
 import Contacts from "@/pages/Contacts";
 
 const queryClient = new QueryClient();
@@ -21,9 +19,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
         <Route path="/music" component={Music} />
-        <Route path="/songs" component={Songs} />
         <Route path="/merch" component={Merch} />
-        <Route path="/forge" component={Forge} />
         <Route path="/contacts" component={Contacts} />
         <Route component={NotFound} />
       </Switch>

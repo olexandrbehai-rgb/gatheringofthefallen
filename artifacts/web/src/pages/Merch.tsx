@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
 import { CheckCircle, CreditCard, Zap, Loader2 } from "lucide-react";
 import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
 import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
 import bomberImg from "@assets/bomber.png_1776018973002.jpg";
 import capImg from "@assets/cap.png_1776018973002.jpg";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
-import { GlitchButton } from "@/components/GlitchButton";
+
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 
@@ -162,11 +161,6 @@ export default function Merch() {
             Оплата карткою через Stripe | CAD
           </p>
         </div>
-        <Link href="/forge">
-          <GlitchButton className="border-secondary text-secondary hover:bg-secondary/20 flex items-center gap-2">
-            <span>&gt; ВІДВІДАТИ КУЗНЮ ПОВАЛЕНИХ</span>
-          </GlitchButton>
-        </Link>
       </div>
 
       {stripeSuccess && (

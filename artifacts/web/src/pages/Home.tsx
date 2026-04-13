@@ -100,7 +100,7 @@ export default function Home() {
                 { title: "Молодість", type: "SINGLE", date: "2025" },
                 { title: "Емігрант", type: "SINGLE", date: "2025" }
               ].map((release, i) => (
-                <Link key={i} href="/songs" className="block">
+                <Link key={i} href="/music" className="block">
                   <motion.div 
                     whileHover={{ scale: 1.03 }}
                     className="rusted-border bg-black/40 backdrop-blur-sm p-6 hover:bg-black/50 transition-colors group cursor-pointer h-full"

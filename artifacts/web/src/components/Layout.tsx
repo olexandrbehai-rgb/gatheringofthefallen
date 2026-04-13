@@ -13,9 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Головна" },
     { href: "/about", label: "Про гурт" },
     { href: "/music", label: "Музика" },
-    { href: "/songs", label: "Пісні" },
     { href: "/merch", label: "Мерч" },
-    { href: "/forge", label: "Кузня" },
     { href: "/contacts", label: "Контакти" },
   ];
 
