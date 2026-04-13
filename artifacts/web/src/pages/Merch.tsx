@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, CreditCard, Zap, Loader2 } from "lucide-react";
+import { CheckCircle, CreditCard, Zap, Loader2, Plus, Minus } from "lucide-react";
 import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
 import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
 import bomberImg from "@assets/bomber.png_1776018973002.jpg";
 import capImg from "@assets/cap.png_1776018973002.jpg";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 
-
-const SIZES = ["S", "M", "L", "XL", "XXL"];
+const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
 const PRODUCTS = [
   { id: 1, name: "Футболка GF", price: 49, image: tshirtImg },
@@ -23,10 +22,12 @@ interface StripeResult {
   size?: string;
   quantity?: string;
   total?: string;
+  customerName?: string;
 }
 
 function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
   const [selectedSize, setSelectedSize] = useState("M");
+  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
   const handleStripeCheckout = async () => {
@@ -38,9 +39,8 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
         body: JSON.stringify({
           product: product.name,
           size: selectedSize,
-          quantity: 1,
+          quantity,
           price: product.price,
-          customer: {},
         }),
       });
       const data = await res.json();
@@ -51,6 +51,8 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
       setLoading(false);
     }
   };
+
+  const totalPrice = product.price * quantity;
 
   return (
     <motion.div
@@ -95,6 +97,27 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           </div>
         </div>
 
+        <div className="mb-4">
+          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
+            Кількість:
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="font-mono text-lg text-foreground w-8 text-center">{quantity}</span>
+            <button
+              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+              className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+        </div>
+
         <div className="mt-auto">
           <button
             onClick={handleStripeCheckout}
@@ -110,7 +133,7 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
               <>
                 <CreditCard size={16} />
                 <Zap size={12} className="stripe-zap" />
-                <span>ОПЛАТИТИ {product.price} CAD</span>
+                <span>ОПЛАТИТИ {totalPrice} CAD</span>
               </>
             )}
           </button>
@@ -174,12 +197,17 @@ export default function Merch() {
             Замовлення оплачено!
           </h3>
           <p className="font-mono text-muted-foreground">
-            Твій мерч уже кується в Кузні Повалених.
+            Дякуємо за замовлення! Деталі доставки будуть надіслані на вашу пошту.
           </p>
           {stripeSuccess.product && (
             <div className="font-mono text-sm text-foreground">
               {stripeSuccess.product} {stripeSuccess.size && `(${stripeSuccess.size})`} x
               {stripeSuccess.quantity || 1} — {stripeSuccess.total}
+            </div>
+          )}
+          {stripeSuccess.customerName && (
+            <div className="font-mono text-xs text-muted-foreground">
+              {stripeSuccess.customerName}
             </div>
           )}
           <button
