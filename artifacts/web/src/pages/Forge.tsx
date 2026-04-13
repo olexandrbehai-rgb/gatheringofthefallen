@@ -83,7 +83,7 @@ export default function Forge() {
           </GlitchButton>
         </Link>
         <p className="font-mono text-sm text-muted-foreground mt-4">
-          Оплата через PayPal у канадських доларах (CAD)
+          Залиш заявку — ми зв'яжемось для підтвердження та оплати
         </p>
       </div>
     </motion.div>

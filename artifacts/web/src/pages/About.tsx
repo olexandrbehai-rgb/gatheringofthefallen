@@ -8,36 +8,36 @@ export default function About() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="container mx-auto px-4 py-12 md:py-24 max-w-5xl"
+      className="container mx-auto px-4 py-12 md:py-24 max-w-6xl"
     >
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">ПРО ГУРТ</h1>
       
-      <div className="mb-16 space-y-8">
+      <div className="mb-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="photo-frame-neon overflow-hidden group"
+          className="photo-frame-neon overflow-hidden group lg:row-span-1"
         >
           <img 
             src={gurtImg} 
             alt="Gathering Of The Fallen на сцені" 
             loading="lazy"
-            className="w-full h-auto block group-hover:scale-[1.03] transition-transform duration-700"
+            className="w-full h-full object-contain block group-hover:scale-[1.03] transition-transform duration-700"
           />
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="photo-frame-neon overflow-hidden group"
+          className="photo-frame-neon overflow-hidden group lg:row-span-1"
         >
           <img 
             src={gurt2Img} 
             alt="Gathering Of The Fallen — учасники гурту" 
             loading="lazy"
-            className="w-full h-auto block group-hover:scale-[1.03] transition-transform duration-700"
+            className="w-full h-full object-contain block group-hover:scale-[1.03] transition-transform duration-700"
           />
         </motion.div>
       </div>

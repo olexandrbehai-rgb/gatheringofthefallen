@@ -78,7 +78,7 @@ export default function Home() {
                   src={gurtImg} 
                   alt="Gathering Of The Fallen на сцені" 
                   loading="lazy"
-                  className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="rusted-border overflow-hidden group">
@@ -86,7 +86,7 @@ export default function Home() {
                   src={gurt2Img} 
                   alt="Gathering Of The Fallen" 
                   loading="lazy"
-                  className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
             </div>
