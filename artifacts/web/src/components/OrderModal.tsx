@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, ShoppingCart } from "lucide-react";
+import { X, CheckCircle, ShoppingCart, CreditCard, Loader2 } from "lucide-react";
 import { GlitchButton } from "./GlitchButton";
 
 interface Product {
@@ -20,9 +20,11 @@ const PAYPAL_CLIENT_ID =
   "EPPTtiHG2EWOr-rep0FJk6xizUyTRjUQbqdnxcuNFw0YUSXkshCmh8aWLTND7TpR8PW00YXgEn6qgAvE";
 
 type OrderStep = "form" | "payment" | "success";
+type PaymentMethod = "stripe" | "paypal";
 
 export function OrderModal({ product, onClose }: OrderModalProps) {
   const [step, setStep] = useState<OrderStep>("form");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
   const [size, setSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
   const [firstName, setFirstName] = useState("");
@@ -36,6 +38,8 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
   const [comment, setComment] = useState("");
   const [sdkReady, setSdkReady] = useState(false);
   const [sdkError, setSdkError] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState("");
   const paypalContainerRef = useRef<HTMLDivElement>(null);
   const buttonsRendered = useRef(false);
 
@@ -88,7 +92,6 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     const script = document.createElement("script");
     script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&intent=capture`;
     script.async = true;
-    script.setAttribute("data-namespace", "paypal_sdk");
     script.onload = () => {
       if (!cancelled) {
         const checkReady = setInterval(() => {
@@ -113,7 +116,49 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
     };
   }, []);
 
-  const renderButtons = useCallback(() => {
+  const handleStripeCheckout = async () => {
+    if (!product) return;
+    setStripeLoading(true);
+    setStripeError("");
+
+    try {
+      const res = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product: product.name,
+          size,
+          quantity,
+          price: product.price,
+          customer: {
+            firstName,
+            lastName,
+            email,
+            phone,
+            country,
+            city,
+            street,
+            postalCode,
+            comment,
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setStripeError(data.error || "Не вдалося створити сесію оплати");
+      }
+    } catch {
+      setStripeError("Помилка з'єднання з сервером");
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const renderPaypalButtons = useCallback(() => {
     const w = window as any;
     if (!w.paypal || !paypalContainerRef.current || !product || buttonsRendered.current) return;
 
@@ -152,17 +197,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
               size,
               quantity,
               total: `${total.toFixed(2)} CAD`,
-              customer: {
-                firstName,
-                lastName,
-                email,
-                phone,
-                country,
-                city,
-                street,
-                postalCode,
-                comment,
-              },
+              customer: { firstName, lastName, email, phone, country, city, street, postalCode, comment },
               paypalOrderId: order.id,
               paypalStatus: order.status,
             }),
@@ -180,12 +215,12 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
   }, [product, size, quantity, total, firstName, lastName, email, phone, country, city, street, postalCode, comment]);
 
   useEffect(() => {
-    if (step === "payment" && sdkReady) {
+    if (step === "payment" && paymentMethod === "paypal" && sdkReady) {
       buttonsRendered.current = false;
-      const timer = setTimeout(renderButtons, 300);
+      const timer = setTimeout(renderPaypalButtons, 300);
       return () => clearTimeout(timer);
     }
-  }, [step, sdkReady, renderButtons]);
+  }, [step, paymentMethod, sdkReady, renderPaypalButtons]);
 
   if (!product) return null;
 
@@ -413,71 +448,103 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
                 </div>
 
                 <div>
-                  <p className="font-mono text-sm text-muted-foreground mb-2 text-center">
+                  <p className="font-mono text-sm text-muted-foreground mb-4 text-center">
                     Оберіть спосіб оплати:
                   </p>
-                  <p className="font-mono text-xs text-muted-foreground/60 mb-4 text-center">
-                    PayPal, Visa, Mastercard, Amex або інша картка
-                  </p>
 
-                  {sdkError && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded text-center space-y-3">
-                      <p className="font-mono text-sm text-red-400">
-                        Не вдалося завантажити PayPal.
-                      </p>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        PayPal блокує завантаження в iframe.
-                        <br />
-                        Відкрийте сайт у новій вкладці браузера.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setSdkError(false);
-                          setSdkReady(false);
-                          buttonsRendered.current = false;
-                          const old = document.querySelector('script[src*="paypal.com/sdk"]');
-                          if (old) old.remove();
-                          const script = document.createElement("script");
-                          script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD&intent=capture`;
-                          script.async = true;
-                          script.onload = () => {
-                            const check = setInterval(() => {
-                              if ((window as any).paypal) {
-                                setSdkReady(true);
-                                clearInterval(check);
-                              }
-                            }, 100);
-                            setTimeout(() => clearInterval(check), 5000);
-                          };
-                          script.onerror = () => setSdkError(true);
-                          document.head.appendChild(script);
-                        }}
-                        className="px-4 py-2 border border-primary/50 text-primary font-mono text-sm hover:bg-primary/10 transition-colors"
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <button
+                      onClick={() => setPaymentMethod("stripe")}
+                      className={`p-4 border font-mono text-sm transition-all flex flex-col items-center gap-2 ${
+                        paymentMethod === "stripe"
+                          ? "border-primary bg-primary/20 text-primary"
+                          : "border-border/50 text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      <CreditCard size={24} />
+                      <span className="font-bold">Stripe</span>
+                      <span className="text-xs opacity-70">Visa, Mastercard, Amex</span>
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("paypal")}
+                      className={`p-4 border font-mono text-sm transition-all flex flex-col items-center gap-2 ${
+                        paymentMethod === "paypal"
+                          ? "border-primary bg-primary/20 text-primary"
+                          : "border-border/50 text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .757-.644h6.568c2.175 0 3.88.564 4.934 1.635 1.013 1.027 1.373 2.49 1.07 4.348-.36 2.209-1.263 3.818-2.682 4.779-1.357.921-3.106 1.388-5.194 1.388H8.76a.77.77 0 0 0-.757.644l-.928 5.467zm13.917-13.98c-.01.064-.02.128-.032.192-.605 3.7-3.5 5.42-7.166 5.42H12.05a.89.89 0 0 0-.878.745l-.935 5.53-.265 1.565a.467.467 0 0 0 .461.541h3.237a.67.67 0 0 0 .661-.563l.027-.141.524-3.088.034-.183a.67.67 0 0 1 .661-.563h.416c2.695 0 4.806-1.027 5.423-3.997.258-1.242.124-2.279-.557-3.008a2.54 2.54 0 0 0-.725-.53z" />
+                      </svg>
+                      <span className="font-bold">PayPal</span>
+                      <span className="text-xs opacity-70">PayPal акаунт</span>
+                    </button>
+                  </div>
+
+                  {paymentMethod === "stripe" && (
+                    <div className="space-y-4">
+                      {stripeError && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded text-center">
+                          <p className="font-mono text-sm text-red-400">{stripeError}</p>
+                        </div>
+                      )}
+                      <GlitchButton
+                        onClick={handleStripeCheckout}
+                        disabled={stripeLoading}
+                        className={`w-full py-4 text-lg flex items-center justify-center gap-3 ${stripeLoading ? "opacity-70" : ""}`}
                       >
-                        СПРОБУВАТИ ЗНОВУ
-                      </button>
-                      <a
-                        href={window.location.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block px-4 py-2 border border-secondary/50 text-secondary font-mono text-sm hover:bg-secondary/10 transition-colors"
-                      >
-                        ВІДКРИТИ В НОВІЙ ВКЛАДЦІ
-                      </a>
+                        {stripeLoading ? (
+                          <>
+                            <Loader2 size={20} className="animate-spin" />
+                            ПЕРЕНАПРАВЛЕННЯ...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={20} />
+                            ОПЛАТИТИ {total} CAD ЧЕРЕЗ STRIPE
+                          </>
+                        )}
+                      </GlitchButton>
+                      <p className="font-mono text-xs text-muted-foreground/60 text-center">
+                        Вас буде перенаправлено на безпечну сторінку оплати Stripe
+                      </p>
                     </div>
                   )}
 
-                  {!sdkError && (
-                    <div
-                      ref={paypalContainerRef}
-                      className="min-h-[200px] flex items-center justify-center"
-                    >
-                      {!sdkReady && (
-                        <div className="text-center space-y-3">
-                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                          <p className="font-mono text-sm text-muted-foreground animate-pulse">
-                            Завантаження PayPal...
+                  {paymentMethod === "paypal" && (
+                    <div>
+                      {sdkError && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded text-center space-y-3">
+                          <p className="font-mono text-sm text-red-400">
+                            Не вдалося завантажити PayPal.
                           </p>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            PayPal блокує завантаження в iframe.
+                            <br />
+                            Відкрийте сайт у новій вкладці або використайте Stripe.
+                          </p>
+                          <button
+                            onClick={() => setPaymentMethod("stripe")}
+                            className="px-4 py-2 border border-primary/50 text-primary font-mono text-sm hover:bg-primary/10 transition-colors"
+                          >
+                            ОПЛАТИТИ ЧЕРЕЗ STRIPE
+                          </button>
+                        </div>
+                      )}
+
+                      {!sdkError && (
+                        <div
+                          ref={paypalContainerRef}
+                          className="min-h-[200px] flex items-center justify-center"
+                        >
+                          {!sdkReady && (
+                            <div className="text-center space-y-3">
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                              <p className="font-mono text-sm text-muted-foreground animate-pulse">
+                                Завантаження PayPal...
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

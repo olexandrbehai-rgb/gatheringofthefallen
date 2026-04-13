@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
+import { CheckCircle } from "lucide-react";
 import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
 import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
 import bomberImg from "@assets/bomber.png_1776018973002.jpg";
@@ -16,8 +17,39 @@ const PRODUCTS = [
   { id: 4, name: "Кепка Fallen", price: 45, image: capImg, status: "В НАЯВНОСТІ" },
 ];
 
+interface StripeResult {
+  status: string;
+  product?: string;
+  size?: string;
+  quantity?: string;
+  total?: string;
+  customerName?: string;
+}
+
 export default function Merch() {
   const [selectedProduct, setSelectedProduct] = useState<typeof PRODUCTS[0] | null>(null);
+  const [stripeSuccess, setStripeSuccess] = useState<StripeResult | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    const sessionId = params.get("session_id");
+
+    if (payment === "success" && sessionId) {
+      fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.status === "paid") {
+            setStripeSuccess(data);
+          }
+        })
+        .catch(() => {});
+
+      window.history.replaceState({}, "", "/merch");
+    } else if (payment === "cancelled") {
+      window.history.replaceState({}, "", "/merch");
+    }
+  }, []);
 
   return (
     <motion.div 
@@ -41,6 +73,33 @@ export default function Merch() {
           </GlitchButton>
         </Link>
       </div>
+
+      {stripeSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-6 bg-green-500/10 border border-green-500/30 rounded text-center space-y-3"
+        >
+          <CheckCircle size={48} className="mx-auto text-green-400" />
+          <h3 className="font-creepster text-2xl text-primary">
+            Замовлення оплачено!
+          </h3>
+          <p className="font-mono text-muted-foreground">
+            Твій мерч уже кується в Кузні Повалених.
+          </p>
+          {stripeSuccess.product && (
+            <div className="font-mono text-sm text-foreground">
+              {stripeSuccess.product} {stripeSuccess.size && `(${stripeSuccess.size})`} x{stripeSuccess.quantity || 1} — {stripeSuccess.total}
+            </div>
+          )}
+          <button
+            onClick={() => setStripeSuccess(null)}
+            className="font-mono text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
+          >
+            Закрити
+          </button>
+        </motion.div>
+      )}
 
       <div className="rusted-border overflow-hidden mb-12 group">
         <img 

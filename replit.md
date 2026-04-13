@@ -25,7 +25,7 @@ Multi-page post-apocalyptic themed website for the Ukrainian rock/metal band "Ga
 - `/about` — About: Band history, philosophy, lore with generated band image
 - `/music` — Music: 6 real YouTube embeds from @gathering-of-the-fallen channel (Through the Ashes, Молодість, Емігрант, Реквієм Народу, Пустеля Душ, Вогонь В Руках) with "Дивитися на YouTube" buttons
 - `/songs` — Songs: 12 real tracks with YouTube embeds in horizontal card layout (Із Попелу, Молодість, Емігрант, Старий Хорон, Вогонь В Руках, Реквієм Народу, Пустеля Душ, Несу, Крізь уламки і Дим, Життя, Кобзар, Залізний Спадок)
-- `/merch` — Merch: 4 products in CAD (Футболка 49, Худі 79, Бомбер 129, Кепка 45). Order modal with size/quantity/shipping form → submit request → saved to PostgreSQL `orders` table (status PENDING_CONTACT). Band contacts customer directly for payment. Email notification via nodemailer (SMTP_EMAIL/SMTP_PASSWORD env vars, Gmail).
+- `/merch` — Merch: 4 products in CAD (Футболка 49, Худі 79, Бомбер 129, Кепка 45). Order modal with size/quantity/shipping form → dual payment: Stripe Checkout (redirect) or PayPal (inline). Orders saved to PostgreSQL `orders` table. Email notification via nodemailer (SMTP_EMAIL/SMTP_PASSWORD env vars, Gmail). Stripe env vars: STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY (test mode). PayPal Client ID hardcoded in OrderModal.tsx.
 - `/forge` — Forge ("Кузня Повалених"): Animated conveyor RUINS → CRYSTAL → MERCH
 - `/contacts` — Contacts: Terminal-style social links + contact form
 
