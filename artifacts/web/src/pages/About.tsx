@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import darynaImg from "@assets/Daryna_1777381963168.png";
-import groupImg from "@assets/Group_1777381963170.png";
+import groupImg from "@assets/Група_1777383007687.png";
 import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
 import tetianaImg from "@assets/Tetiana_1777381963174.png";
 import yaroslavImg from "@assets/Yaroslav_1777381963176.jpg";

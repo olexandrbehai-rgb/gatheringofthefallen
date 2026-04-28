@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import logoImg from "@assets/logo_1776019192682.jpg";
-import groupImg from "@assets/Group_1777381963170.png";
+import groupImg from "@assets/Група_1777383007687.png";
 import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 
