@@ -345,6 +345,12 @@
   animation: photo-frame-glow 4s ease-in-out infinite alternate;
 }
 
+.no-scanlines {
+  position: relative;
+  z-index: 60;
+  isolation: isolate;
+}
+
 .photo-frame-neon::before {
   content: "";
   position: absolute;

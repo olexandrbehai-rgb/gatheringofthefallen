@@ -68,7 +68,7 @@ export default function About() {
             initial={{ opacity: 0, x: i === 0 ? -30 : 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.2, duration: 0.6 }}
-            className="photo-frame-neon overflow-hidden group lg:row-span-1"
+            className={`photo-frame-neon overflow-hidden group lg:row-span-1${i === 0 ? " no-scanlines" : ""}`}
           >
             <img
               src={item.src}
