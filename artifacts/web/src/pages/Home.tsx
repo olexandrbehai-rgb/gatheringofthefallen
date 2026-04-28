@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import logoImg from "@assets/logo_1776019192682.jpg";
-import gurtImg from "@assets/гурт_1776018973007.jpg";
-import gurt2Img from "@assets/гурт_2_1776018973007.jpg";
+import groupImg from "@assets/Group_1777381963170.png";
+import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 
 export default function Home() {
@@ -65,20 +65,20 @@ export default function Home() {
       </section>
 
       <section className="container mx-auto px-4 py-16">
-        <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">Гурт</h2>
+        <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">Гурт — Новий склад 2026</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <div className="rusted-border overflow-hidden group">
             <img
-              src={gurtImg}
-              alt="Gathering Of The Fallen на сцені"
+              src={groupImg}
+              alt="Новий склад Gathering Of The Fallen у фіолетово-синіх неонових руїнах"
               loading="lazy"
               className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
             />
           </div>
           <div className="rusted-border overflow-hidden group">
             <img
-              src={gurt2Img}
-              alt="Gathering Of The Fallen"
+              src={oleksandrImg}
+              alt="Олександр, засновник гурту, з гітарою на головній сцені"
               loading="lazy"
               className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
             />
