@@ -18,16 +18,33 @@
         min-height: 100vh;
       }
       [data-replit-badge],
+      [data-replit-feedback],
+      [data-replit-widget],
+      [data-replit],
       .replit-badge,
       .replit-badge-v2,
       .replit-badge-v3,
+      .replit-feedback,
+      .replit-widget,
       #replit-badge,
       #replit-badge-iframe,
+      #replit-feedback,
+      #replit-feedback-widget,
       .replit-watermark,
       div[class*="replit-badge"],
       div[id*="replit-badge"],
+      div[class*="replit-feedback"],
+      div[id*="replit-feedback"],
+      div[class*="replit-widget"],
+      div[id*="replit-widget"],
       iframe[src*="replit.com/badge"],
       iframe[src*="replit.dev/badge"],
+      iframe[src*="replit.com/feedback"],
+      iframe[src*="replit.dev/feedback"],
+      iframe[src*="replit.com/widget"],
+      iframe[src*="replit.dev/widget"],
+      iframe[src*="replit.com/inbox"],
+      iframe[src*="replit.dev/inbox"],
       a[href*="replit.com/badge"],
       a[href*="replit.com?utm"],
       a[href*="replit.com/?utm"] {
@@ -45,44 +62,83 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       (function () {
-        function looksLikeReplitBadge(el) {
+        var TEXT_PATTERNS = [
+          'made on replit',
+          'made with replit',
+          'built on replit',
+          'powered by replit',
+          'share your feedback',
+          'help improve this app',
+          'sharing your feedback with the creator',
+          'this app is built on replit'
+        ];
+        var ATTR_PATTERNS = [
+          'replit-badge',
+          'replit-feedback',
+          'replit-widget',
+          'replit-inbox',
+          'replit.com/badge',
+          'replit.com/feedback',
+          'replit.com/widget',
+          'replit.com/inbox',
+          'replit.dev/badge',
+          'replit.dev/feedback',
+          'replit.dev/widget',
+          'replit.dev/inbox'
+        ];
+        function looksLikeReplitWidget(el) {
           if (!el || el.nodeType !== 1) return false;
-          var text = (el.textContent || '').toLowerCase();
+          if (el.id === 'root' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK' || el.tagName === 'META') return false;
           var html = (el.outerHTML || '').toLowerCase();
-          if (
-            html.indexOf('replit-badge') !== -1 ||
-            html.indexOf('replit.com/badge') !== -1 ||
-            html.indexOf('replit.dev/badge') !== -1
-          ) return true;
-          if (
-            (text.indexOf('made on replit') !== -1 ||
-             text.indexOf('made with replit') !== -1 ||
-             text.indexOf('built on replit') !== -1 ||
-             text.indexOf('powered by replit') !== -1) &&
-            text.length < 80
-          ) return true;
+          for (var a = 0; a < ATTR_PATTERNS.length; a++) {
+            if (html.indexOf(ATTR_PATTERNS[a]) !== -1) return true;
+          }
+          var text = (el.textContent || '').toLowerCase();
+          if (text.length > 0 && text.length < 400) {
+            for (var t = 0; t < TEXT_PATTERNS.length; t++) {
+              if (text.indexOf(TEXT_PATTERNS[t]) !== -1) return true;
+            }
+          }
           return false;
         }
         function nuke() {
-          var nodes = document.querySelectorAll('body > *');
-          for (var i = 0; i < nodes.length; i++) {
-            var n = nodes[i];
+          var bodyKids = document.body ? document.body.children : [];
+          for (var i = bodyKids.length - 1; i >= 0; i--) {
+            var n = bodyKids[i];
             if (n.id === 'root' || n.tagName === 'SCRIPT') continue;
-            if (looksLikeReplitBadge(n)) n.remove();
+            if (looksLikeReplitWidget(n)) {
+              n.remove();
+              continue;
+            }
+            var inner = n.querySelectorAll ? n.querySelectorAll('*') : [];
+            for (var k = 0; k < inner.length; k++) {
+              if (looksLikeReplitWidget(inner[k])) {
+                try { inner[k].remove(); } catch (e) {}
+              }
+            }
           }
           var iframes = document.querySelectorAll('iframe');
           for (var j = 0; j < iframes.length; j++) {
-            var src = iframes[j].getAttribute('src') || '';
-            if (src.indexOf('replit.com/badge') !== -1 || src.indexOf('replit.dev/badge') !== -1) {
-              iframes[j].remove();
+            var src = (iframes[j].getAttribute('src') || '').toLowerCase();
+            for (var p = 0; p < ATTR_PATTERNS.length; p++) {
+              if (src.indexOf(ATTR_PATTERNS[p]) !== -1) {
+                iframes[j].remove();
+                break;
+              }
             }
           }
         }
-        nuke();
+        function safeNuke() { try { nuke(); } catch (e) {} }
+        safeNuke();
         if (window.MutationObserver) {
-          new MutationObserver(nuke).observe(document.documentElement, { childList: true, subtree: true });
+          var obs = new MutationObserver(safeNuke);
+          if (document.documentElement) {
+            obs.observe(document.documentElement, { childList: true, subtree: true });
+          }
         }
-        window.addEventListener('load', nuke);
+        document.addEventListener('DOMContentLoaded', safeNuke);
+        window.addEventListener('load', safeNuke);
+        setInterval(safeNuke, 1500);
       })();
     </script>
   </body>
