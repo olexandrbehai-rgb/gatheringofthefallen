@@ -29,10 +29,20 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <div className="text-xs uppercase tracking-[0.4em] text-red-300 mb-3 font-mono">НОВИЙ АЛЬБОМ ВИХОДИТЬ НЕЗАБАРОМ!</div>
-          <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed">
-            Скоро вийде довгоочікуваний новий альбом від Gathering of the Fallen. Темрява збирається. Нове звучання, нові сили, ще глибша безодня. Слідкуйте за оновленнями на сайті та в соцмережах — падіння тільки починається!
+          <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold">
+            НОВИЙ АЛЬБОМ: !3 ПОСЛАНЬ — ВЖЕ У МЕРЕЖІ
+          </div>
+          <h2 className="font-creepster text-3xl md:text-5xl text-primary mb-4" style={{ textShadow: '0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)' }}>
+            !3 ПОСЛАНЬ
+          </h2>
+          <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed mb-5">
+            !3 Послань — це музичний маніфест, що складається з трьох ключових меседжів для тих, хто вижив у руїнах старого світу. Це голос нового племені живих.
           </p>
+          <Link href="/music">
+            <GlitchButton className="text-sm py-2 px-5">
+              Слухати альбом
+            </GlitchButton>
+          </Link>
         </motion.div>
 
         <motion.p
@@ -90,17 +100,20 @@ export default function Home() {
         <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4">Останні релізи</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { title: "Із Попелу", type: "SINGLE", date: "2025" },
-            { title: "Молодість", type: "SINGLE", date: "2025" },
-            { title: "Емігрант", type: "SINGLE", date: "2025" }
+            { title: "Вогонь в руках", type: "СИНГЛ З АЛЬБОМУ !3 ПОСЛАНЬ", date: "2026", featured: true },
+            { title: "!3 Послань", type: "АЛЬБОМ", date: "2026", featured: false },
+            { title: "Із Попелу", type: "SINGLE", date: "2025", featured: false }
           ].map((release, i) => (
             <Link key={i} href="/music" className="block">
               <motion.div
                 whileHover={{ scale: 1.03 }}
-                className="rusted-border bg-black/40 backdrop-blur-sm p-6 hover:bg-black/50 transition-colors group cursor-pointer h-full"
+                className={`rusted-border backdrop-blur-sm p-6 transition-colors group cursor-pointer h-full ${release.featured ? "bg-primary/10 border-primary/60 hover:bg-primary/15" : "bg-black/40 hover:bg-black/50"}`}
               >
-                <div className="text-xs text-secondary font-mono mb-2">{release.type} // {release.date}</div>
+                <div className={`text-xs font-mono mb-2 ${release.featured ? "text-red-300" : "text-secondary"}`}>{release.type} // {release.date}</div>
                 <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors">{release.title}</h3>
+                {release.featured && (
+                  <div className="mt-2 text-[10px] uppercase tracking-widest text-primary font-mono">Головний трек</div>
+                )}
               </motion.div>
             </Link>
           ))}

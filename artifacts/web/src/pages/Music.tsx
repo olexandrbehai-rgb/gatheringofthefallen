@@ -2,6 +2,13 @@ import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { GlitchButton } from "@/components/GlitchButton";
 
+const FEATURED_TRACK = {
+  id: "bfbYohcYrnM",
+  title: "Вогонь в руках",
+  description:
+    "Головний сингл нового альбому «!3 Послань». Внутрішня сила, яку ніхто не здатен відібрати. Далеко від дому, під чужим небом — ми тримаємо полум'я українського духу і не дамо йому згаснути.",
+};
+
 const TRACKS = [
   {
     id: "pGHn8UmSeVw",
@@ -28,11 +35,6 @@ const TRACKS = [
     title: "Пустеля Душ",
     description: "Дні, коли всередині — тиша і пустота. Коли рідних голосів не чути за тисячі кілометрів. Лише музика здатна повернути дощ у висохлу душу емігранта.",
   },
-  {
-    id: "bfbYohcYrnM",
-    title: "Вогонь В Руках",
-    description: "Внутрішня сила, яку ніхто не здатен відібрати. Далеко від дому, під чужим небом — ми тримаємо полум'я українського духу і не дамо йому згаснути.",
-  },
 ];
 
 export default function Music() {
@@ -46,7 +48,7 @@ export default function Music() {
         МУЗИКА
       </h1>
       <p
-        className="font-mono text-secondary text-center mb-16 text-lg uppercase tracking-widest"
+        className="font-mono text-secondary text-center mb-12 text-lg uppercase tracking-widest"
         style={{
           textShadow:
             "0 0 10px rgba(138,43,226,0.8), 0 0 20px rgba(138,43,226,0.4)",
@@ -54,6 +56,79 @@ export default function Music() {
       >
         Офіційні треки гурту
       </p>
+
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rusted-border bg-black/65 border border-primary/40 backdrop-blur-sm p-6 md:p-10 mb-14 shadow-[0_0_50px_rgba(138,43,226,0.25)]"
+      >
+        <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold text-center">
+          НОВИЙ АЛЬБОМ — ВЖЕ У МЕРЕЖІ
+        </div>
+        <h2
+          className="font-creepster text-4xl md:text-6xl text-primary text-center mb-5"
+          style={{ textShadow: "0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)" }}
+        >
+          !3 ПОСЛАНЬ
+        </h2>
+        <p className="font-mono text-white/95 text-center text-base md:text-lg leading-relaxed max-w-3xl mx-auto mb-8">
+          !3 Послань — це музичний маніфест, що складається з трьох ключових меседжів для тих, хто вижив у руїнах старого світу. Це голос нового племені живих.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 items-start">
+          <div className="aspect-video w-full relative rusted-border overflow-hidden">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${FEATURED_TRACK.id}`}
+              title={FEATURED_TRACK.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0"
+              loading="lazy"
+            />
+          </div>
+          <div className="flex flex-col justify-center">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-red-300 font-mono mb-2">
+              Головний сингл альбому
+            </div>
+            <h3 className="font-creepster text-3xl md:text-4xl text-primary mb-4">
+              {FEATURED_TRACK.title}
+            </h3>
+            <p className="font-mono text-sm md:text-base text-white/90 leading-relaxed mb-5">
+              {FEATURED_TRACK.description}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={`https://www.youtube.com/watch?v=${FEATURED_TRACK.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GlitchButton className="text-sm py-2 px-4">
+                  <ExternalLink size={14} className="inline mr-2" />
+                  Дивитися кліп
+                </GlitchButton>
+              </a>
+              <a
+                href="https://music.youtube.com/channel/UCJNjRvO6Nce6qExLl2hFuAw"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GlitchButton className="text-sm py-2 px-4 border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
+                  <ExternalLink size={14} className="inline mr-2" />
+                  Слухати в YouTube Music
+                </GlitchButton>
+              </a>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      <h2 className="font-creepster text-3xl md:text-4xl text-primary mb-8 border-b border-primary/20 pb-3">
+        Інші треки
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {TRACKS.map((track, i) => (
