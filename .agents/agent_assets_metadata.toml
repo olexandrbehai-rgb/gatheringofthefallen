@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "rj-d51ZD8YaPmoHuws5oV"
@@ -24,3 +23,9 @@ id = "zU85NSQ7hsBOyNhcRne5C"
 uri = "file://artifacts/web/src/assets/band-ruins.png"
 type = "image"
 title = "Band in post-apocalyptic ruins"
+
+[[outputs]]
+id = "vMdrMfSKo-EWAJIv2ZJwb"
+uri = "file://exports/gathering-of-the-fallen-source.tar.gz"
+type = "unspecified"
+title = "Gathering Of The Fallen — повний код сайту"
