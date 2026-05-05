@@ -10,10 +10,10 @@ import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
 const PRODUCTS = [
-  { id: 1, name: "Футболка GF", price: 49, image: tshirtImg },
-  { id: 2, name: "Худі Повалених", price: 79, image: hoodieImg },
-  { id: 3, name: "Бомбер GF", price: 129, image: bomberImg },
-  { id: 4, name: "Кепка Fallen", price: 45, image: capImg },
+  { id: "t-shirt", name: "Футболка GF", price: 49, image: tshirtImg },
+  { id: "hoodie", name: "Худі Повалених", price: 79, image: hoodieImg },
+  { id: "bomber", name: "Бомбер GF", price: 129, image: bomberImg },
+  { id: "cap", name: "Кепка Fallen", price: 45, image: capImg },
 ];
 
 interface StripeResult {
@@ -37,10 +37,9 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          product: product.name,
-          size: selectedSize,
+          product_id: product.id,
           quantity,
-          price: product.price,
+          size: selectedSize,
         }),
       });
       const data = await res.json();
