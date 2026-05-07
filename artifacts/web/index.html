@@ -87,6 +87,8 @@
         function looksLikeReplitWidget(el) {
           if (!el || el.nodeType !== 1) return false;
           if (el.id === 'root' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK' || el.tagName === 'META') return false;
+          var tag = (el.tagName || '').toLowerCase();
+          if (tag.indexOf('replit-') === 0) return true;
           var html = (el.outerHTML || '').toLowerCase();
           for (var a = 0; a < ATTR_PATTERNS.length; a++) {
             if (html.indexOf(ATTR_PATTERNS[a]) !== -1) return true;
