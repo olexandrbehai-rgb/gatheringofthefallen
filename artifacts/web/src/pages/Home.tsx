@@ -24,9 +24,9 @@ export default function Home() {
           className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
           style={{
             WebkitMaskImage:
-              "radial-gradient(ellipse 60% 60% at center, #000 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.4) 70%, transparent 92%)",
+              "radial-gradient(ellipse 42% 55% at center, #000 20%, rgba(0,0,0,0.75) 50%, rgba(0,0,0,0.25) 78%, transparent 100%)",
             maskImage:
-              "radial-gradient(ellipse 60% 60% at center, #000 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.4) 70%, transparent 92%)",
+              "radial-gradient(ellipse 42% 55% at center, #000 20%, rgba(0,0,0,0.75) 50%, rgba(0,0,0,0.25) 78%, transparent 100%)",
           }}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
