@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
-import logoImg from "@assets/logo_1776019192682.jpg";
+import logoVideo from "@assets/grok-video-4e191f5f-3c1c-4e03-97ea-bc727051f844_1778193049750.mp4";
 import groupImg from "@assets/Група_1777383007687.png";
 import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
@@ -14,9 +14,13 @@ export default function Home() {
       transition={{ duration: 0.6 }}
     >
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
-        <motion.img
-          src={logoImg}
-          alt="Gathering Of The Fallen"
+        <motion.video
+          src={logoVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          aria-label="Герб гурту Gathering Of The Fallen"
           className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
