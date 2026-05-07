@@ -22,6 +22,12 @@ export default function Home() {
           playsInline
           aria-label="Герб гурту Gathering Of The Fallen"
           className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
+          style={{
+            WebkitMaskImage:
+              "radial-gradient(ellipse at center, #000 55%, rgba(0,0,0,0.6) 75%, transparent 100%)",
+            maskImage:
+              "radial-gradient(ellipse at center, #000 55%, rgba(0,0,0,0.6) 75%, transparent 100%)",
+          }}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
