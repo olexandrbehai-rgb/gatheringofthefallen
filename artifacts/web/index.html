@@ -101,6 +101,29 @@
           }
           return false;
         }
+        function nukeFixedCorner() {
+          var all = document.body ? document.body.querySelectorAll('*') : [];
+          for (var i = 0; i < all.length; i++) {
+            var el = all[i];
+            if (!el || el.id === 'root' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+            var cs;
+            try { cs = window.getComputedStyle(el); } catch (e) { continue; }
+            if (!cs || (cs.position !== 'fixed' && cs.position !== 'sticky')) continue;
+            var r;
+            try { r = el.getBoundingClientRect(); } catch (e) { continue; }
+            if (!r || r.width === 0 || r.height === 0) continue;
+            if (r.width > 220 || r.height > 220) continue;
+            var nearBottom = (window.innerHeight - r.bottom) < 80;
+            var nearRight = (window.innerWidth - r.right) < 80;
+            if (!(nearBottom && nearRight)) continue;
+            var probe = ((el.outerHTML || '') + ' ' + (el.shadowRoot ? (el.shadowRoot.innerHTML || '') : '')).toLowerCase();
+            if (probe.indexOf('replit') !== -1) {
+              try { el.remove(); } catch (e) {
+                el.style.setProperty('display', 'none', 'important');
+              }
+            }
+          }
+        }
         function nuke() {
           var bodyKids = document.body ? document.body.children : [];
           for (var i = bodyKids.length - 1; i >= 0; i--) {
@@ -128,7 +151,10 @@
             }
           }
         }
-        function safeNuke() { try { nuke(); } catch (e) {} }
+        function safeNuke() {
+          try { nuke(); } catch (e) {}
+          try { nukeFixedCorner(); } catch (e) {}
+        }
         safeNuke();
         if (window.MutationObserver) {
           var obs = new MutationObserver(safeNuke);
