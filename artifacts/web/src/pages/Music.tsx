@@ -1,43 +1,18 @@
 import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { GlitchButton } from "@/components/GlitchButton";
+import { useT } from "@/i18n/LanguageContext";
 
-const FEATURED_TRACK = {
-  id: "bfbYohcYrnM",
-  title: "Вогонь в руках",
-  description:
-    "Головний сингл нового альбому «!3 Послань». Внутрішня сила, яку ніхто не здатен відібрати. Далеко від дому, під чужим небом — ми тримаємо полум'я українського духу і не дамо йому згаснути.",
-};
+const FEATURED_ID = "bfbYohcYrnM";
+const TRACK_IDS = ["pGHn8UmSeVw", "YGqN3dVWBqg", "2kdtj1rwS5w", "hboWQxvrau8", "EiUXYLow4v8"];
 
-const TRACKS = [
-  {
-    id: "pGHn8UmSeVw",
-    title: "Through the Ashes (Із Попелу)",
-    description: "Ми згоріли, але встали. Попіл минулого — це фундамент нового. Пісня про кожного українця, який піднявся після падіння і йде далі з вогнем у серці.",
-  },
-  {
-    id: "YGqN3dVWBqg",
-    title: "Молодість",
-    description: "Спогади про рідні вулиці, про тих, кого залишили. Молодість, яка назавжди лишилась в Україні — але живе в кожному акорді цієї пісні.",
-  },
-  {
-    id: "2kdtj1rwS5w",
-    title: "Емігрант",
-    description: "Серце тут, душа — там. Пісня про тих, хто живе між двома світами, несучи Україну всюди, куди забирає доля. Біль розлуки і незламна воля.",
-  },
-  {
-    id: "hboWQxvrau8",
-    title: "Реквієм Народу",
-    description: "Пам'ять про тих, хто боровся і не здався. Реквієм для народу, який пройшов через століття випробувань — і не зламався. Наш поклон кожному борцю.",
-  },
-  {
-    id: "EiUXYLow4v8",
-    title: "Пустеля Душ",
-    description: "Дні, коли всередині — тиша і пустота. Коли рідних голосів не чути за тисячі кілометрів. Лише музика здатна повернути дощ у висохлу душу емігранта.",
-  },
-];
+type Track = { title: string; description: string };
 
 export default function Music() {
+  const { t, tArr, tObj } = useT();
+  const featured = tObj<Track>("music.featured");
+  const tracks = tArr<Track>("music.tracks");
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -45,7 +20,7 @@ export default function Music() {
       className="container mx-auto px-4 py-12 md:py-24 max-w-6xl"
     >
       <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-4 text-center">
-        МУЗИКА
+        {t("music.title")}
       </h1>
       <p
         className="font-mono text-secondary text-center mb-12 text-lg uppercase tracking-widest"
@@ -54,7 +29,7 @@ export default function Music() {
             "0 0 10px rgba(138,43,226,0.8), 0 0 20px rgba(138,43,226,0.4)",
         }}
       >
-        Офіційні треки гурту
+        {t("music.subtitle")}
       </p>
 
       <motion.section
@@ -64,16 +39,16 @@ export default function Music() {
         className="rusted-border bg-black/65 border border-primary/40 backdrop-blur-sm p-6 md:p-10 mb-14 shadow-[0_0_50px_rgba(138,43,226,0.25)]"
       >
         <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold text-center">
-          НОВИЙ АЛЬБОМ — ВЖЕ У МЕРЕЖІ
+          {t("music.newAlbumBadge")}
         </div>
         <h2
           className="font-creepster text-4xl md:text-6xl text-primary text-center mb-5"
           style={{ textShadow: "0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)" }}
         >
-          !3 ПОСЛАНЬ
+          {t("music.albumTitle")}
         </h2>
         <p className="font-mono text-white/95 text-center text-base md:text-lg leading-relaxed max-w-3xl mx-auto mb-8">
-          !3 Послань — це музичний маніфест, що складається з трьох ключових меседжів для тих, хто вижив у руїнах старого світу. Це голос нового племені живих.
+          {t("music.albumDesc")}
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 items-start">
@@ -81,8 +56,8 @@ export default function Music() {
             <iframe
               width="100%"
               height="100%"
-              src={`https://www.youtube.com/embed/${FEATURED_TRACK.id}`}
-              title={FEATURED_TRACK.title}
+              src={`https://www.youtube.com/embed/${FEATURED_ID}`}
+              title={featured.title}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -92,23 +67,23 @@ export default function Music() {
           </div>
           <div className="flex flex-col justify-center">
             <div className="text-[11px] uppercase tracking-[0.3em] text-red-300 font-mono mb-2">
-              Головний сингл альбому
+              {t("music.mainSingleLabel")}
             </div>
             <h3 className="font-creepster text-3xl md:text-4xl text-primary mb-4">
-              {FEATURED_TRACK.title}
+              {featured.title}
             </h3>
             <p className="font-mono text-sm md:text-base text-white/90 leading-relaxed mb-5">
-              {FEATURED_TRACK.description}
+              {featured.description}
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href={`https://www.youtube.com/watch?v=${FEATURED_TRACK.id}`}
+                href={`https://www.youtube.com/watch?v=${FEATURED_ID}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <GlitchButton className="text-sm py-2 px-4">
                   <ExternalLink size={14} className="inline mr-2" />
-                  Дивитися кліп
+                  {t("music.watchClip")}
                 </GlitchButton>
               </a>
               <a
@@ -118,7 +93,7 @@ export default function Music() {
               >
                 <GlitchButton className="text-sm py-2 px-4 border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
                   <ExternalLink size={14} className="inline mr-2" />
-                  Слухати в YouTube Music
+                  {t("music.listenYTMusic")}
                 </GlitchButton>
               </a>
             </div>
@@ -127,51 +102,54 @@ export default function Music() {
       </motion.section>
 
       <h2 className="font-creepster text-3xl md:text-4xl text-primary mb-8 border-b border-primary/20 pb-3">
-        Інші треки
+        {t("music.otherTracks")}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {TRACKS.map((track, i) => (
-          <motion.div
-            key={track.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="rusted-border bg-black/40 backdrop-blur-sm overflow-hidden group"
-          >
-            <div className="aspect-video w-full relative">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${track.id}`}
-                title={track.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0"
-                loading="lazy"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="font-creepster text-2xl text-primary mb-3 group-hover:text-white transition-colors">
-                {track.title}
-              </h3>
-              <p className="font-mono text-sm text-muted-foreground leading-relaxed mb-4">
-                {track.description}
-              </p>
-              <a
-                href={`https://www.youtube.com/watch?v=${track.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <GlitchButton className="text-sm py-2 px-4">
-                  <ExternalLink size={14} className="inline mr-2" />
-                  Дивитися на YouTube
-                </GlitchButton>
-              </a>
-            </div>
-          </motion.div>
-        ))}
+        {tracks.map((track, i) => {
+          const id = TRACK_IDS[i];
+          return (
+            <motion.div
+              key={id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="rusted-border bg-black/40 backdrop-blur-sm overflow-hidden group"
+            >
+              <div className="aspect-video w-full relative">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${id}`}
+                  title={track.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-5">
+                <h3 className="font-creepster text-2xl text-primary mb-3 group-hover:text-white transition-colors">
+                  {track.title}
+                </h3>
+                <p className="font-mono text-sm text-muted-foreground leading-relaxed mb-4">
+                  {track.description}
+                </p>
+                <a
+                  href={`https://www.youtube.com/watch?v=${id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <GlitchButton className="text-sm py-2 px-4">
+                    <ExternalLink size={14} className="inline mr-2" />
+                    {t("music.watchYouTube")}
+                  </GlitchButton>
+                </a>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       <motion.div
@@ -187,7 +165,7 @@ export default function Music() {
         >
           <GlitchButton className="text-lg py-4 px-8 border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
             <ExternalLink size={18} className="inline mr-2" />
-            Всі треки на YouTube
+            {t("music.allOnYouTube")}
           </GlitchButton>
         </a>
       </motion.div>

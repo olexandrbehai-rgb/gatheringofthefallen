@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, CreditCard, Zap, Loader2, Plus, Minus } from "lucide-react";
+import { useT } from "@/i18n/LanguageContext";
 import tshirtImg from "@assets/t-shirt.png_1776018973005.png";
 import hoodieImg from "@assets/hoodie.png_1776018973003.jpg";
 import bomberImg from "@assets/bomber.png_1776018973002.jpg";
@@ -10,10 +11,10 @@ import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
 const PRODUCTS = [
-  { id: "t-shirt", name: "Футболка GF", price: 49, image: tshirtImg },
-  { id: "hoodie", name: "Худі Повалених", price: 79, image: hoodieImg },
-  { id: "bomber", name: "Бомбер GF", price: 129, image: bomberImg },
-  { id: "cap", name: "Кепка Fallen", price: 45, image: capImg },
+  { id: "t-shirt", price: 49, image: tshirtImg },
+  { id: "hoodie", price: 79, image: hoodieImg },
+  { id: "bomber", price: 129, image: bomberImg },
+  { id: "cap", price: 45, image: capImg },
 ];
 
 interface StripeResult {
@@ -26,6 +27,8 @@ interface StripeResult {
 }
 
 function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
+  const { t } = useT();
+  const productName = t(`merch.products.${product.id}`);
   const [selectedSize, setSelectedSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -62,14 +65,14 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
         <div className="absolute inset-0 bg-primary/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
         <img
           src={product.image}
-          alt={product.name}
+          alt={productName}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
         />
       </div>
       <div className="p-5 flex flex-col flex-1">
         <h3 className="font-mono font-bold text-lg text-foreground tracking-wider mb-1">
-          {product.name}
+          {productName}
         </h3>
         <div className="text-primary font-creepster text-3xl mb-4">
           {product.price} CAD
@@ -77,7 +80,7 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
 
         <div className="mb-3">
           <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            Розмір:
+            {t("merch.size")}
           </div>
           <div className="flex gap-1 flex-wrap">
             {SIZES.map((s) => (
@@ -98,7 +101,7 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
 
         <div className="mb-4">
           <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            Кількість:
+            {t("merch.quantity")}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -126,13 +129,13 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
             {loading ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                <span>ПЕРЕНАПРАВЛЕННЯ...</span>
+                <span>{t("merch.redirecting")}</span>
               </>
             ) : (
               <>
                 <CreditCard size={16} />
                 <Zap size={12} className="stripe-zap" />
-                <span>ОПЛАТИТИ {totalPrice} CAD</span>
+                <span>{t("merch.pay")} {totalPrice} CAD</span>
               </>
             )}
           </button>
@@ -143,6 +146,7 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
 }
 
 export default function Merch() {
+  const { t } = useT();
   const [stripeSuccess, setStripeSuccess] = useState<StripeResult | null>(null);
 
   useEffect(() => {
@@ -174,13 +178,13 @@ export default function Merch() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
           <h1 className="font-creepster text-5xl md:text-7xl text-primary text-center md:text-left">
-            МЕРЧ
+            {t("merch.title")}
           </h1>
           <p
             className="font-mono text-secondary text-center md:text-left mt-2 uppercase tracking-widest text-sm"
             style={{ textShadow: "0 0 10px rgba(138,43,226,0.8)" }}
           >
-            Оплата карткою через Stripe | CAD
+            {t("merch.subtitle")}
           </p>
         </div>
       </div>
@@ -193,10 +197,10 @@ export default function Merch() {
         >
           <CheckCircle size={48} className="mx-auto text-green-400" />
           <h3 className="font-creepster text-2xl text-primary">
-            Замовлення оплачено!
+            {t("merch.paid")}
           </h3>
           <p className="font-mono text-muted-foreground">
-            Дякуємо за замовлення! Деталі доставки будуть надіслані на вашу пошту.
+            {t("merch.paidDetails")}
           </p>
           {stripeSuccess.product && (
             <div className="font-mono text-sm text-foreground">
@@ -213,7 +217,7 @@ export default function Merch() {
             onClick={() => setStripeSuccess(null)}
             className="font-mono text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
           >
-            Закрити
+            {t("merch.close")}
           </button>
         </motion.div>
       )}
@@ -221,7 +225,7 @@ export default function Merch() {
       <div className="rusted-border overflow-hidden mb-12 group">
         <img
           src={merchAllImg}
-          alt="Колекція мерчу Gathering Of The Fallen"
+          alt={t("merch.galleryAlt")}
           loading="lazy"
           className="w-full h-auto object-cover group-hover:brightness-110 transition-all duration-500"
         />

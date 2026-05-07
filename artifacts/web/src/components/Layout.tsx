@@ -3,18 +3,21 @@ import { AnimatedFog } from "./AnimatedFog";
 import { CRTScanline } from "./CRTScanline";
 import { SecretLevel } from "./SecretLevel";
 import { GlitchText } from "./GlitchText";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useT } from "@/i18n/LanguageContext";
 import logoImg from "@assets/logo_1776018973004.png";
 import heroBg from "@assets/hero-bg.png_1776018973003.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { t } = useT();
 
   const links = [
-    { href: "/", label: "Головна" },
-    { href: "/about", label: "Про гурт" },
-    { href: "/music", label: "Музика" },
-    { href: "/merch", label: "Мерч" },
-    { href: "/contacts", label: "Контакти" },
+    { href: "/", label: t("nav.home") },
+    { href: "/about", label: t("nav.about") },
+    { href: "/music", label: t("nav.music") },
+    { href: "/merch", label: t("nav.merch") },
+    { href: "/contacts", label: t("nav.contacts") },
   ];
 
   return (
@@ -47,8 +50,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             <nav className="flex flex-wrap justify-center gap-4 text-sm font-mono uppercase">
               {links.map((link) => (
-                <Link 
-                  key={link.href} 
+                <Link
+                  key={link.href}
                   href={link.href}
                   className={`transition-colors hover:text-primary ${location === link.href ? "text-primary border-b border-primary" : "text-muted-foreground"}`}
                 >
@@ -56,6 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
             </nav>
+            <LanguageSwitcher />
           </div>
         </header>
 
@@ -67,7 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="container mx-auto px-4 text-center font-mono text-xs text-muted-foreground">
             <img src={logoImg} alt="GotF" className="h-8 mx-auto mb-4 opacity-50" />
             <p className="mb-2">&copy; {new Date().getFullYear()} GATHERING OF THE FALLEN</p>
-            <p className="text-secondary/50">TRANSMISSION ENCRYPTED</p>
+            <p className="text-secondary/50">{t("footer.transmission")}</p>
           </div>
         </footer>
       </div>

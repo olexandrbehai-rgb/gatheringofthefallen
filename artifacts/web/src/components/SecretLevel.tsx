@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useT } from "@/i18n/LanguageContext";
 
 export function SecretLevel() {
+  const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const targetCode = "FALLEN";
@@ -55,34 +57,31 @@ export function SecretLevel() {
           }}></div>
           
           <h2 className="text-4xl md:text-6xl font-nosifer text-destructive mb-8 animate-[glitch-skew_0.5s_infinite]">
-            TRANSMISSION INTERCEPTED
+            {t("secret.intercept")}
           </h2>
-          
+
           <div className="max-w-2xl font-sans text-xl md:text-2xl space-y-6 text-foreground">
-            <p className="text-primary italic animate-pulse">
-              "Ми — тіні, що танцюють у вогні<br />
-              Ми — голоси, що лунають у пустці<br />
-              Ми — останній подих згасаючого світу<br />
-              Ми — Gathering Of The Fallen"
+            <p className="text-primary italic animate-pulse whitespace-pre-line">
+              {t("secret.poem")}
             </p>
-            
+
             <div className="mt-12">
-              <a 
-                href="https://www.youtube.com/@gathering-of-the-fallen" 
-                target="_blank" 
+              <a
+                href="https://www.youtube.com/@gathering-of-the-fallen"
+                target="_blank"
                 rel="noreferrer"
                 className="inline-block px-8 py-4 border border-destructive text-destructive hover:bg-destructive hover:text-black transition-colors font-bold text-2xl"
               >
-                [ ACCESS ARCHIVE ]
+                {t("secret.archive")}
               </a>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={() => setIsOpen(false)}
             className="absolute top-8 right-8 text-muted-foreground hover:text-primary"
           >
-            [ ESC TO ABORT ]
+            {t("secret.abort")}
           </button>
         </motion.div>
       )}
