@@ -24,9 +24,13 @@ export default function Home() {
           className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
           style={{
             WebkitMaskImage:
-              "radial-gradient(ellipse at center, #000 55%, rgba(0,0,0,0.6) 75%, transparent 100%)",
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><filter id='r' x='-20%25' y='-20%25' width='140%25' height='140%25'><feTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='7'/><feDisplacementMap in='SourceGraphic' scale='28'/></filter><radialGradient id='g' cx='50%25' cy='50%25' r='55%25'><stop offset='35%25' stop-color='white'/><stop offset='70%25' stop-color='white' stop-opacity='0.55'/><stop offset='100%25' stop-color='white' stop-opacity='0'/></radialGradient></defs><rect width='100' height='100' fill='url(%23g)' filter='url(%23r)'/></svg>\")",
             maskImage:
-              "radial-gradient(ellipse at center, #000 55%, rgba(0,0,0,0.6) 75%, transparent 100%)",
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><filter id='r' x='-20%25' y='-20%25' width='140%25' height='140%25'><feTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='7'/><feDisplacementMap in='SourceGraphic' scale='28'/></filter><radialGradient id='g' cx='50%25' cy='50%25' r='55%25'><stop offset='35%25' stop-color='white'/><stop offset='70%25' stop-color='white' stop-opacity='0.55'/><stop offset='100%25' stop-color='white' stop-opacity='0'/></radialGradient></defs><rect width='100' height='100' fill='url(%23g)' filter='url(%23r)'/></svg>\")",
+            WebkitMaskSize: "100% 100%",
+            maskSize: "100% 100%",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
           }}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
