@@ -57,6 +57,9 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const selectedColorMeta = COLORS.find((c) => c.id === selectedColor) ?? COLORS[0];
+  const selectedFitMeta = FITS.find((f) => f.id === selectedFit) ?? FITS[0];
+
   const handleStripeCheckout = async () => {
     setLoading(true);
     try {
@@ -68,7 +71,9 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           quantity,
           size: selectedSize,
           color: selectedColor,
+          color_label: selectedColorMeta.label,
           fit: selectedFit,
+          fit_label: selectedFitMeta.label,
         }),
       });
       const data = await res.json();
@@ -198,11 +203,40 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           </div>
         </div>
 
-        <div className="mt-auto">
-          <div className="mb-3 text-[11px] font-mono text-muted-foreground space-y-1">
-            <div>Color: {COLORS.find((c) => c.id === selectedColor)?.label}</div>
-            <div>Shape: {FITS.find((f) => f.id === selectedFit)?.label}</div>
+        <div className="mb-4 rounded border border-primary/20 bg-black/50 p-3 font-mono text-[11px] text-muted-foreground space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <span>Preview</span>
+            <span className="text-primary">{selectedSize}</span>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2 py-1 border border-white/20 text-foreground" style={{ backgroundColor: selectedColorMeta.hex }}>
+              {selectedColorMeta.label}
+            </span>
+            <span className="px-2 py-1 border border-secondary/30 text-secondary">
+              {selectedFitMeta.label}
+            </span>
+            <span className="px-2 py-1 border border-primary/30 text-primary">
+              x{quantity}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <div className="flex-1 h-2 rounded-full overflow-hidden bg-black/70 border border-border/40">
+              <div
+                className="h-full"
+                style={{
+                  width: `${Math.min(100, quantity * 10)}%`,
+                  background: `linear-gradient(90deg, ${selectedColorMeta.hex}, rgba(0,240,255,0.85))`,
+                }}
+              />
+            </div>
+            <div className="text-right min-w-[88px]">
+              <div className="text-foreground">{selectedColorMeta.label}</div>
+              <div>{selectedFitMeta.label}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto">
           <button
             onClick={handleStripeCheckout}
             disabled={loading}
