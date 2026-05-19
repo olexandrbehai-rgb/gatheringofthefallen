@@ -1,189 +1,298 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Minus, Plus, ShoppingCart } from "lucide-react";
-import { useT } from "@/i18n/LanguageContext";
-import tshirtFrontImg from "@assets/t-shirt.png_1776018973005.png";
-import tshirtBackImg from "@assets/hoodie.png_1776018973003.jpg";
+import {
+  Shirt,
+  ShoppingBag,
+  Sticker,
+  KeyRound,
+  Music2,
+  Pin,
+  Image as ImageIcon,
+  NotebookPen,
+  Coffee,
+  Smartphone,
+  CheckCircle,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const COLORS = [
-  { id: "black", label: "Black", hex: "#0a0a0f" },
-  { id: "white", label: "White", hex: "#f3f4f6" },
+/**
+ * MERCH STORE
+ * ----------------------------------------------------------------------------
+ * To replace prices or add real photos:
+ *   - Update the `price` field of any item below.
+ *   - Replace `image: null` with `image: "/path/to/photo.jpg"` (or an import).
+ *   - The card will automatically show the image instead of the placeholder.
+ * ----------------------------------------------------------------------------
+ */
+
+type Category = "clothing" | "accessories" | "collectibles";
+
+interface Item {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  icon: LucideIcon;
+  image?: string | null;
+  badge?: string;
+}
+
+const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
+  {
+    id: "clothing",
+    label: "Одяг",
+    items: [
+      {
+        id: "tshirt-oversize",
+        name: "Oversize футболка",
+        description: "Чорна, лого гурту спереду + арт на спині",
+        price: "650 ₴",
+        icon: Shirt,
+      },
+      {
+        id: "hoodie",
+        name: "Худі Повалених",
+        description: "Темне худі, лого + текст на рукаві",
+        price: "1450 ₴",
+        icon: ShoppingBag,
+      },
+      {
+        id: "longsleeve",
+        name: "Лонгслів",
+        description: "Мінімалістичне лого на грудях і спині",
+        price: "850 ₴",
+        icon: Shirt,
+      },
+      {
+        id: "cap",
+        name: "Кепка / Бейні",
+        description: "Вишите лого Gathering of the Fallen",
+        price: "450 ₴",
+        icon: ShoppingBag,
+      },
+    ],
+  },
+  {
+    id: "accessories",
+    label: "Аксесуари",
+    items: [
+      {
+        id: "pins",
+        name: "Набір значків (5 шт)",
+        description: "Лого, цитата, символ — металева емаль",
+        price: "320 ₴",
+        icon: Pin,
+      },
+      {
+        id: "keychain",
+        name: "Брелок",
+        description: "Метал або акрил із лого гурту",
+        price: "180 ₴",
+        icon: KeyRound,
+      },
+      {
+        id: "picks",
+        name: "Медіатори (3 шт)",
+        description: "Авторський набір з лого — для своїх",
+        price: "150 ₴",
+        icon: Music2,
+        badge: "Music",
+      },
+      {
+        id: "stickers",
+        name: "Пак наліпок (8 шт)",
+        description: "Лого, символи, цитати гурту",
+        price: "120 ₴",
+        icon: Sticker,
+      },
+    ],
+  },
+  {
+    id: "collectibles",
+    label: "Колекційне",
+    items: [
+      {
+        id: "poster",
+        name: "Постер A2/A1",
+        description: "Тeмний арт, опція з підписом гурту",
+        price: "350 ₴",
+        icon: ImageIcon,
+        badge: "Limited",
+      },
+      {
+        id: "notebook",
+        name: "Нотатник",
+        description: "Чорна обкладинка з тисненим лого",
+        price: "390 ₴",
+        icon: NotebookPen,
+      },
+      {
+        id: "mug",
+        name: "Термо-чашка",
+        description: "Чорна з лого, тримає тепло до 6 год",
+        price: "490 ₴",
+        icon: Coffee,
+      },
+      {
+        id: "case",
+        name: "Чохол на телефон",
+        description: "Чорний, з лого або арт-принтом",
+        price: "420 ₴",
+        icon: Smartphone,
+      },
+    ],
+  },
 ];
 
-const SIZES = ["S", "M", "L", "XL", "XXL"];
-const GALLERY = [
-  { id: "front", label: "Front", img: tshirtFrontImg, caption: "Вигляд Спереду" },
-  { id: "back", label: "Back", img: tshirtBackImg, caption: "Вигляд зі Спини" },
+type FilterId = "all" | Category;
+
+const FILTERS: { id: FilterId; label: string }[] = [
+  { id: "all", label: "Усе" },
+  { id: "clothing", label: "Одяг" },
+  { id: "accessories", label: "Аксесуари" },
+  { id: "collectibles", label: "Колекційне" },
 ];
 
-export default function Merch() {
-  const { t } = useT();
-  const [selectedColor, setSelectedColor] = useState<(typeof COLORS)[number]["id"]>("black");
-  const [selectedSize, setSelectedSize] = useState<(typeof SIZES)[number]>("M");
-  const [quantity, setQuantity] = useState(1);
-  const [activeView, setActiveView] = useState<(typeof GALLERY)[number]["id"]>("front");
-  const [added, setAdded] = useState(false);
-
-  const activePhoto = GALLERY.find((item) => item.id === activeView) ?? GALLERY[0];
-  const activeColor = COLORS.find((item) => item.id === selectedColor) ?? COLORS[0];
-
-  useEffect(() => {
-    if (!added) return;
-    const timer = window.setTimeout(() => setAdded(false), 1800);
-    return () => window.clearTimeout(timer);
-  }, [added]);
-
-  const handleAddToCart = () => {
-    setAdded(true);
-  };
+function ItemCard({ item }: { item: Item }) {
+  const Icon = item.icon;
+  const [bought, setBought] = useState(false);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="container mx-auto px-4 py-10 md:py-16 max-w-6xl">
-      <div className="mb-8 md:mb-10">
-        <p className="font-mono text-xs uppercase tracking-[0.35em] text-secondary mb-3">Gathering of the Fallen</p>
-        <h1 className="font-creepster text-5xl md:text-7xl text-primary leading-none">Футболка GotF</h1>
-        <p className="mt-3 max-w-2xl text-sm md:text-base font-mono text-muted-foreground">
-          Створи свій варіант мерчу: подивись принт спереду і зі спини, обери колір тканини, розмір і кількість.
-        </p>
+    <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#b80000]/70 hover:shadow-[0_0_30px_rgba(184,0,0,0.35)]">
+      {/* Image / placeholder */}
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-[#0a0000] via-black to-[#160000]">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#8b0000] transition-colors group-hover:text-[#ff2b2b]">
+            <Icon size={56} strokeWidth={1.25} />
+            <div className="font-mono text-[11px] uppercase tracking-[0.35em] text-white/40 text-center px-4">
+              {item.name}
+            </div>
+          </div>
+        )}
+
+        {item.badge && (
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-sm border border-[#8b0000]/60 bg-black/80 font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff5050]">
+            {item.badge}
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black to-transparent" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 lg:gap-10 items-start">
-        <section className="rusted-border bg-black/55 overflow-hidden">
-          <div className="p-4 border-b border-border/60 flex items-center justify-between gap-3">
-            <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Gallery</div>
-              <div className="text-sm font-mono text-foreground">{activePhoto.caption}</div>
-            </div>
-            <div className="flex gap-2">
-              {GALLERY.map((item) => {
-                const active = item.id === activeView;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveView(item.id)}
-                    className={`px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] border transition-all ${active ? "border-primary text-primary bg-primary/10" : "border-border/50 text-muted-foreground hover:border-primary/40"}`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Content */}
+      <div className="flex flex-col flex-1 p-4 gap-3">
+        <div>
+          <h3 className="font-creepster text-2xl text-white leading-none tracking-wide">
+            {item.name}
+          </h3>
+          <p className="mt-2 text-sm font-mono text-white/55 leading-snug min-h-[2.5em]">
+            {item.description}
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border/50">
-            {GALLERY.map((item) => {
-              const active = item.id === activeView;
-              return (
-                <button key={item.id} onClick={() => setActiveView(item.id)} className="relative aspect-[4/5] bg-black overflow-hidden text-left group">
-                  <img src={item.img} alt={item.caption} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-3">
-                    <div>
-                      <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-secondary">{item.label}</div>
-                      <div className="mt-1 text-lg text-foreground font-bold">{item.caption}</div>
-                    </div>
-                    <div className={`w-3 h-3 rounded-full ${active ? "bg-primary shadow-[0_0_18px_rgba(0,240,255,0.95)]" : "bg-white/35"}`} />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="rusted-border bg-black/55 p-5 md:p-6">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-muted-foreground">Product</div>
-              <h2 className="mt-1 text-2xl md:text-3xl font-creepster text-primary">Фірмова футболка GotF</h2>
-            </div>
-            <div className="text-right">
-              <div className="font-creepster text-4xl text-primary">49</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">CAD</div>
-            </div>
-          </div>
-
-          <div className="mb-5 rounded border border-border/50 bg-black/40 p-4">
-            <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Тканина</div>
-            <div className="flex gap-3">
-              {COLORS.map((color) => {
-                const active = selectedColor === color.id;
-                return (
-                  <button
-                    key={color.id}
-                    onClick={() => setSelectedColor(color.id)}
-                    className="relative flex flex-col items-center gap-2"
-                  >
-                    <span
-                      className={`inline-flex items-center justify-center w-12 h-12 rounded-full border transition-all ${active ? "border-primary shadow-[0_0_0_4px_rgba(0,240,255,0.18),0_0_24px_rgba(0,240,255,0.85)]" : "border-white/15"}`}
-                      style={{ backgroundColor: color.hex }}
-                    />
-                    <span className={`text-[11px] font-mono uppercase tracking-[0.2em] ${active ? "text-primary" : "text-muted-foreground"}`}>{color.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-5 rounded border border-border/50 bg-black/40 p-4">
-            <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Розмір</div>
-            <div className="flex flex-wrap gap-2">
-              {SIZES.map((size) => {
-                const active = selectedSize === size;
-                return (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`min-w-12 px-4 py-2 border text-sm font-mono transition-all ${active ? "border-secondary text-secondary bg-secondary/10 shadow-[0_0_22px_rgba(138,43,226,0.25)]" : "border-border/50 text-muted-foreground hover:border-secondary/40"}`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-5 rounded border border-border/50 bg-black/40 p-4">
-            <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Кількість</div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-all">
-                <Minus size={16} />
-              </button>
-              <div className="min-w-10 text-center font-mono text-2xl text-foreground">{quantity}</div>
-              <button onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-all">
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          <div className="mb-6 rounded border border-primary/20 bg-black/45 p-4">
-            <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Поточний вибір</div>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1 border border-primary/30 text-primary text-[11px] font-mono uppercase tracking-[0.2em]">{activePhoto.label}</span>
-              <span className="px-3 py-1 border border-white/20 text-foreground text-[11px] font-mono uppercase tracking-[0.2em]">{activeColor.label}</span>
-              <span className="px-3 py-1 border border-secondary/30 text-secondary text-[11px] font-mono uppercase tracking-[0.2em]">{selectedSize}</span>
-              <span className="px-3 py-1 border border-white/20 text-muted-foreground text-[11px] font-mono uppercase tracking-[0.2em]">x{quantity}</span>
-            </div>
-          </div>
-
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-white/10">
+          <div className="font-mono text-lg text-[#ff5a5a]">{item.price}</div>
           <button
-            onClick={handleAddToCart}
-            className="w-full group relative overflow-hidden rounded border border-primary/30 bg-black px-5 py-4 font-mono text-sm uppercase tracking-[0.3em] text-primary transition-all hover:border-primary hover:shadow-[0_0_18px_rgba(0,240,255,0.35),0_0_34px_rgba(138,43,226,0.2)]"
+            onClick={() => {
+              setBought(true);
+              window.setTimeout(() => setBought(false), 1500);
+            }}
+            className="merch-buy group/btn relative overflow-hidden rounded-sm border border-[#8b0000]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#ff5a5a] transition-all hover:border-[#ff2b2b] hover:text-white hover:shadow-[0_0_18px_rgba(184,0,0,0.7)]"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <ShoppingCart size={16} />
-              Add to Cart
+            <span className="relative z-10 flex items-center gap-2">
+              {bought ? (
+                <>
+                  <CheckCircle size={14} /> Додано
+                </>
+              ) : (
+                <>Купити</>
+              )}
             </span>
-            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(0,240,255,0.22)_0%,rgba(138,43,226,0.08)_40%,transparent_75%)]" />
+            <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(184,0,0,0.4)_0%,transparent_70%)]" />
           </button>
-
-          {added && (
-            <div className="mt-4 flex items-center gap-2 text-green-400 font-mono text-sm">
-              <CheckCircle size={16} />
-              Додано до кошика
-            </div>
-          )}
-        </section>
+        </div>
       </div>
-    </motion.div>
+    </article>
+  );
+}
+
+export default function Merch() {
+  const [filter, setFilter] = useState<FilterId>("all");
+  const visible = CATEGORIES.filter((cat) => filter === "all" || cat.id === filter);
+
+  return (
+    <motion.section
+      id="merch"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="container mx-auto px-4 py-12 md:py-20 max-w-7xl"
+    >
+      {/* Section header */}
+      <header className="mb-10 md:mb-14 text-center">
+        <p className="font-mono text-xs uppercase tracking-[0.4em] text-[#8b0000] mb-3">
+          Gathering of the Fallen
+        </p>
+        <h1
+          className="font-creepster text-6xl md:text-8xl text-white leading-none"
+          style={{ textShadow: "0 0 28px rgba(184,0,0,0.55), 0 0 4px rgba(255,255,255,0.15)" }}
+        >
+          MERCH
+        </h1>
+        <p className="mt-4 max-w-2xl mx-auto font-mono text-sm text-white/55">
+          Одяг, аксесуари і колекційне для тих, хто йде з нами крізь попіл.
+        </p>
+
+        {/* Filters */}
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {FILTERS.map((f) => {
+            const active = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-4 py-2 font-mono text-[11px] uppercase tracking-[0.3em] border transition-all ${
+                  active
+                    ? "border-[#8b0000] text-white bg-[#8b0000]/20 shadow-[0_0_18px_rgba(184,0,0,0.45)]"
+                    : "border-white/15 text-white/55 hover:border-[#8b0000]/70 hover:text-white"
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* Categories */}
+      <div className="space-y-14">
+        {visible.map((cat) => (
+          <div key={cat.id}>
+            <div className="mb-5 flex items-center gap-4">
+              <h2 className="font-creepster text-3xl md:text-4xl text-white">
+                {cat.label}
+              </h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-[#8b0000]/70 to-transparent" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/40">
+                {cat.items.length} items
+              </span>
+            </div>
+
+            {/* Responsive grid: 4 / 2 / 1 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+              {cat.items.map((item) => (
+                <ItemCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.section>
   );
 }
