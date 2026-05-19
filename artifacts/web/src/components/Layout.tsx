@@ -6,6 +6,7 @@ import { GlitchText } from "./GlitchText";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useT } from "@/i18n/LanguageContext";
 import { useCart } from "@/hooks/useCart";
+import { CartDrawer } from "./CartDrawer";
 import { ShoppingCart } from "lucide-react";
 import logoImg from "@assets/logo_1776018973004.png";
 import heroBg from "@assets/hero-bg.png_1776018973003.png";
@@ -13,7 +14,7 @@ import heroBg from "@assets/hero-bg.png_1776018973003.png";
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { t } = useT();
-  const { count: cartCount } = useCart();
+  const { count: cartCount, open: openCart } = useCart();
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -71,13 +72,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <LanguageSwitcher />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={openCart}
+                aria-label={`Кошик (${cartCount})`}
+                className="relative inline-flex items-center gap-2 px-3 py-2 rounded border border-white/15 text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-colors"
+              >
+                <ShoppingCart size={16} />
+                <span className="font-mono text-xs uppercase tracking-[0.2em]">Кошик</span>
+                {cartCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#8a2be2] border border-[#a855f7] text-[10px] font-mono text-white shadow-[0_0_10px_rgba(138,43,226,0.7)]">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              <LanguageSwitcher />
+            </div>
           </div>
         </header>
 
         <main className="flex-1 w-full">
           {children}
         </main>
+
+        <CartDrawer />
 
         <footer className="border-t border-primary/30 bg-black/50 backdrop-blur-sm py-8 mt-16">
           <div className="container mx-auto px-4 text-center font-mono text-xs text-muted-foreground">
