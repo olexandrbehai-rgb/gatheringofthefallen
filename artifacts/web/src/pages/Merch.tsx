@@ -48,6 +48,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Чорна, лого гурту спереду + арт на спині",
         price: "650 ₴",
         icon: Shirt,
+        image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
       },
       {
         id: "hoodie",
@@ -55,6 +56,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Темне худі, лого + текст на рукаві",
         price: "1450 ₴",
         icon: ShoppingBag,
+        image: "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400",
       },
       {
         id: "longsleeve",
@@ -62,6 +64,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Мінімалістичне лого на грудях і спині",
         price: "850 ₴",
         icon: Shirt,
+        image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400",
       },
       {
         id: "cap",
@@ -69,6 +72,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Вишите лого Gathering of the Fallen",
         price: "450 ₴",
         icon: ShoppingBag,
+        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400",
       },
     ],
   },
@@ -82,6 +86,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Лого, цитата, символ — металева емаль",
         price: "320 ₴",
         icon: Pin,
+        image: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=400",
       },
       {
         id: "keychain",
@@ -104,6 +109,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Лого, символи, цитати гурту",
         price: "120 ₴",
         icon: Sticker,
+        image: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400",
       },
     ],
   },
@@ -118,6 +124,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         price: "350 ₴",
         icon: ImageIcon,
         badge: "Limited",
+        image: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=400",
       },
       {
         id: "notebook",
@@ -132,6 +139,7 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
         description: "Чорна з лого, тримає тепло до 6 год",
         price: "490 ₴",
         icon: Coffee,
+        image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400",
       },
       {
         id: "case",
@@ -153,9 +161,8 @@ const FILTERS: { id: FilterId; label: string }[] = [
   { id: "collectibles", label: "Колекційне" },
 ];
 
-function ItemCard({ item }: { item: Item }) {
+function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
   const Icon = item.icon;
-  const [bought, setBought] = useState(false);
 
   return (
     <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#b80000]/70 hover:shadow-[0_0_30px_rgba(184,0,0,0.35)]">
@@ -200,21 +207,10 @@ function ItemCard({ item }: { item: Item }) {
         <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-white/10">
           <div className="font-mono text-lg text-[#ff5a5a]">{item.price}</div>
           <button
-            onClick={() => {
-              setBought(true);
-              window.setTimeout(() => setBought(false), 1500);
-            }}
+            onClick={onBuy}
             className="merch-buy group/btn relative overflow-hidden rounded-sm border border-[#8b0000]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#ff5a5a] transition-all hover:border-[#ff2b2b] hover:text-white hover:shadow-[0_0_18px_rgba(184,0,0,0.7)]"
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {bought ? (
-                <>
-                  <CheckCircle size={14} /> Додано
-                </>
-              ) : (
-                <>Купити</>
-              )}
-            </span>
+            <span className="relative z-10">Купити</span>
             <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(184,0,0,0.4)_0%,transparent_70%)]" />
           </button>
         </div>
@@ -225,7 +221,13 @@ function ItemCard({ item }: { item: Item }) {
 
 export default function Merch() {
   const [filter, setFilter] = useState<FilterId>("all");
+  const [toast, setToast] = useState(false);
   const visible = CATEGORIES.filter((cat) => filter === "all" || cat.id === filter);
+
+  const handleBuy = () => {
+    setToast(true);
+    window.setTimeout(() => setToast(false), 2000);
+  };
 
   return (
     <motion.section
@@ -287,11 +289,25 @@ export default function Merch() {
             {/* Responsive grid: 4 / 2 / 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
               {cat.items.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemCard key={item.id} item={item} onBuy={handleBuy} />
               ))}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Toast notification */}
+      <div
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+          toast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-3 rounded-md border border-[#8b0000]/70 bg-black/95 px-5 py-3 shadow-[0_0_28px_rgba(184,0,0,0.55)]">
+          <CheckCircle size={18} className="text-[#ff5a5a]" />
+          <span className="font-mono text-sm text-white">Додано до кошика!</span>
+        </div>
       </div>
     </motion.section>
   );
