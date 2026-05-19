@@ -8,7 +8,27 @@ import bomberImg from "@assets/bomber.png_1776018973002.jpg";
 import capImg from "@assets/cap.png_1776018973002.jpg";
 import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
 
-const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL"];
+const COLORS = [
+  { id: "black", label: "Black", hex: "#0b0b0f" },
+  { id: "purple", label: "Purple", hex: "#6f2cff" },
+  { id: "violet", label: "Violet", hex: "#a855f7" },
+  { id: "ash", label: "Ash Gray", hex: "#9ca3af" },
+  { id: "bone", label: "Bone", hex: "#d6c7b2" },
+  { id: "crimson", label: "Crimson", hex: "#8b1e2d" },
+  { id: "navy", label: "Midnight Navy", hex: "#0f1b3d" },
+  { id: "sand", label: "Sand", hex: "#c2a46b" },
+];
+
+const FITS = [
+  { id: "classic", label: "Classic fit" },
+  { id: "oversized", label: "Oversized" },
+  { id: "boxy", label: "Boxy" },
+  { id: "cropped", label: "Cropped" },
+  { id: "longline", label: "Longline" },
+  { id: "sleeveless", label: "Sleeveless" },
+];
+
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
 const PRODUCTS = [
   { id: "t-shirt", price: 49, image: tshirtImg },
@@ -21,6 +41,8 @@ interface StripeResult {
   status: string;
   product?: string;
   size?: string;
+  color?: string;
+  fit?: string;
   quantity?: string;
   total?: string;
   customerName?: string;
@@ -30,6 +52,8 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
   const { t } = useT();
   const productName = t(`merch.products.${product.id}`);
   const [selectedSize, setSelectedSize] = useState("M");
+  const [selectedColor, setSelectedColor] = useState(COLORS[0].id);
+  const [selectedFit, setSelectedFit] = useState(FITS[0].id);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +67,8 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           product_id: product.id,
           quantity,
           size: selectedSize,
+          color: selectedColor,
+          fit: selectedFit,
         }),
       });
       const data = await res.json();
@@ -99,6 +125,58 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           </div>
         </div>
 
+        <div className="mb-3">
+          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
+            Color
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {COLORS.map((color) => {
+              const active = selectedColor === color.id;
+              return (
+                <button
+                  key={color.id}
+                  onClick={() => setSelectedColor(color.id)}
+                  className={`px-3 py-2 border text-[11px] font-mono transition-all flex items-center gap-2 ${
+                    active
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-border/40 text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  <span
+                    className="inline-block w-3 h-3 rounded-full border border-white/30"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                  {color.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
+            Shape
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {FITS.map((fit) => {
+              const active = selectedFit === fit.id;
+              return (
+                <button
+                  key={fit.id}
+                  onClick={() => setSelectedFit(fit.id)}
+                  className={`px-3 py-2 border text-[11px] font-mono uppercase tracking-wide transition-all ${
+                    active
+                      ? "border-secondary text-secondary bg-secondary/10"
+                      : "border-border/40 text-muted-foreground hover:border-secondary/50"
+                  }`}
+                >
+                  {fit.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="mb-4">
           <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
             {t("merch.quantity")}
@@ -121,6 +199,10 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
         </div>
 
         <div className="mt-auto">
+          <div className="mb-3 text-[11px] font-mono text-muted-foreground space-y-1">
+            <div>Color: {COLORS.find((c) => c.id === selectedColor)?.label}</div>
+            <div>Shape: {FITS.find((f) => f.id === selectedFit)?.label}</div>
+          </div>
           <button
             onClick={handleStripeCheckout}
             disabled={loading}
@@ -196,16 +278,14 @@ export default function Merch() {
           className="mb-8 p-6 bg-green-500/10 border border-green-500/30 rounded text-center space-y-3"
         >
           <CheckCircle size={48} className="mx-auto text-green-400" />
-          <h3 className="font-creepster text-2xl text-primary">
-            {t("merch.paid")}
-          </h3>
-          <p className="font-mono text-muted-foreground">
-            {t("merch.paidDetails")}
-          </p>
+          <h3 className="font-creepster text-2xl text-primary">{t("merch.paid")}</h3>
+          <p className="font-mono text-muted-foreground">{t("merch.paidDetails")}</p>
           {stripeSuccess.product && (
             <div className="font-mono text-sm text-foreground">
               {stripeSuccess.product} {stripeSuccess.size && `(${stripeSuccess.size})`} x
               {stripeSuccess.quantity || 1} — {stripeSuccess.total}
+              {stripeSuccess.color ? ` · ${stripeSuccess.color}` : ""}
+              {stripeSuccess.fit ? ` · ${stripeSuccess.fit}` : ""}
             </div>
           )}
           {stripeSuccess.customerName && (
