@@ -86,54 +86,116 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
   };
 
   const totalPrice = product.price * quantity;
+  const selectedPreviewColor = selectedColorMeta.hex;
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="rusted-border bg-black/40 backdrop-blur-sm group flex flex-col h-full"
+      whileHover={{ scale: 1.01 }}
+      className="rusted-border bg-black/45 backdrop-blur-sm overflow-hidden flex flex-col h-full"
     >
-      <div className="aspect-square w-full overflow-hidden border-b border-border relative flex items-center justify-center">
-        <div className="absolute inset-0 bg-primary/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
+      <div className="relative aspect-[4/5] w-full overflow-hidden border-b border-border bg-black">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 50% 45%, ${selectedPreviewColor}55 0%, rgba(0,0,0,0.3) 32%, rgba(0,0,0,0.92) 82%)`,
+          }}
+        />
         <img
           src={product.image}
           alt={productName}
           loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+          className="relative z-10 w-full h-full object-cover mix-blend-screen opacity-90 group-hover:scale-105 transition-transform duration-500"
         />
-      </div>
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-mono font-bold text-lg text-foreground tracking-wider mb-1">
+        <div className="absolute top-3 left-3 z-20 rounded-full border border-primary/30 bg-black/70 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.3em] text-primary">
           {productName}
-        </h3>
-        <div className="text-primary font-creepster text-3xl mb-4">
+        </div>
+        <div className="absolute top-3 right-3 z-20 rounded-full border border-secondary/30 bg-black/70 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.3em] text-secondary">
           {product.price} CAD
         </div>
+        <div className="absolute bottom-3 left-3 z-20 rounded-full border border-white/15 bg-black/75 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">
+          {t("merch.retail")}
+        </div>
+      </div>
 
-        <div className="mb-3">
-          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            {t("merch.size")}
+      <div className="p-5 flex flex-col gap-4 flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-mono font-bold text-lg text-foreground tracking-wider mb-1">
+              {productName}
+            </h3>
+            <div className="text-muted-foreground text-xs font-mono uppercase tracking-[0.25em]">
+              {t("merch.product")}
+            </div>
           </div>
-          <div className="flex gap-1 flex-wrap">
-            {SIZES.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSelectedSize(s)}
-                className={`px-2.5 py-1 font-mono text-xs transition-all ${
-                  selectedSize === s
-                    ? "bg-primary/20 border-primary text-primary border"
-                    : "border border-border/40 text-muted-foreground hover:border-primary/50"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="text-right">
+            <div className="text-primary font-creepster text-3xl leading-none">{product.price}</div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">CAD</div>
           </div>
         </div>
 
-        <div className="mb-3">
-          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            Color
+        <div className="rounded border border-border/40 bg-black/30 p-3">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {t("merch.selection")}
+            </span>
+            <span className="font-mono text-xs uppercase tracking-wider text-primary">
+              {selectedSize}
+            </span>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2 py-1 border border-primary/30 text-primary font-mono text-[11px]">{selectedSize}</span>
+            <span className="px-2 py-1 border border-secondary/30 text-secondary font-mono text-[11px]">{selectedFitMeta.label}</span>
+            <span className="px-2 py-1 border border-white/20 text-foreground font-mono text-[11px]">{selectedColorMeta.label}</span>
+            <span className="px-2 py-1 border border-white/20 text-muted-foreground font-mono text-[11px]">x{quantity}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
+              {t("merch.size")}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {SIZES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSelectedSize(s)}
+                  className={`px-2.5 py-1 font-mono text-xs transition-all ${
+                    selectedSize === s
+                      ? "bg-primary/20 border-primary text-primary border"
+                      : "border border-border/40 text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
+              {t("merch.quantity")}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="font-mono text-lg text-foreground w-8 text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+                className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">Color</div>
           <div className="grid grid-cols-2 gap-2">
             {COLORS.map((color) => {
               const active = selectedColor === color.id;
@@ -158,10 +220,8 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           </div>
         </div>
 
-        <div className="mb-3">
-          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            Shape
-          </div>
+        <div>
+          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">Shape</div>
           <div className="grid grid-cols-2 gap-2">
             {FITS.map((fit) => {
               const active = selectedFit === fit.id;
@@ -182,57 +242,27 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
           </div>
         </div>
 
-        <div className="mb-4">
-          <div className="font-mono text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">
-            {t("merch.quantity")}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="font-mono text-lg text-foreground w-8 text-center">{quantity}</span>
-            <button
-              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-              className="w-8 h-8 flex items-center justify-center border border-border/40 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4 rounded border border-primary/20 bg-black/50 p-3 font-mono text-[11px] text-muted-foreground space-y-2">
+        <div className="rounded border border-primary/20 bg-black/60 p-4 font-mono text-[11px] text-muted-foreground space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <span>Preview</span>
+            <span>Live preview</span>
             <span className="text-primary">{selectedSize}</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="px-2 py-1 border border-white/20 text-foreground" style={{ backgroundColor: selectedColorMeta.hex }}>
-              {selectedColorMeta.label}
-            </span>
-            <span className="px-2 py-1 border border-secondary/30 text-secondary">
-              {selectedFitMeta.label}
-            </span>
-            <span className="px-2 py-1 border border-primary/30 text-primary">
-              x{quantity}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 pt-1">
-            <div className="flex-1 h-2 rounded-full overflow-hidden bg-black/70 border border-border/40">
-              <div
-                className="h-full"
-                style={{
-                  width: `${Math.min(100, quantity * 10)}%`,
-                  background: `linear-gradient(90deg, ${selectedColorMeta.hex}, rgba(0,240,255,0.85))`,
-                }}
-              />
-            </div>
-            <div className="text-right min-w-[88px]">
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 rounded-full border border-white/20" style={{ backgroundColor: selectedColorMeta.hex }} />
+            <div className="flex-1 space-y-1">
               <div className="text-foreground">{selectedColorMeta.label}</div>
               <div>{selectedFitMeta.label}</div>
+              <div>{quantity} pcs</div>
             </div>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden bg-black/70 border border-border/40">
+            <div
+              className="h-full"
+              style={{
+                width: `${Math.min(100, quantity * 10)}%`,
+                background: `linear-gradient(90deg, ${selectedColorMeta.hex}, rgba(0,240,255,0.85))`,
+              }}
+            />
           </div>
         </div>
 
@@ -286,12 +316,8 @@ export default function Merch() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="container mx-auto px-4 py-12 md:py-24 max-w-6xl"
-    >
-      <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="container mx-auto px-4 py-12 md:py-24 max-w-6xl">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
         <div>
           <h1 className="font-creepster text-5xl md:text-7xl text-primary text-center md:text-left">
             {t("merch.title")}
