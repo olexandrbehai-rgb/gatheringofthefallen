@@ -37,6 +37,13 @@ const PRODUCTS = [
   { id: "cap", price: 45, image: capImg },
 ];
 
+const PRODUCT_TYPES = [
+  { id: "t-shirt", label: "Футболки", image: tshirtImg },
+  { id: "hoodie", label: "Худі", image: hoodieImg },
+  { id: "bomber", label: "Бомбери", image: bomberImg },
+  { id: "cap", label: "Кепки", image: capImg },
+];
+
 interface StripeResult {
   status: string;
   product?: string;
@@ -294,6 +301,9 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
 export default function Merch() {
   const { t } = useT();
   const [stripeSuccess, setStripeSuccess] = useState<StripeResult | null>(null);
+  const [selectedCatalog, setSelectedCatalog] = useState(PRODUCT_TYPES[0].id);
+  const selectedProduct = PRODUCTS.find((product) => product.id === selectedCatalog) ?? PRODUCTS[0];
+  const relatedProducts = PRODUCTS.filter((product) => product.id !== selectedProduct.id);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -331,6 +341,42 @@ export default function Merch() {
         </div>
       </div>
 
+      <div className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {PRODUCT_TYPES.map((type) => {
+          const active = selectedCatalog === type.id;
+          return (
+            <button
+              key={type.id}
+              onClick={() => setSelectedCatalog(type.id)}
+              className={`rusted-border overflow-hidden text-left transition-all ${active ? "ring-1 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            >
+              <div className="aspect-[4/3] bg-black overflow-hidden">
+                <img
+                  src={type.image}
+                  alt={type.label}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {t("merch.collection")}
+                </div>
+                <div className="mt-1 text-foreground font-bold">{type.label}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mb-8 flex items-center justify-between gap-4 flex-wrap">
+        <div className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          {t("merch.pickType")}
+        </div>
+        <div className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
+          {PRODUCT_TYPES.find((item) => item.id === selectedCatalog)?.label}
+        </div>
+      </div>
+
       {stripeSuccess && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -362,7 +408,7 @@ export default function Merch() {
         </motion.div>
       )}
 
-      <div className="rusted-border overflow-hidden mb-12 group">
+      <div className="rusted-border overflow-hidden mb-8 group">
         <img
           src={merchAllImg}
           alt={t("merch.galleryAlt")}
@@ -371,8 +417,18 @@ export default function Merch() {
         />
       </div>
 
+      <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+        <div className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          {t("merch.catalog")}
+        </div>
+        <div className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
+          {PRODUCT_TYPES.find((item) => item.id === selectedCatalog)?.label}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {PRODUCTS.map((product) => (
+        <ProductCard product={selectedProduct} />
+        {relatedProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
