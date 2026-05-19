@@ -1,0 +1,46 @@
+I have an existing website at https://gathering-of-the-fallen.replit.app — a dark metal band site for "Gathering of the Fallen". 
+
+Add a full MERCH STORE section to the existing site. Use HTML + CSS + JS (no frameworks).
+
+MERCH CATEGORIES AND ITEMS:
+
+1. CLOTHING
+- Oversized t-shirt (black, band logo front/back art)
+- Hoodie (dark, logo + sleeve text)
+- Long sleeve shirt (minimalist logo chest + back)
+- Cap / beanie (embroidered logo)
+
+2. ACCESSORIES  
+- Pin badge set (3–5 pins: logo, quote, symbol)
+- Keychain (metal or acrylic with logo)
+- Guitar picks set (3 picks with logo) — unique for a music band
+- Stickers pack (5–10 stickers: logos, symbols, quotes)
+
+3. COLLECTIBLES
+- Poster A2/A1 (dark art style, limited signed edition option)
+- Notebook (black cover, embossed logo)
+- Thermo mug (black with logo)
+- Phone case (black with logo or art print)
+
+DESIGN REQUIREMENTS:
+- Match the existing site's dark aesthetic: purple/blue color scheme, apocalyptic atmosphere
+- Each item card should have: placeholder image area (dark gradient placeholder), item name, short description, price in UAH (₴), "КУПИТИ" button
+- Section header: "МЕРЧ" in the same style as other headings on the site
+- Responsive grid: 4 columns desktop, 2 columns tablet, 1 column mobile
+- Hover effects on cards (subtle cyan/purple glow or border highlight)
+- Filter buttons: ВСЕ / ОДЯГ / АКСЕСУАРИ / КОЛЕКЦІЙНЕ — must actually work
+- Add a sticky "Мерч" link to the existing navigation menu
+
+FUNCTIONALITY (JavaScript must work):
+- Filter buttons show/hide cards by category
+- КУПИТИ button shows popup notification "✓ Додано до кошика!"
+- Cart counter badge in navigation updates when items added
+- All click handlers wrapped in DOMContentLoaded
+
+STRUCTURE:
+- Add the merch section as a new page or section
+- Keep all existing content intact — only ADD, do not remove anything
+- The merch section should appear after the existing main content, before the footer
+
+Keep the code clean and well-commented so it's easy to update 
+prices and add real product images later.

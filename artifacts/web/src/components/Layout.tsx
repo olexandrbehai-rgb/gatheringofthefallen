@@ -5,12 +5,15 @@ import { SecretLevel } from "./SecretLevel";
 import { GlitchText } from "./GlitchText";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useT } from "@/i18n/LanguageContext";
+import { useCart } from "@/hooks/useCart";
+import { ShoppingCart } from "lucide-react";
 import logoImg from "@assets/logo_1776018973004.png";
 import heroBg from "@assets/hero-bg.png_1776018973003.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { t } = useT();
+  const { count: cartCount } = useCart();
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -48,16 +51,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img src={logoImg} alt="Gathering Of The Fallen" className="h-12 md:h-14 w-auto neon-glow-img" />
             </Link>
-            <nav className="flex flex-wrap justify-center gap-4 text-sm font-mono uppercase">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`transition-colors hover:text-primary ${location === link.href ? "text-primary border-b border-primary" : "text-muted-foreground"}`}
-                >
-                  <GlitchText>{link.label}</GlitchText>
-                </Link>
-              ))}
+            <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-mono uppercase">
+              {links.map((link) => {
+                const isMerch = link.href === "/merch";
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`relative inline-flex items-center gap-1.5 transition-colors hover:text-primary ${location === link.href ? "text-primary border-b border-primary" : "text-muted-foreground"}`}
+                  >
+                    <GlitchText>{link.label}</GlitchText>
+                    {isMerch && cartCount > 0 && (
+                      <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full bg-secondary/25 border border-secondary/60 text-[10px] leading-none text-secondary shadow-[0_0_10px_rgba(138,43,226,0.65)]">
+                        <ShoppingCart size={10} />
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
             <LanguageSwitcher />
           </div>

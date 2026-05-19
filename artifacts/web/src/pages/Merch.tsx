@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCart } from "@/hooks/useCart";
 import { motion } from "framer-motion";
 import {
   Shirt,
@@ -165,9 +166,9 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
   const Icon = item.icon;
 
   return (
-    <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#b80000]/70 hover:shadow-[0_0_30px_rgba(184,0,0,0.35)]">
+    <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
       {/* Image / placeholder */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-[#0a0000] via-black to-[#160000]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-[#0a0014] via-black to-[#10001f]">
         {item.image ? (
           <img
             src={item.image}
@@ -176,7 +177,7 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
             className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#8b0000] transition-colors group-hover:text-[#ff2b2b]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#8a2be2] transition-colors group-hover:text-[#00f0ff]">
             <Icon size={56} strokeWidth={1.25} />
             <div className="font-mono text-[11px] uppercase tracking-[0.35em] text-white/40 text-center px-4">
               {item.name}
@@ -185,7 +186,7 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
         )}
 
         {item.badge && (
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-sm border border-[#8b0000]/60 bg-black/80 font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff5050]">
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-sm border border-[#8a2be2]/60 bg-black/80 font-mono text-[10px] uppercase tracking-[0.3em] text-[#a855f7]">
             {item.badge}
           </div>
         )}
@@ -205,13 +206,13 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-white/10">
-          <div className="font-mono text-lg text-[#ff5a5a]">{item.price}</div>
+          <div className="font-mono text-lg text-[#00f0ff]">{item.price}</div>
           <button
             onClick={onBuy}
-            className="merch-buy group/btn relative overflow-hidden rounded-sm border border-[#8b0000]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#ff5a5a] transition-all hover:border-[#ff2b2b] hover:text-white hover:shadow-[0_0_18px_rgba(184,0,0,0.7)]"
+            className="merch-buy group/btn relative overflow-hidden rounded-sm border border-[#8a2be2]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#00f0ff] transition-all hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_18px_rgba(0,240,255,0.55)]"
           >
             <span className="relative z-10">Купити</span>
-            <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(184,0,0,0.4)_0%,transparent_70%)]" />
+            <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(138,43,226,0.4)_0%,transparent_70%)]" />
           </button>
         </div>
       </div>
@@ -222,9 +223,11 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
 export default function Merch() {
   const [filter, setFilter] = useState<FilterId>("all");
   const [toast, setToast] = useState(false);
+  const { add: addToCart } = useCart();
   const visible = CATEGORIES.filter((cat) => filter === "all" || cat.id === filter);
 
   const handleBuy = () => {
+    addToCart();
     setToast(true);
     window.setTimeout(() => setToast(false), 2000);
   };
@@ -238,12 +241,12 @@ export default function Merch() {
     >
       {/* Section header */}
       <header className="mb-10 md:mb-14 text-center">
-        <p className="font-mono text-xs uppercase tracking-[0.4em] text-[#8b0000] mb-3">
+        <p className="font-mono text-xs uppercase tracking-[0.4em] text-[#8a2be2] mb-3">
           Gathering of the Fallen
         </p>
         <h1
           className="font-creepster text-6xl md:text-8xl text-white leading-none"
-          style={{ textShadow: "0 0 28px rgba(184,0,0,0.55), 0 0 4px rgba(255,255,255,0.15)" }}
+          style={{ textShadow: "0 0 28px rgba(138,43,226,0.55), 0 0 4px rgba(255,255,255,0.15)" }}
         >
           MERCH
         </h1>
@@ -261,8 +264,8 @@ export default function Merch() {
                 onClick={() => setFilter(f.id)}
                 className={`px-4 py-2 font-mono text-[11px] uppercase tracking-[0.3em] border transition-all ${
                   active
-                    ? "border-[#8b0000] text-white bg-[#8b0000]/20 shadow-[0_0_18px_rgba(184,0,0,0.45)]"
-                    : "border-white/15 text-white/55 hover:border-[#8b0000]/70 hover:text-white"
+                    ? "border-[#8a2be2] text-white bg-[#8a2be2]/20 shadow-[0_0_18px_rgba(0,240,255,0.45)]"
+                    : "border-white/15 text-white/55 hover:border-[#8a2be2]/70 hover:text-white"
                 }`}
               >
                 {f.label}
@@ -280,7 +283,7 @@ export default function Merch() {
               <h2 className="font-creepster text-3xl md:text-4xl text-white">
                 {cat.label}
               </h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-[#8b0000]/70 to-transparent" />
+              <div className="flex-1 h-px bg-gradient-to-r from-[#8a2be2]/70 to-transparent" />
               <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/40">
                 {cat.items.length} items
               </span>
@@ -304,9 +307,9 @@ export default function Merch() {
         role="status"
         aria-live="polite"
       >
-        <div className="flex items-center gap-3 rounded-md border border-[#8b0000]/70 bg-black/95 px-5 py-3 shadow-[0_0_28px_rgba(184,0,0,0.55)]">
-          <CheckCircle size={18} className="text-[#ff5a5a]" />
-          <span className="font-mono text-sm text-white">Додано до кошика!</span>
+        <div className="flex items-center gap-3 rounded-md border border-[#8a2be2]/70 bg-black/95 px-5 py-3 shadow-[0_0_28px_rgba(138,43,226,0.55)]">
+          <CheckCircle size={18} className="text-[#00f0ff]" />
+          <span className="font-mono text-sm text-white">✓ Додано до кошика!</span>
         </div>
       </div>
     </motion.section>
