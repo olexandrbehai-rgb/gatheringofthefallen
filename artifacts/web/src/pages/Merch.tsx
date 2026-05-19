@@ -13,8 +13,25 @@ import {
   Coffee,
   Smartphone,
   CheckCircle,
+  Disc3,
+  Flag,
+  Gem,
+  Package,
+  Backpack,
+  Footprints,
+  Wind,
+  Crown,
+  Glasses,
+  Watch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+import art1 from "@assets/1_1779233683472.png";
+import art2 from "@assets/2_1779233683472.png";
+import art3 from "@assets/3_1779233683472.png";
+import art4 from "@assets/4_1779233683472.png";
+import art5 from "@assets/5_1779233683473.png";
+import art6 from "@assets/6_1779233683473.png";
 
 /**
  * MERCH STORE
@@ -43,112 +60,48 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
     id: "clothing",
     label: "Одяг",
     items: [
-      {
-        id: "tshirt-oversize",
-        name: "Oversize футболка",
-        description: "Чорна, лого гурту спереду + арт на спині",
-        price: "650 ₴",
-        icon: Shirt,
-        image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
-      },
-      {
-        id: "hoodie",
-        name: "Худі Повалених",
-        description: "Темне худі, лого + текст на рукаві",
-        price: "1450 ₴",
-        icon: ShoppingBag,
-        image: "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400",
-      },
-      {
-        id: "longsleeve",
-        name: "Лонгслів",
-        description: "Мінімалістичне лого на грудях і спині",
-        price: "850 ₴",
-        icon: Shirt,
-        image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400",
-      },
-      {
-        id: "cap",
-        name: "Кепка / Бейні",
-        description: "Вишите лого Gathering of the Fallen",
-        price: "450 ₴",
-        icon: ShoppingBag,
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400",
-      },
+      { id: "tshirt-oversize", name: "Oversize футболка «Янгол»", description: "Чорна, повний арт Gathering of the Fallen", price: "650 ₴", icon: Shirt, image: art1 },
+      { id: "tshirt-classic", name: "Класична футболка «Терни»", description: "Готичний логотип у тернах на грудях", price: "550 ₴", icon: Shirt, image: art2 },
+      { id: "hoodie", name: "Худі «Fallen Crest»", description: "Темне худі, повний герб + текст на рукаві", price: "1450 ₴", icon: ShoppingBag, image: art5 },
+      { id: "zip-hoodie", name: "Zip-худі «Crimson Wings»", description: "Худі на блискавці, арт червоного янгола", price: "1550 ₴", icon: ShoppingBag, image: art6, badge: "New" },
+      { id: "longsleeve", name: "Лонгслів «GF Monogram»", description: "Мінімалістичне лого на грудях + арт на спині", price: "850 ₴", icon: Shirt, image: art3 },
+      { id: "bomber", name: "Бомбер «Cathedral»", description: "Чорний бомбер з вишивкою янгола на спині", price: "1990 ₴", icon: ShoppingBag, image: art1 },
+      { id: "cap", name: "Кепка з вишивкою", description: "Вишите лого GF, регульований ремінець", price: "450 ₴", icon: Crown, image: art4 },
+      { id: "beanie", name: "Бейні «Thorns»", description: "Чорна шапка з тканим патчем", price: "390 ₴", icon: Crown, image: art3 },
+      { id: "crop-top", name: "Кроп-топ «Dark Angel»", description: "Жіночий чорний кроп з артом янгола", price: "580 ₴", icon: Shirt, image: art6 },
+      { id: "scarf", name: "Шарф-бандана", description: "Двосторонній арт з тернами та логотипом", price: "320 ₴", icon: Wind, image: art4 },
     ],
   },
   {
     id: "accessories",
     label: "Аксесуари",
     items: [
-      {
-        id: "pins",
-        name: "Набір значків (5 шт)",
-        description: "Лого, цитата, символ — металева емаль",
-        price: "320 ₴",
-        icon: Pin,
-        image: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=400",
-      },
-      {
-        id: "keychain",
-        name: "Брелок",
-        description: "Метал або акрил із лого гурту",
-        price: "180 ₴",
-        icon: KeyRound,
-      },
-      {
-        id: "picks",
-        name: "Медіатори (3 шт)",
-        description: "Авторський набір з лого — для своїх",
-        price: "150 ₴",
-        icon: Music2,
-        badge: "Music",
-      },
-      {
-        id: "stickers",
-        name: "Пак наліпок (8 шт)",
-        description: "Лого, символи, цитати гурту",
-        price: "120 ₴",
-        icon: Sticker,
-        image: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400",
-      },
+      { id: "pins", name: "Набір значків (5 шт)", description: "Лого, монограма, цитата, символ — металева емаль", price: "320 ₴", icon: Pin, image: art3 },
+      { id: "keychain", name: "Брелок металевий", description: "Литий брелок з монограмою GF", price: "180 ₴", icon: KeyRound, image: art4 },
+      { id: "picks", name: "Медіатори (3 шт)", description: "Авторський набір з лого — для гітаристів", price: "150 ₴", icon: Music2, image: art3, badge: "Music" },
+      { id: "stickers", name: "Пак наліпок (10 шт)", description: "Лого, символи, цитати гурту", price: "120 ₴", icon: Sticker, image: art2 },
+      { id: "patch", name: "Тканинний патч", description: "Вишитий патч-янгол на одяг чи рюкзак", price: "220 ₴", icon: Pin, image: art1 },
+      { id: "bracelet", name: "Браслет паракорд", description: "Чорний паракорд з металевим логотипом", price: "260 ₴", icon: Watch, image: art3 },
+      { id: "necklace", name: "Кулон «GF Cross»", description: "Срібний кулон у формі готичного хреста", price: "690 ₴", icon: Gem, image: art3, badge: "Limited" },
+      { id: "mask", name: "Бафф-маска", description: "Чорна, з артом янгола на половину обличчя", price: "240 ₴", icon: Glasses, image: art1 },
+      { id: "socks", name: "Шкарпетки GF", description: "Чорні з фіолетовим логотипом", price: "180 ₴", icon: Footprints, image: art2 },
+      { id: "tote", name: "Сумка-шопер", description: "Чорна канва з повним артом гурту", price: "420 ₴", icon: Backpack, image: art5 },
     ],
   },
   {
     id: "collectibles",
     label: "Колекційне",
     items: [
-      {
-        id: "poster",
-        name: "Постер A2/A1",
-        description: "Тeмний арт, опція з підписом гурту",
-        price: "350 ₴",
-        icon: ImageIcon,
-        badge: "Limited",
-        image: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=400",
-      },
-      {
-        id: "notebook",
-        name: "Нотатник",
-        description: "Чорна обкладинка з тисненим лого",
-        price: "390 ₴",
-        icon: NotebookPen,
-      },
-      {
-        id: "mug",
-        name: "Термо-чашка",
-        description: "Чорна з лого, тримає тепло до 6 год",
-        price: "490 ₴",
-        icon: Coffee,
-        image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400",
-      },
-      {
-        id: "case",
-        name: "Чохол на телефон",
-        description: "Чорний, з лого або арт-принтом",
-        price: "420 ₴",
-        icon: Smartphone,
-      },
+      { id: "poster", name: "Постер A2/A1 «Янгол»", description: "Темний арт, опція з підписом гурту", price: "350 ₴", icon: ImageIcon, image: art1, badge: "Limited" },
+      { id: "notebook", name: "Нотатник з тисненням", description: "Чорна обкладинка з тисненим логотипом GF", price: "390 ₴", icon: NotebookPen, image: art2 },
+      { id: "mug", name: "Термо-чашка", description: "Чорна з артом, тримає тепло до 6 год", price: "490 ₴", icon: Coffee, image: art3 },
+      { id: "case", name: "Чохол на телефон", description: "Чорний, з артом «GF Monogram»", price: "420 ₴", icon: Smartphone, image: art4 },
+      { id: "vinyl", name: "Вініл LP «!3 Messages»", description: "180-грамовий чорний вініл, гейтфолд", price: "1490 ₴", icon: Disc3, image: art5, badge: "Vinyl" },
+      { id: "cd-signed", name: "CD з автографом", description: "Колекційне видання, підписане гуртом", price: "590 ₴", icon: Disc3, image: art6, badge: "Signed" },
+      { id: "flag", name: "Прапор-банер", description: "Великий тканинний банер 90×150 см", price: "750 ₴", icon: Flag, image: art1 },
+      { id: "tapestry", name: "Гобелен на стіну", description: "100×150 см, арт «Crimson Angel»", price: "990 ₴", icon: ImageIcon, image: art6 },
+      { id: "box-set", name: "Колекційна коробка", description: "Постер, патч, значки, листівки в боксі GF", price: "1290 ₴", icon: Package, image: art5, badge: "Box Set" },
+      { id: "figurine", name: "Колекційна фігурка", description: "Лімітована смоляна статуетка янгола GF", price: "1890 ₴", icon: Gem, image: art1, badge: "Limited" },
     ],
   },
 ];
@@ -174,7 +127,7 @@ function ItemCard({ item, onBuy }: { item: Item; onBuy: () => void }) {
             src={item.image}
             alt={item.name}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-contain p-4 opacity-95 transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#8a2be2] transition-colors group-hover:text-[#00f0ff]">
