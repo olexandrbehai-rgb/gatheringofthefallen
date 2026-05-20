@@ -4,12 +4,12 @@ import { ShoppingCart } from "lucide-react";
 import { ProductMockup, type MockupShape } from "@/components/ProductMockup";
 import { ProductModal, type ModalProduct, type ProductColor } from "@/components/ProductModal";
 
-import art1 from "@assets/1_1779233683472.png";
-import art2 from "@assets/2_1779233683472.png";
-import art3 from "@assets/3_1779233683472.png";
-import art4 from "@assets/4_1779233683472.png";
-import art5 from "@assets/5_1779233683473.png";
-import art6 from "@assets/6_1779233683473.png";
+import art1 from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779281475325.jpg";
+import art2 from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779281475325.jpg";
+import art3 from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779281475325.jpg";
+import art4 from "@assets/grok-5877c3fa-402a-4e00-971f-c52708d24989_1779281475325.jpg";
+import art5 from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779281475325.jpg";
+import art6 from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779281475326.jpg";
 
 /**
  * MERCH STORE — Gathering of the Fallen
