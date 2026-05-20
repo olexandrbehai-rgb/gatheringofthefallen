@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import { ProductModal, type ModalProduct } from "@/components/ProductModal";
+import { useCurrency } from "@/hooks/useCurrency";
+import type { ProductType } from "@/lib/pricing";
 
 import tshirtAngelFront from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779282522766.jpg";
 import tshirtAngelBack from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779282522766.jpg";
@@ -18,9 +20,9 @@ const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 interface Item {
   id: string;
+  productType: ProductType;
   name: string;
   description: string;
-  price: number;
   images: string[];
   sizes: string[];
   badge?: string;
@@ -29,49 +31,49 @@ interface Item {
 const ITEMS: Item[] = [
   {
     id: "tshirt-angel",
-    name: "Оверсайз футболка — Янгол",
+    productType: "tee-premium",
+    name: "Оверсайз футболка — Янгол (преміум)",
     description: "Повний арт занепалого янгола, фронт + спина",
-    price: 850,
     images: [tshirtAngelFront, tshirtAngelBack],
     sizes: APPAREL_SIZES,
   },
   {
     id: "tshirt-purple",
-    name: "Оверсайз футболка — Пурпур",
+    productType: "tee-premium",
+    name: "Оверсайз футболка — Пурпур (преміум)",
     description: "Спинний дизайн з тернами та логотипом GtF",
-    price: 850,
     images: [tshirtPurpleBack, tshirtGtfLogoBack],
     sizes: APPAREL_SIZES,
   },
   {
     id: "tshirt-fire",
-    name: "Оверсайз футболка — Вогонь",
+    productType: "tee-basic",
+    name: "Оверсайз футболка — Вогонь (базова)",
     description: "Янгол з вогняним волоссям, фронт-принт",
-    price: 850,
     images: [tshirtRedAngel],
     sizes: APPAREL_SIZES,
   },
   {
     id: "hoodie-fallen",
+    productType: "hoodie",
     name: "Худі — Занепалий Янгол",
     description: "Фронт-принт + великий арт замку на спині",
-    price: 1450,
     images: [hoodieRedAngel, hoodieDarkCastle],
     sizes: APPAREL_SIZES,
   },
   {
     id: "hoodie-goddess",
+    productType: "hoodie",
     name: "Худі — Пурпурна Богиня",
     description: "Фронт-принт пурпурного янгола",
-    price: 1450,
     images: [hoodiePurpleAngel],
     sizes: APPAREL_SIZES,
   },
   {
     id: "bomber-gtf",
+    productType: "bomber",
     name: "Бомбер — Gathering of the Fallen",
     description: "Лого GtF на грудях, арт янгола на спині",
-    price: 2200,
     images: [bomberLogoFront, bomberAngelBack],
     sizes: APPAREL_SIZES,
     badge: "New",
@@ -79,8 +81,10 @@ const ITEMS: Item[] = [
 ];
 
 function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }) {
+  const { priceFor, format } = useCurrency();
   const [hoverIdx, setHoverIdx] = useState(0);
   const heroImg = item.images[hoverIdx] ?? item.images[0];
+  const price = priceFor(item.productType);
 
   return (
     <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
@@ -131,7 +135,7 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-white/10">
-          <div className="font-mono text-lg text-[#00f0ff]">{item.price} ₴</div>
+          <div className="font-mono text-lg text-[#00f0ff]">{format(price)}</div>
           <button
             onClick={() => onOpen(item)}
             className="group/btn relative overflow-hidden rounded-sm border border-[#8a2be2]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#00f0ff] transition-all hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_18px_rgba(0,240,255,0.55)]"
@@ -155,9 +159,9 @@ export default function Merch() {
     () => (item: Item) =>
       setActive({
         id: item.id,
+        productType: item.productType,
         name: item.name,
         description: item.description,
-        price: item.price,
         images: item.images,
         sizes: item.sizes,
       }),

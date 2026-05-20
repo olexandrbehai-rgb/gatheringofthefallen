@@ -9,24 +9,24 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const NOTIFICATION_EMAIL = "tetianabehai@gmail.com";
 
-const PRICE_CATALOG: Record<string, number> = {
-  "tshirt-angel": 850,
-  "tshirt-purple": 850,
-  "tshirt-fire": 850,
-  "hoodie-fallen": 1450,
-  "hoodie-goddess": 1450,
-  "bomber-gtf": 2200,
+type ProductType = "tee-basic" | "tee-premium" | "hoodie" | "bomber";
+type Currency = "CAD" | "UAH" | "USD" | "PLN";
+
+const PRICE_TABLE: Record<ProductType, Record<Currency, number>> = {
+  "tee-basic":   { CAD: 45,  UAH: 1650, USD: 33,  PLN: 135 },
+  "tee-premium": { CAD: 58,  UAH: 2100, USD: 43,  PLN: 174 },
+  "hoodie":      { CAD: 95,  UAH: 3500, USD: 70,  PLN: 285 },
+  "bomber":      { CAD: 185, UAH: 6800, USD: 136, PLN: 555 },
+};
+
+const CURRENCY_SYMBOL: Record<Currency, string> = {
+  CAD: "CA$",
+  UAH: "₴",
+  USD: "$",
+  PLN: "zł",
 };
 
 const ALLOWED_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
-
-const CURRENCY_RATES = {
-  UAH: 1,
-  USD: 1 / 41,
-  CAD: 1 / 30,
-  PLN: 1 / 10,
-} as const;
-type Currency = keyof typeof CURRENCY_RATES;
 
 const CartOrderSchema = z.object({
   customer: z.object({
@@ -35,6 +35,7 @@ const CartOrderSchema = z.object({
     phone: z.string().trim().min(3).max(40),
     country: z.string().trim().min(1).max(80),
     countryCode: z.string().trim().min(1).max(8),
+    currency: z.enum(["CAD", "UAH", "USD", "PLN"]),
     city: z.string().trim().min(1).max(120),
     street: z.string().trim().min(1).max(200),
     postalCode: z.string().trim().min(1).max(40),
@@ -43,6 +44,7 @@ const CartOrderSchema = z.object({
     .array(
       z.object({
         productId: z.string().min(1).max(80),
+        productType: z.enum(["tee-basic", "tee-premium", "hoodie", "bomber"]),
         name: z.string().min(1).max(200),
         size: z.string().max(8).optional().default(""),
         qty: z.number().int().min(1).max(20),
@@ -50,9 +52,6 @@ const CartOrderSchema = z.object({
     )
     .min(1)
     .max(30),
-  totals: z.object({
-    currency: z.enum(["UAH", "USD", "CAD", "PLN"]),
-  }),
 });
 
 function escapeHtml(s: string): string {
@@ -64,27 +63,35 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#039;");
 }
 
-interface ServerItem {
+function formatMoney(amount: number, currency: Currency): string {
+  if (currency === "UAH" || currency === "PLN") {
+    return `${Math.round(amount)} ${CURRENCY_SYMBOL[currency]}`;
+  }
+  return `${CURRENCY_SYMBOL[currency]}${amount.toFixed(amount % 1 === 0 ? 0 : 2)}`;
+}
+
+interface PricedItem {
   productId: string;
+  productType: ProductType;
   name: string;
   size: string;
   qty: number;
-  priceUah: number;
-  subtotalUah: number;
+  unitLocal: number;
+  subtotalLocal: number;
+  unitCad: number;
+  subtotalCad: number;
 }
-interface ServerTotals {
-  uah: number;
-  currency: Currency;
-  converted: number;
-}
+
 interface OrderCtx {
   customer: z.infer<typeof CartOrderSchema>["customer"];
-  items: ServerItem[];
-  totals: ServerTotals;
+  items: PricedItem[];
+  currency: Currency;
+  totalLocal: number;
+  totalCad: number;
 }
 
 function buildEmailHtml(order: OrderCtx, orderId: number): string {
-  const { customer, items, totals } = order;
+  const { customer, items, currency, totalLocal, totalCad } = order;
   const rows = items
     .map(
       (i) => `
@@ -92,7 +99,10 @@ function buildEmailHtml(order: OrderCtx, orderId: number): string {
         <td style="padding:8px 12px;border-top:1px solid #222;color:#fff;">${escapeHtml(i.name)}</td>
         <td style="padding:8px 12px;border-top:1px solid #222;color:#ccc;text-align:center;">${escapeHtml(i.size || "—")}</td>
         <td style="padding:8px 12px;border-top:1px solid #222;color:#ccc;text-align:center;">${i.qty}</td>
-        <td style="padding:8px 12px;border-top:1px solid #222;color:#00f0ff;text-align:right;">${i.subtotalUah} ₴</td>
+        <td style="padding:8px 12px;border-top:1px solid #222;color:#00f0ff;text-align:right;">
+          ${formatMoney(i.subtotalLocal, currency)}
+          ${currency !== "CAD" ? `<div style="color:#666;font-size:11px;">≈ ${formatMoney(i.subtotalCad, "CAD")}</div>` : ""}
+        </td>
       </tr>`,
     )
     .join("");
@@ -123,13 +133,17 @@ function buildEmailHtml(order: OrderCtx, orderId: number): string {
         <tbody>${rows}</tbody>
         <tfoot>
           <tr style="border-top:2px solid #00f0ff;background:#0a0a0a;">
-            <td colspan="3" style="padding:12px;color:#00f0ff;font-weight:bold;text-transform:uppercase;">Всього (₴):</td>
-            <td style="padding:12px;color:#00f0ff;text-align:right;font-weight:bold;font-size:18px;">${totals.uah} ₴</td>
+            <td colspan="3" style="padding:12px;color:#00f0ff;font-weight:bold;text-transform:uppercase;">Всього (${currency}):</td>
+            <td style="padding:12px;color:#00f0ff;text-align:right;font-weight:bold;font-size:18px;">${formatMoney(totalLocal, currency)}</td>
           </tr>
-          <tr style="background:#0a0a0a;">
-            <td colspan="3" style="padding:8px 12px;color:#888;text-transform:uppercase;">До сплати (${totals.currency}):</td>
-            <td style="padding:8px 12px;color:#fff;text-align:right;font-weight:bold;">${totals.converted} ${totals.currency}</td>
-          </tr>
+          ${
+            currency !== "CAD"
+              ? `<tr style="background:#0a0a0a;">
+                  <td colspan="3" style="padding:8px 12px;color:#888;text-transform:uppercase;">Еквівалент (CAD):</td>
+                  <td style="padding:8px 12px;color:#fff;text-align:right;font-weight:bold;">${formatMoney(totalCad, "CAD")}</td>
+                </tr>`
+              : ""
+          }
         </tfoot>
       </table>
       <p style="color:#555;font-size:11px;margin-top:24px;text-align:center;">З руїн цивілізації. З попелу — вічність.</p>
@@ -152,7 +166,7 @@ async function sendOrderEmail(order: OrderCtx, orderId: number): Promise<boolean
     from: `"GtF Merch" <${user}>`,
     to: NOTIFICATION_EMAIL,
     replyTo: order.customer.email,
-    subject: `Нове замовлення #${orderId}: ${order.totals.converted} ${order.totals.currency} (${order.items.length} поз.)`,
+    subject: `Нове замовлення #${orderId}: ${formatMoney(order.totalLocal, order.currency)} (${order.items.length} поз.)`,
     html: buildEmailHtml(order, orderId),
   });
   return true;
@@ -166,44 +180,40 @@ router.post("/cart-order", async (req: Request, res: Response): Promise<void> =>
   }
 
   try {
-    const { customer, items: rawItems, totals: rawTotals } = parsed.data;
+    const { customer, items: rawItems } = parsed.data;
+    const currency = customer.currency as Currency;
 
-    const items: ServerItem[] = [];
+    const items: PricedItem[] = [];
     for (const raw of rawItems) {
-      const priceUah = PRICE_CATALOG[raw.productId];
-      if (priceUah === undefined) {
-        res.status(400).json({ success: false, message: `Невідомий товар: ${raw.productId}` });
-        return;
-      }
       const size = (raw.size || "").toUpperCase();
       if (size && !ALLOWED_SIZES.has(size)) {
         res.status(400).json({ success: false, message: `Невірний розмір: ${size}` });
         return;
       }
+      const unitLocal = PRICE_TABLE[raw.productType][currency];
+      const unitCad = PRICE_TABLE[raw.productType]["CAD"];
       items.push({
         productId: raw.productId,
+        productType: raw.productType,
         name: raw.name.slice(0, 200),
         size,
         qty: raw.qty,
-        priceUah,
-        subtotalUah: priceUah * raw.qty,
+        unitLocal,
+        subtotalLocal: unitLocal * raw.qty,
+        unitCad,
+        subtotalCad: unitCad * raw.qty,
       });
     }
 
-    const totalUah = items.reduce((s, i) => s + i.subtotalUah, 0);
-    const currency = rawTotals.currency as Currency;
-    const rate = CURRENCY_RATES[currency];
-    const convertedRaw = totalUah * rate;
-    const converted =
-      currency === "UAH" ? Math.round(convertedRaw) : Math.round(convertedRaw * 100) / 100;
-
-    const totals: ServerTotals = { uah: totalUah, currency, converted };
+    const totalLocal = items.reduce((s, i) => s + i.subtotalLocal, 0);
+    const totalCad = items.reduce((s, i) => s + i.subtotalCad, 0);
 
     const productSummary = items.map((i) => `${i.name} (${i.size || "—"}) × ${i.qty}`).join("\n");
     const sizesSummary = items.map((i) => i.size || "—").join(", ");
     const totalQty = items.reduce((s, i) => s + i.qty, 0);
     const [firstName, ...rest] = customer.name.split(/\s+/);
     const lastName = rest.join(" ");
+    const totalDisplay = `${formatMoney(totalLocal, currency)}${currency !== "CAD" ? ` (≈ ${formatMoney(totalCad, "CAD")})` : ""}`;
 
     const dbResult = await pool.query(
       `INSERT INTO orders
@@ -215,7 +225,7 @@ router.post("/cart-order", async (req: Request, res: Response): Promise<void> =>
         productSummary,
         sizesSummary,
         totalQty,
-        `${converted} ${currency}`,
+        totalDisplay,
         firstName || customer.name,
         lastName,
         customer.email,
@@ -224,16 +234,16 @@ router.post("/cart-order", async (req: Request, res: Response): Promise<void> =>
         customer.city,
         customer.street,
         customer.postalCode,
-        `UAH: ${totalUah} ₴ | Items: ${JSON.stringify(items)}`,
+        `Currency: ${currency} | Local: ${totalLocal} | CAD: ${totalCad} | Items: ${JSON.stringify(items)}`,
         null,
         "CART_PENDING",
       ],
     );
 
     const orderId = dbResult.rows[0]?.id as number;
-    logger.info({ msg: "Cart order saved", orderId, items: items.length, totalUah });
+    logger.info({ msg: "Cart order saved", orderId, items: items.length, currency, totalLocal, totalCad });
 
-    const ctx: OrderCtx = { customer, items, totals };
+    const ctx: OrderCtx = { customer, items, currency, totalLocal, totalCad };
     let emailSent = false;
     try {
       emailSent = await sendOrderEmail(ctx, orderId);
@@ -241,7 +251,12 @@ router.post("/cart-order", async (req: Request, res: Response): Promise<void> =>
       logger.error({ msg: "Cart order email failed", error: err?.message });
     }
 
-    res.json({ success: true, orderId, emailSent, totals });
+    res.json({
+      success: true,
+      orderId,
+      emailSent,
+      totals: { currency, local: totalLocal, cad: totalCad },
+    });
   } catch (error: any) {
     logger.error({ msg: "Cart order error", error: error?.message });
     res.status(500).json({ success: false, message: "Internal error" });

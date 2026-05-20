@@ -1,16 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Check } from "lucide-react";
+import type { ProductType } from "@/lib/pricing";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export interface CartLine {
   key: string;
   productId: string;
+  productType: ProductType;
   name: string;
-  price: number;
   qty: number;
-  color?: { id: string; label: string; hex: string };
   size?: string;
   image?: string;
-  mockup?: string;
 }
 
 interface CartContextValue {
@@ -28,17 +28,18 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function makeKey(productId: string, colorId?: string, size?: string) {
-  return `${productId}::${colorId ?? "-"}::${size ?? "-"}`;
+function makeKey(productId: string, size?: string) {
+  return `${productId}::${size ?? "-"}`;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { priceFor } = useCurrency();
   const [items, setItems] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ name: string; ts: number } | null>(null);
 
   const addItem: CartContextValue["addItem"] = useCallback((item) => {
-    const key = makeKey(item.productId, item.color?.id, item.size);
+    const key = makeKey(item.productId, item.size);
     const qty = item.qty ?? 1;
     setItems((prev) => {
       const existing = prev.find((l) => l.key === key);
@@ -77,10 +78,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let t = 0;
     for (const l of items) {
       c += l.qty;
-      t += l.qty * l.price;
+      t += l.qty * priceFor(l.productType);
     }
     return { count: c, total: t };
-  }, [items]);
+  }, [items, priceFor]);
 
   const value: CartContextValue = {
     items,

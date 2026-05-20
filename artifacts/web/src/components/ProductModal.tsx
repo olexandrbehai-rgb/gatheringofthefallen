@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { X, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useCurrency } from "@/hooks/useCurrency";
+import type { ProductType } from "@/lib/pricing";
 
 export interface ModalProduct {
   id: string;
+  productType: ProductType;
   name: string;
   description: string;
-  price: number;
   images: string[];
   sizes: string[];
 }
@@ -18,6 +20,7 @@ interface Props {
 
 export function ProductModal({ product, onClose }: Props) {
   const { addItem, open: openCart } = useCart();
+  const { priceFor, format } = useCurrency();
   const [size, setSize] = useState<string | undefined>(undefined);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
@@ -45,12 +48,13 @@ export function ProductModal({ product, onClose }: Props) {
 
   if (!product) return null;
   const currentImg = product.images[Math.min(activeImg, product.images.length - 1)];
+  const unitPrice = priceFor(product.productType);
 
   const handleAdd = () => {
     addItem({
       productId: product.id,
+      productType: product.productType,
       name: product.name,
-      price: product.price,
       qty,
       size,
       image: currentImg,
@@ -112,7 +116,7 @@ export function ProductModal({ product, onClose }: Props) {
                 {product.name}
               </h2>
               <p className="mt-2 font-mono text-sm text-white/55">{product.description}</p>
-              <div className="mt-3 font-mono text-2xl text-[#00f0ff]">{product.price} ₴</div>
+              <div className="mt-3 font-mono text-2xl text-[#00f0ff]">{format(unitPrice)}</div>
             </div>
 
             <div>
@@ -159,7 +163,7 @@ export function ProductModal({ product, onClose }: Props) {
             <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between gap-4">
               <div>
                 <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/45">Разом</div>
-                <div className="font-mono text-2xl text-[#00f0ff]">{product.price * qty} ₴</div>
+                <div className="font-mono text-2xl text-[#00f0ff]">{format(unitPrice * qty)}</div>
               </div>
               <button
                 onClick={handleAdd}

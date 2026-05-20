@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useCurrency } from "@/hooks/useCurrency";
 import { CheckoutModal } from "./CheckoutModal";
 
 export function CartDrawer() {
   const { items, count, total, isOpen, close, removeItem, updateQty, clear } = useCart();
+  const { priceFor, format } = useCurrency();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
@@ -64,12 +66,6 @@ export function CartDrawer() {
                     <div className="flex-1 min-w-0">
                       <div className="font-mono text-sm text-white truncate">{line.name}</div>
                       <div className="mt-1 flex flex-wrap gap-1.5 text-[10px] font-mono uppercase tracking-[0.2em] text-white/55">
-                        {line.color && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-white/10 rounded-sm">
-                            <span className="inline-block w-2 h-2 rounded-full border border-white/30" style={{ backgroundColor: line.color.hex }} />
-                            {line.color.label}
-                          </span>
-                        )}
                         {line.size && (
                           <span className="px-1.5 py-0.5 border border-white/10 rounded-sm">{line.size}</span>
                         )}
@@ -101,7 +97,7 @@ export function CartDrawer() {
                         <Plus size={14} />
                       </button>
                     </div>
-                    <div className="font-mono text-[#00f0ff]">{line.price * line.qty} ₴</div>
+                    <div className="font-mono text-[#00f0ff]">{format(priceFor(line.productType) * line.qty)}</div>
                   </div>
                 </li>
               ))}
@@ -112,7 +108,7 @@ export function CartDrawer() {
         <footer className="border-t border-white/10 px-5 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-[0.3em] text-white/55">Разом</span>
-            <span className="font-mono text-2xl text-[#00f0ff]">{total} ₴</span>
+            <span className="font-mono text-2xl text-[#00f0ff]">{format(total)}</span>
           </div>
           <button
             disabled={items.length === 0}
