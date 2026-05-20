@@ -16,7 +16,7 @@ function getStripe() {
   return new Stripe(key);
 }
 
-const NOTIFICATION_EMAIL = "gatheringofthefallen@gmail.com";
+const NOTIFICATION_EMAIL = "tetianabehai@gmail.com";
 const CURRENCY = "cad";
 
 type ProductId = "t-shirt" | "hoodie" | "bomber" | "cap";

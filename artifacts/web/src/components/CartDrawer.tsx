@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { CheckoutModal } from "./CheckoutModal";
 
 export function CartDrawer() {
   const { items, count, total, isOpen, close, removeItem, updateQty, clear } = useCart();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -114,6 +116,7 @@ export function CartDrawer() {
           </div>
           <button
             disabled={items.length === 0}
+            onClick={() => setCheckoutOpen(true)}
             className="w-full rounded border border-[#8a2be2]/70 bg-black px-5 py-3 font-mono text-sm uppercase tracking-[0.3em] text-[#00f0ff] hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_22px_rgba(0,240,255,0.55)] transition-all disabled:opacity-40 disabled:pointer-events-none"
           >
             Оформити замовлення
@@ -128,6 +131,13 @@ export function CartDrawer() {
           )}
         </footer>
       </aside>
+      <CheckoutModal
+        open={checkoutOpen}
+        onClose={() => {
+          setCheckoutOpen(false);
+          close();
+        }}
+      />
     </>
   );
 }

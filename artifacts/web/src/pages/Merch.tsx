@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
-import { ProductMockup, type MockupShape } from "@/components/ProductMockup";
-import { ProductModal, type ModalProduct, type ProductColor } from "@/components/ProductModal";
+import { ProductModal, type ModalProduct } from "@/components/ProductModal";
 
 import tshirtAngelFront from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779282522766.jpg";
 import tshirtAngelBack from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779282522766.jpg";
@@ -15,133 +14,98 @@ import hoodiePurpleAngel from "@assets/grok-f5aaf40a-1ced-416e-8573-df8b2f9ecc7f
 import bomberLogoFront from "@assets/grok-facb31e0-2ffb-4b4a-8b65-bf04c6396de1_1779282522767.jpg";
 import bomberAngelBack from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779282522766.jpg";
 
-const CLOTHING_COLORS: ProductColor[] = [
-  { id: "black", label: "Чорний", hex: "#0a0a0a" },
-  { id: "charcoal", label: "Графіт", hex: "#1f2937" },
-];
-
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-
-type Category = "clothing";
 
 interface Item {
   id: string;
   name: string;
   description: string;
   price: number;
-  shape: MockupShape;
-  print?: string;
-  images?: string[];
-  colors?: ProductColor[];
-  sizes?: string[];
-  sizeLabel?: string;
+  images: string[];
+  sizes: string[];
   badge?: string;
 }
 
-const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
+const ITEMS: Item[] = [
   {
-    id: "clothing",
-    label: "Одяг",
-    items: [
-      {
-        id: "tshirt-angel",
-        name: "Оверсайз футболка — Янгол",
-        description: "Повний арт занепалого янгола, фронт + спина",
-        price: 850,
-        shape: "tee",
-        images: [tshirtAngelFront, tshirtAngelBack],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-      },
-      {
-        id: "tshirt-purple",
-        name: "Оверсайз футболка — Пурпур",
-        description: "Спинний дизайн з тернами та логотипом GtF",
-        price: 850,
-        shape: "tee",
-        images: [tshirtPurpleBack, tshirtGtfLogoBack],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-      },
-      {
-        id: "tshirt-fire",
-        name: "Оверсайз футболка — Вогонь",
-        description: "Янгол з вогняним волоссям, фронт-принт",
-        price: 850,
-        shape: "tee",
-        images: [tshirtRedAngel],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-      },
-      {
-        id: "hoodie-fallen",
-        name: "Худі — Занепалий Янгол",
-        description: "Фронт-принт + великий арт замку на спині",
-        price: 1450,
-        shape: "hoodie",
-        images: [hoodieRedAngel, hoodieDarkCastle],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-      },
-      {
-        id: "hoodie-goddess",
-        name: "Худі — Пурпурна Богиня",
-        description: "Фронт-принт пурпурного янгола",
-        price: 1450,
-        shape: "hoodie",
-        images: [hoodiePurpleAngel],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-      },
-      {
-        id: "bomber-gtf",
-        name: "Бомбер — Gathering of the Fallen",
-        description: "Лого GtF на грудях, арт янгола на спині",
-        price: 2200,
-        shape: "bomber",
-        images: [bomberLogoFront, bomberAngelBack],
-        colors: CLOTHING_COLORS,
-        sizes: APPAREL_SIZES,
-        badge: "New",
-      },
-    ],
+    id: "tshirt-angel",
+    name: "Оверсайз футболка — Янгол",
+    description: "Повний арт занепалого янгола, фронт + спина",
+    price: 850,
+    images: [tshirtAngelFront, tshirtAngelBack],
+    sizes: APPAREL_SIZES,
+  },
+  {
+    id: "tshirt-purple",
+    name: "Оверсайз футболка — Пурпур",
+    description: "Спинний дизайн з тернами та логотипом GtF",
+    price: 850,
+    images: [tshirtPurpleBack, tshirtGtfLogoBack],
+    sizes: APPAREL_SIZES,
+  },
+  {
+    id: "tshirt-fire",
+    name: "Оверсайз футболка — Вогонь",
+    description: "Янгол з вогняним волоссям, фронт-принт",
+    price: 850,
+    images: [tshirtRedAngel],
+    sizes: APPAREL_SIZES,
+  },
+  {
+    id: "hoodie-fallen",
+    name: "Худі — Занепалий Янгол",
+    description: "Фронт-принт + великий арт замку на спині",
+    price: 1450,
+    images: [hoodieRedAngel, hoodieDarkCastle],
+    sizes: APPAREL_SIZES,
+  },
+  {
+    id: "hoodie-goddess",
+    name: "Худі — Пурпурна Богиня",
+    description: "Фронт-принт пурпурного янгола",
+    price: 1450,
+    images: [hoodiePurpleAngel],
+    sizes: APPAREL_SIZES,
+  },
+  {
+    id: "bomber-gtf",
+    name: "Бомбер — Gathering of the Fallen",
+    description: "Лого GtF на грудях, арт янгола на спині",
+    price: 2200,
+    images: [bomberLogoFront, bomberAngelBack],
+    sizes: APPAREL_SIZES,
+    badge: "New",
   },
 ];
 
 function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }) {
-  const [previewColor, setPreviewColor] = useState(item.colors?.[0]?.hex ?? "#0a0a0a");
-  const hasImages = !!item.images && item.images.length > 0;
   const [hoverIdx, setHoverIdx] = useState(0);
-  const heroImg = hasImages ? item.images![hoverIdx] ?? item.images![0] : undefined;
+  const heroImg = item.images[hoverIdx] ?? item.images[0];
 
   return (
     <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
-      <div className={`relative w-full overflow-hidden ${hasImages ? "h-[320px] bg-[#0a0a0a]" : "aspect-[4/5]"}`}>
+      <div className="relative w-full aspect-[3/4] overflow-hidden">
         <button
           type="button"
           onClick={() => onOpen(item)}
           aria-label={`Відкрити ${item.name}`}
           className="absolute inset-0 w-full h-full z-0"
         >
-          {hasImages ? (
-            <img
-              src={heroImg}
-              alt={item.name}
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-            />
-          ) : (
-            <ProductMockup shape={item.shape} color={previewColor} print={item.print} />
-          )}
+          <img
+            src={heroImg}
+            alt={item.name}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          />
         </button>
         {item.badge && (
           <span className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-sm border border-[#8a2be2]/60 bg-black/85 font-mono text-[10px] uppercase tracking-[0.3em] text-[#a855f7] pointer-events-none">
             {item.badge}
           </span>
         )}
-        {hasImages && item.images!.length > 1 && (
+        {item.images.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            {item.images!.map((_, i) => {
+            {item.images.map((_, i) => {
               const active = i === hoverIdx;
               return (
                 <button
@@ -166,26 +130,6 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
           <p className="mt-2 text-sm font-mono text-white/55 leading-snug min-h-[2.5em]">{item.description}</p>
         </div>
 
-        {!hasImages && item.colors && item.colors.length > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">Колір</span>
-            <div className="flex gap-1.5">
-              {item.colors.map((c) => {
-                const active = previewColor === c.hex;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setPreviewColor(c.hex)}
-                    aria-label={c.label}
-                    className={`w-5 h-5 rounded-full border transition-all ${active ? "border-[#00f0ff] shadow-[0_0_0_2px_rgba(0,240,255,0.2)]" : "border-white/25 hover:border-white/60"}`}
-                    style={{ backgroundColor: c.hex }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-white/10">
           <div className="font-mono text-lg text-[#00f0ff]">{item.price} ₴</div>
           <button
@@ -206,7 +150,6 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
 
 export default function Merch() {
   const [active, setActive] = useState<ModalProduct | null>(null);
-  const items = CATEGORIES[0].items;
 
   const open = useMemo(
     () => (item: Item) =>
@@ -215,12 +158,8 @@ export default function Merch() {
         name: item.name,
         description: item.description,
         price: item.price,
-        shape: item.shape,
-        print: item.print,
         images: item.images,
-        colors: item.colors,
         sizes: item.sizes,
-        sizeLabel: item.sizeLabel,
       }),
     [],
   );
@@ -246,7 +185,7 @@ export default function Merch() {
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-        {items.map((item) => (
+        {ITEMS.map((item) => (
           <ItemCard key={item.id} item={item} onOpen={open} />
         ))}
       </div>
