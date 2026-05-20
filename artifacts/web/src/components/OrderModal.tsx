@@ -16,8 +16,11 @@ interface OrderModalProps {
 }
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
-const PAYPAL_CLIENT_ID =
+const PAYPAL_SANDBOX_FALLBACK =
   "EPPTtiHG2EWOr-rep0FJk6xizUyTRjUQbqdnxcuNFw0YUSXkshCmh8aWLTND7TpR8PW00YXgEn6qgAvE";
+const PAYPAL_CLIENT_ID =
+  (import.meta.env.VITE_PAYPAL_CLIENT_ID as string | undefined) ??
+  PAYPAL_SANDBOX_FALLBACK;
 
 type OrderStep = "form" | "payment" | "success";
 type PaymentMethod = "stripe" | "paypal";
@@ -220,6 +223,7 @@ export function OrderModal({ product, onClose }: OrderModalProps) {
       const timer = setTimeout(renderPaypalButtons, 300);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [step, paymentMethod, sdkReady, renderPaypalButtons]);
 
   if (!product) return null;

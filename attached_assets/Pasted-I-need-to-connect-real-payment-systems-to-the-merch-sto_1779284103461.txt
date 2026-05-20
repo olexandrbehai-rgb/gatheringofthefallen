@@ -1,0 +1,59 @@
+I need to connect real payment systems to the merch store.
+The site already has Stripe and PayPal working in test/sandbox mode.
+
+TASK 1 — STRIPE LIVE MODE:
+1. In Replit Secrets, I will add these keys (do NOT hardcode them):
+   - STRIPE_SECRET_KEY = (live key starting with sk_live_...)
+   - VITE_STRIPE_PUBLISHABLE_KEY = (live key starting with pk_live_...)
+   - STRIPE_WEBHOOK_SECRET = (from Stripe dashboard webhook settings)
+
+2. Update the code to use these environment variables everywhere 
+   Stripe is initialized — check both artifacts/api-server and artifacts/web
+
+3. After I add the live keys, the checkout must work with real cards
+
+TASK 2 — STRIPE WEBHOOK:
+1. Create/verify the webhook endpoint: POST /api/webhook/stripe
+2. It must handle these events:
+   - payment_intent.succeeded → mark order as PAID in PostgreSQL
+   - payment_intent.payment_failed → mark order as FAILED
+3. The endpoint must verify Stripe signature using STRIPE_WEBHOOK_SECRET
+4. After deploy, I will register this URL in Stripe dashboard:
+   https://gathering-of-the-fallen.replit.app/api/webhook/stripe
+
+TASK 3 — PAYPAL LIVE MODE:
+1. In Replit Secrets, I will add:
+   - PAYPAL_CLIENT_ID = (real business account client ID)
+   - PAYPAL_CLIENT_SECRET = (real business account secret)
+   - VITE_PAYPAL_CLIENT_ID = (same client ID for frontend)
+
+2. Find the hardcoded PayPal Client ID in OrderModal.tsx 
+   and replace it with import.meta.env.VITE_PAYPAL_CLIENT_ID
+
+3. Switch PayPal from sandbox to production mode:
+   Change environment="sandbox" to environment="production" 
+   in the PayPal Buttons component
+
+TASK 4 — EMAIL NOTIFICATIONS:
+1. In Replit Secrets, I will add:
+   - SMTP_EMAIL = (Gmail address)
+   - SMTP_PASSWORD = (Gmail App Password, not regular password)
+
+2. Verify nodemailer is configured to use these env variables
+3. On successful payment send email to SMTP_EMAIL with:
+   - Order number
+   - Customer name + address  
+   - Items ordered (name, size, color, quantity)
+   - Total amount paid
+   - Payment method (Stripe/PayPal)
+
+TASK 5 — SAFETY CHECKS:
+1. Make sure NO live keys are hardcoded anywhere in the code
+2. Add a check: if environment is development, use test keys automatically
+3. Fix the known TypeScript error in OrderModal.tsx:217 
+   (Not all code paths return a value)
+4. Test that the order saves to PostgreSQL after payment
+
+DO NOT change any visual design.
+DO NOT remove test keys yet — just add the live key variables alongside.
+Show me which Replit Secrets I need to add manually.

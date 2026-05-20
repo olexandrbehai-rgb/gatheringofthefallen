@@ -320,7 +320,15 @@ async function processPaidSession(session: Stripe.Checkout.Session) {
   return { alreadyProcessed: false, total, stripeFee, productionCost, netProfit, productName, size, quantity, customerName };
 }
 
-router.post("/stripe/webhook", async (req: Request, res: Response): Promise<void> => {
+async function updateOrderStatusByPaymentIntent(piId: string, status: string) {
+  const result = await pool.query(
+    `UPDATE orders SET paypal_status = $1 WHERE paypal_order_id = $2 RETURNING id`,
+    [status, piId],
+  );
+  return result.rowCount ?? 0;
+}
+
+async function stripeWebhookHandler(req: Request, res: Response): Promise<void> {
   const sig = req.headers["stripe-signature"] as string | undefined;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -345,26 +353,49 @@ router.post("/stripe/webhook", async (req: Request, res: Response): Promise<void
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      if (session.payment_status === "paid") {
-        await processPaidSession(session);
-      } else {
-        logger.info({
-          msg: "Webhook: session completed but not paid",
-          sessionId: session.id,
-          payment_status: session.payment_status,
-        });
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.payment_status === "paid") {
+          await processPaidSession(session);
+        } else {
+          logger.info({
+            msg: "Webhook: session completed but not paid",
+            sessionId: session.id,
+            payment_status: session.payment_status,
+          });
+        }
+        break;
       }
-    } else {
-      logger.debug({ msg: "Unhandled Stripe event type", type: event.type });
+      case "payment_intent.succeeded": {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        const updated = await updateOrderStatusByPaymentIntent(pi.id, "STRIPE_PAID");
+        logger.info({ msg: "payment_intent.succeeded", paymentIntent: pi.id, rowsUpdated: updated });
+        break;
+      }
+      case "payment_intent.payment_failed": {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        const updated = await updateOrderStatusByPaymentIntent(pi.id, "STRIPE_FAILED");
+        logger.warn({
+          msg: "payment_intent.payment_failed",
+          paymentIntent: pi.id,
+          rowsUpdated: updated,
+          reason: pi.last_payment_error?.message,
+        });
+        break;
+      }
+      default:
+        logger.debug({ msg: "Unhandled Stripe event type", type: event.type });
     }
     res.json({ received: true });
   } catch (err: any) {
     logger.error({ msg: "Error processing webhook event", error: err.message });
     res.status(500).send("Webhook handler error");
   }
-});
+}
+
+router.post("/stripe/webhook", stripeWebhookHandler);
+router.post("/webhook/stripe", stripeWebhookHandler);
 
 router.get("/stripe/verify-session", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -400,7 +431,8 @@ router.get("/stripe/verify-session", async (req: Request, res: Response): Promis
 });
 
 router.get("/stripe/publishable-key", (_req: Request, res: Response): void => {
-  const key = process.env.STRIPE_PUBLISHABLE_KEY;
+  const key =
+    process.env.VITE_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY;
   if (!key) {
     res.status(500).json({ error: "Stripe not configured" });
     return;
