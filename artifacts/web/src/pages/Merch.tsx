@@ -15,24 +15,14 @@ import hoodiePurpleAngel from "@assets/grok-f5aaf40a-1ced-416e-8573-df8b2f9ecc7f
 import bomberLogoFront from "@assets/grok-facb31e0-2ffb-4b4a-8b65-bf04c6396de1_1779282522767.jpg";
 import bomberAngelBack from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779282522766.jpg";
 
-import legacyArt1 from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779281475325.jpg";
-import legacyArt2 from "@assets/grok-5877c3fa-402a-4e00-971f-c52708d24989_1779281475325.jpg";
-import legacyArt3 from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779281475325.jpg";
-import legacyArt4 from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779281475326.jpg";
-import legacyArt5 from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779281475325.jpg";
-import legacyArt6 from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779281475325.jpg";
-
 const CLOTHING_COLORS: ProductColor[] = [
   { id: "black", label: "Чорний", hex: "#0a0a0a" },
   { id: "charcoal", label: "Графіт", hex: "#1f2937" },
 ];
 
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-const SHOE_SIZES = ["36", "38", "40", "42", "44"];
-const POSTER_SIZES = ["A2", "A1"];
-const PHONE_MODELS = ["iPhone 13", "iPhone 14", "iPhone 15", "Galaxy S23", "Galaxy S24"];
 
-type Category = "clothing" | "accessories" | "collectibles";
+type Category = "clothing";
 
 interface Item {
   id: string;
@@ -116,47 +106,6 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
       },
     ],
   },
-  {
-    id: "accessories",
-    label: "Аксесуари",
-    items: [
-      { id: "pins", name: "Набір значків (5 шт)", description: "Лого, монограма, цитата — металева емаль", price: 320, shape: "pin", print: legacyArt1 },
-      { id: "keychain", name: "Брелок металевий", description: "Литий брелок з монограмою GF", price: 180, shape: "key", print: legacyArt4, colors: [{ id: "silver", label: "Срібний", hex: "#cbd5e1" }, { id: "black-metal", label: "Чорний метал", hex: "#1f1f24" }] },
-      { id: "picks", name: "Медіатори (3 шт)", description: "Авторський набір для гітаристів", price: 150, shape: "pick", print: legacyArt5, badge: "Music", colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "purple", label: "Фіолетовий", hex: "#6d28d9" }] },
-      { id: "stickers", name: "Пак наліпок (10 шт)", description: "Лого, символи, цитати гурту", price: 120, shape: "sticker", print: legacyArt2 },
-      { id: "patch", name: "Тканинний патч", description: "Вишитий патч-янгол на одяг або рюкзак", price: 220, shape: "patch", print: legacyArt3 },
-      { id: "bracelet", name: "Браслет паракорд", description: "Чорний паракорд з металевим логотипом", price: 260, shape: "bracelet", print: legacyArt6, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }], sizes: ["S", "M", "L"], sizeLabel: "Обхват" },
-      { id: "necklace", name: "Кулон «GF Cross»", description: "Срібний кулон у формі готичного хреста", price: 690, shape: "necklace", print: legacyArt1, badge: "Limited", colors: [{ id: "silver", label: "Срібло", hex: "#cbd5e1" }, { id: "black", label: "Чорнене срібло", hex: "#1f1f24" }] },
-      { id: "mask", name: "Бафф-маска", description: "Чорна, з артом янгола", price: 240, shape: "mask", print: legacyArt2, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "purple", label: "Фіолет", hex: "#3b0764" }] },
-      { id: "socks", name: "Шкарпетки GF", description: "Чорні з фіолетовим логотипом", price: 180, shape: "socks", print: legacyArt5, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "white", label: "Білий", hex: "#f3f4f6" }], sizes: SHOE_SIZES, sizeLabel: "Розмір" },
-      { id: "tote", name: "Сумка-шопер", description: "Чорна канва з повним артом гурту", price: 420, shape: "tote", print: legacyArt4, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "natural", label: "Natural", hex: "#d6c7b2" }] },
-    ],
-  },
-  {
-    id: "collectibles",
-    label: "Колекційне",
-    items: [
-      { id: "poster", name: "Постер «Янгол»", description: "Темний арт, опція з підписом гурту", price: 350, shape: "poster", print: legacyArt1, badge: "Limited", sizes: POSTER_SIZES, sizeLabel: "Формат" },
-      { id: "notebook", name: "Нотатник з тисненням", description: "Чорна обкладинка з тисненим лого GF", price: 390, shape: "notebook", print: legacyArt6 },
-      { id: "mug", name: "Термо-чашка", description: "Тримає тепло до 6 год", price: 490, shape: "mug", print: legacyArt2 },
-      { id: "case", name: "Чохол на телефон", description: "Арт «GF Monogram»", price: 420, shape: "case", print: legacyArt4, sizes: PHONE_MODELS, sizeLabel: "Модель" },
-      { id: "vinyl", name: "Вініл LP «!3 Messages»", description: "180-грамовий чорний вініл, гейтфолд", price: 1490, shape: "vinyl", print: legacyArt5, badge: "Vinyl" },
-      { id: "cd-signed", name: "CD з автографом", description: "Колекційне видання, підписане гуртом", price: 590, shape: "vinyl", print: legacyArt6, badge: "Signed" },
-      { id: "flag", name: "Прапор-банер", description: "Тканинний банер 90×150 см", price: 750, shape: "flag", print: legacyArt3 },
-      { id: "tapestry", name: "Гобелен на стіну", description: "100×150 см, арт «Crimson Angel»", price: 990, shape: "tapestry", print: legacyArt1 },
-      { id: "box-set", name: "Колекційна коробка", description: "Постер, патч, значки, листівки в боксі", price: 1290, shape: "box", print: legacyArt2, badge: "Box Set" },
-      { id: "figurine", name: "Колекційна фігурка", description: "Лімітована смоляна статуетка янгола GF", price: 1890, shape: "figurine", print: legacyArt4, badge: "Limited" },
-    ],
-  },
-];
-
-type FilterId = "all" | Category;
-
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: "all", label: "Усе" },
-  { id: "clothing", label: "Одяг" },
-  { id: "accessories", label: "Аксесуари" },
-  { id: "collectibles", label: "Колекційне" },
 ];
 
 function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }) {
@@ -256,9 +205,8 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
 }
 
 export default function Merch() {
-  const [filter, setFilter] = useState<FilterId>("all");
   const [active, setActive] = useState<ModalProduct | null>(null);
-  const visible = CATEGORIES.filter((cat) => filter === "all" || cat.id === filter);
+  const items = CATEGORIES[0].items;
 
   const open = useMemo(
     () => (item: Item) =>
@@ -293,46 +241,13 @@ export default function Merch() {
           MERCH
         </h1>
         <p className="mt-4 max-w-2xl mx-auto font-mono text-sm text-white/55">
-          Одяг, аксесуари і колекційне для тих, хто йде з нами крізь попіл.
+          Одяг для тих, хто йде з нами крізь попіл.
         </p>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {FILTERS.map((f) => {
-            const isActive = filter === f.id;
-            return (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={`px-4 py-2 font-mono text-[11px] uppercase tracking-[0.3em] border transition-all ${
-                  isActive
-                    ? "border-[#8a2be2] text-white bg-[#8a2be2]/20 shadow-[0_0_18px_rgba(0,240,255,0.45)]"
-                    : "border-white/15 text-white/55 hover:border-[#8a2be2]/70 hover:text-white"
-                }`}
-              >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
       </header>
 
-      <div className="space-y-14">
-        {visible.map((cat) => (
-          <div key={cat.id}>
-            <div className="mb-5 flex items-center gap-4">
-              <h2 className="font-creepster text-3xl md:text-4xl text-white">{cat.label}</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-[#8a2be2]/70 to-transparent" />
-              <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/40">
-                {cat.items.length} items
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-              {cat.items.map((item) => (
-                <ItemCard key={item.id} item={item} onOpen={open} />
-              ))}
-            </div>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+        {items.map((item) => (
+          <ItemCard key={item.id} item={item} onOpen={open} />
         ))}
       </div>
 
