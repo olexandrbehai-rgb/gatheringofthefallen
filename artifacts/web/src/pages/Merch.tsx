@@ -4,28 +4,27 @@ import { ShoppingCart } from "lucide-react";
 import { ProductMockup, type MockupShape } from "@/components/ProductMockup";
 import { ProductModal, type ModalProduct, type ProductColor } from "@/components/ProductModal";
 
-import art1 from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779281475325.jpg";
-import art2 from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779281475325.jpg";
-import art3 from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779281475325.jpg";
-import art4 from "@assets/grok-5877c3fa-402a-4e00-971f-c52708d24989_1779281475325.jpg";
-import art5 from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779281475325.jpg";
-import art6 from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779281475326.jpg";
+import tshirtAngelFront from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779282522766.jpg";
+import tshirtAngelBack from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779282522766.jpg";
+import tshirtPurpleBack from "@assets/grok-eb168b15-a8fd-485f-87b0-6a6e78936ff8_1779282522767.jpg";
+import tshirtGtfLogoBack from "@assets/grok-e4486323-2796-4b7c-b1fc-7d8484dbb2cd_1779282522767.jpg";
+import tshirtRedAngel from "@assets/grok-d2da9d56-5ce6-429a-b6fd-005521590e2b_1779282522767.jpg";
+import hoodieRedAngel from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779282522766.jpg";
+import hoodieDarkCastle from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779282522766.jpg";
+import hoodiePurpleAngel from "@assets/grok-f5aaf40a-1ced-416e-8573-df8b2f9ecc7f_1779282522767.jpg";
+import bomberLogoFront from "@assets/grok-facb31e0-2ffb-4b4a-8b65-bf04c6396de1_1779282522767.jpg";
+import bomberAngelBack from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779282522766.jpg";
 
-/**
- * MERCH STORE — Gathering of the Fallen
- * ---------------------------------------------------------------
- * Кожен товар — справжній виріб (футболка/худі/кепка/чашка/постер ...)
- * з накладеним логотипом гурту. Колір тканини / розмір вибирається
- * у модалці і додається в робочий кошик (див. useCart).
- * ---------------------------------------------------------------
- * Щоб змінити ціну / арт — просто відредагуй поле в items нижче.
- */
+import legacyArt1 from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779281475325.jpg";
+import legacyArt2 from "@assets/grok-5877c3fa-402a-4e00-971f-c52708d24989_1779281475325.jpg";
+import legacyArt3 from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779281475325.jpg";
+import legacyArt4 from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779281475326.jpg";
+import legacyArt5 from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779281475325.jpg";
+import legacyArt6 from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779281475325.jpg";
 
 const CLOTHING_COLORS: ProductColor[] = [
   { id: "black", label: "Чорний", hex: "#0a0a0a" },
   { id: "charcoal", label: "Графіт", hex: "#1f2937" },
-  { id: "purple", label: "Фіолет", hex: "#3b0764" },
-  { id: "white", label: "Білий", hex: "#f3f4f6" },
 ];
 
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -42,6 +41,7 @@ interface Item {
   price: number;
   shape: MockupShape;
   print?: string;
+  images?: string[];
   colors?: ProductColor[];
   sizes?: string[];
   sizeLabel?: string;
@@ -53,48 +53,99 @@ const CATEGORIES: { id: Category; label: string; items: Item[] }[] = [
     id: "clothing",
     label: "Одяг",
     items: [
-      { id: "tshirt-oversize", name: "Oversize футболка «Янгол»", description: "Футболка з великим фронт-принтом", price: 650, shape: "tee", print: art3, colors: CLOTHING_COLORS, sizes: APPAREL_SIZES },
-      { id: "tshirt-classic", name: "Футболка «Терни»", description: "Класичний крій, фронт-дизайн з логотипом", price: 550, shape: "tee", print: art1, colors: CLOTHING_COLORS, sizes: APPAREL_SIZES },
-      { id: "hoodie", name: "Худі «Fallen Crest»", description: "Худі з фронт-принтом янгола", price: 1450, shape: "hoodie", print: art2, colors: CLOTHING_COLORS, sizes: APPAREL_SIZES },
-      { id: "zip-hoodie", name: "Zip-худі «Crimson Wings»", description: "Худі на блискавці з емблемою GF", price: 1550, shape: "zip-hoodie", print: art6, colors: CLOTHING_COLORS, sizes: APPAREL_SIZES, badge: "New" },
-      { id: "longsleeve", name: "Лонгслів «GF Monogram»", description: "Лонгслів з круглим принтом на спині", price: 850, shape: "longsleeve", print: art5, colors: CLOTHING_COLORS, sizes: APPAREL_SIZES },
-      { id: "bomber", name: "Бомбер «Cathedral»", description: "Бомбер з великим спинним артом", price: 1990, shape: "bomber", print: art4, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[1], CLOTHING_COLORS[2]], sizes: APPAREL_SIZES },
-      { id: "cap", name: "Кепка з вишивкою", description: "Вишите лого GF, регульований ремінець", price: 450, shape: "cap", print: art1, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]], sizes: ["One size"], sizeLabel: "Розмір" },
-      { id: "beanie", name: "Бейні «Thorns»", description: "Чорна шапка з тканим патчем", price: 390, shape: "beanie", print: art5, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[1]], sizes: ["One size"], sizeLabel: "Розмір" },
-      { id: "crop-top", name: "Кроп-топ «Dark Angel»", description: "Жіночий кроп з артом янгола", price: 580, shape: "tee-crop", print: art3, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]], sizes: ["XS", "S", "M", "L"] },
-      { id: "scarf", name: "Шарф-бандана", description: "Двосторонній арт з тернами та логотипом", price: 320, shape: "scarf", print: art4, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]] },
+      {
+        id: "tshirt-angel",
+        name: "Оверсайз футболка — Янгол",
+        description: "Повний арт занепалого янгола, фронт + спина",
+        price: 850,
+        shape: "tee",
+        images: [tshirtAngelFront, tshirtAngelBack],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+      },
+      {
+        id: "tshirt-purple",
+        name: "Оверсайз футболка — Пурпур",
+        description: "Спинний дизайн з тернами та логотипом GtF",
+        price: 850,
+        shape: "tee",
+        images: [tshirtPurpleBack, tshirtGtfLogoBack],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+      },
+      {
+        id: "tshirt-fire",
+        name: "Оверсайз футболка — Вогонь",
+        description: "Янгол з вогняним волоссям, фронт-принт",
+        price: 850,
+        shape: "tee",
+        images: [tshirtRedAngel],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+      },
+      {
+        id: "hoodie-fallen",
+        name: "Худі — Занепалий Янгол",
+        description: "Фронт-принт + великий арт замку на спині",
+        price: 1450,
+        shape: "hoodie",
+        images: [hoodieRedAngel, hoodieDarkCastle],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+      },
+      {
+        id: "hoodie-goddess",
+        name: "Худі — Пурпурна Богиня",
+        description: "Фронт-принт пурпурного янгола",
+        price: 1450,
+        shape: "hoodie",
+        images: [hoodiePurpleAngel],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+      },
+      {
+        id: "bomber-gtf",
+        name: "Бомбер — Gathering of the Fallen",
+        description: "Лого GtF на грудях, арт янгола на спині",
+        price: 2200,
+        shape: "bomber",
+        images: [bomberLogoFront, bomberAngelBack],
+        colors: CLOTHING_COLORS,
+        sizes: APPAREL_SIZES,
+        badge: "New",
+      },
     ],
   },
   {
     id: "accessories",
     label: "Аксесуари",
     items: [
-      { id: "pins", name: "Набір значків (5 шт)", description: "Лого, монограма, цитата — металева емаль", price: 320, shape: "pin", print: art1 },
-      { id: "keychain", name: "Брелок металевий", description: "Литий брелок з монограмою GF", price: 180, shape: "key", print: art4, colors: [{ id: "silver", label: "Срібний", hex: "#cbd5e1" }, { id: "black-metal", label: "Чорний метал", hex: "#1f1f24" }] },
-      { id: "picks", name: "Медіатори (3 шт)", description: "Авторський набір для гітаристів", price: 150, shape: "pick", print: art5, badge: "Music", colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "purple", label: "Фіолетовий", hex: "#6d28d9" }] },
-      { id: "stickers", name: "Пак наліпок (10 шт)", description: "Лого, символи, цитати гурту", price: 120, shape: "sticker", print: art2 },
-      { id: "patch", name: "Тканинний патч", description: "Вишитий патч-янгол на одяг або рюкзак", price: 220, shape: "patch", print: art3 },
-      { id: "bracelet", name: "Браслет паракорд", description: "Чорний паракорд з металевим логотипом", price: 260, shape: "bracelet", print: art6, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]], sizes: ["S", "M", "L"], sizeLabel: "Обхват" },
-      { id: "necklace", name: "Кулон «GF Cross»", description: "Срібний кулон у формі готичного хреста", price: 690, shape: "necklace", print: art1, badge: "Limited", colors: [{ id: "silver", label: "Срібло", hex: "#cbd5e1" }, { id: "black", label: "Чорнене срібло", hex: "#1f1f24" }] },
-      { id: "mask", name: "Бафф-маска", description: "Чорна, з артом янгола", price: 240, shape: "mask", print: art2, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]] },
-      { id: "socks", name: "Шкарпетки GF", description: "Чорні з фіолетовим логотипом", price: 180, shape: "socks", print: art5, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[3]], sizes: SHOE_SIZES, sizeLabel: "Розмір" },
-      { id: "tote", name: "Сумка-шопер", description: "Чорна канва з повним артом гурту", price: 420, shape: "tote", print: art4, colors: [CLOTHING_COLORS[0], { id: "natural", label: "Natural", hex: "#d6c7b2" }] },
+      { id: "pins", name: "Набір значків (5 шт)", description: "Лого, монограма, цитата — металева емаль", price: 320, shape: "pin", print: legacyArt1 },
+      { id: "keychain", name: "Брелок металевий", description: "Литий брелок з монограмою GF", price: 180, shape: "key", print: legacyArt4, colors: [{ id: "silver", label: "Срібний", hex: "#cbd5e1" }, { id: "black-metal", label: "Чорний метал", hex: "#1f1f24" }] },
+      { id: "picks", name: "Медіатори (3 шт)", description: "Авторський набір для гітаристів", price: 150, shape: "pick", print: legacyArt5, badge: "Music", colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "purple", label: "Фіолетовий", hex: "#6d28d9" }] },
+      { id: "stickers", name: "Пак наліпок (10 шт)", description: "Лого, символи, цитати гурту", price: 120, shape: "sticker", print: legacyArt2 },
+      { id: "patch", name: "Тканинний патч", description: "Вишитий патч-янгол на одяг або рюкзак", price: 220, shape: "patch", print: legacyArt3 },
+      { id: "bracelet", name: "Браслет паракорд", description: "Чорний паракорд з металевим логотипом", price: 260, shape: "bracelet", print: legacyArt6, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }], sizes: ["S", "M", "L"], sizeLabel: "Обхват" },
+      { id: "necklace", name: "Кулон «GF Cross»", description: "Срібний кулон у формі готичного хреста", price: 690, shape: "necklace", print: legacyArt1, badge: "Limited", colors: [{ id: "silver", label: "Срібло", hex: "#cbd5e1" }, { id: "black", label: "Чорнене срібло", hex: "#1f1f24" }] },
+      { id: "mask", name: "Бафф-маска", description: "Чорна, з артом янгола", price: 240, shape: "mask", print: legacyArt2, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "purple", label: "Фіолет", hex: "#3b0764" }] },
+      { id: "socks", name: "Шкарпетки GF", description: "Чорні з фіолетовим логотипом", price: 180, shape: "socks", print: legacyArt5, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "white", label: "Білий", hex: "#f3f4f6" }], sizes: SHOE_SIZES, sizeLabel: "Розмір" },
+      { id: "tote", name: "Сумка-шопер", description: "Чорна канва з повним артом гурту", price: 420, shape: "tote", print: legacyArt4, colors: [{ id: "black", label: "Чорний", hex: "#0a0a0a" }, { id: "natural", label: "Natural", hex: "#d6c7b2" }] },
     ],
   },
   {
     id: "collectibles",
     label: "Колекційне",
     items: [
-      { id: "poster", name: "Постер «Янгол»", description: "Темний арт, опція з підписом гурту", price: 350, shape: "poster", print: art1, badge: "Limited", sizes: POSTER_SIZES, sizeLabel: "Формат" },
-      { id: "notebook", name: "Нотатник з тисненням", description: "Чорна обкладинка з тисненим лого GF", price: 390, shape: "notebook", print: art6, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[2]] },
-      { id: "mug", name: "Термо-чашка", description: "Тримає тепло до 6 год", price: 490, shape: "mug", print: art2, colors: [CLOTHING_COLORS[0], CLOTHING_COLORS[3], CLOTHING_COLORS[2]] },
-      { id: "case", name: "Чохол на телефон", description: "Арт «GF Monogram»", price: 420, shape: "case", print: art4, sizes: PHONE_MODELS, sizeLabel: "Модель" },
-      { id: "vinyl", name: "Вініл LP «!3 Messages»", description: "180-грамовий чорний вініл, гейтфолд", price: 1490, shape: "vinyl", print: art5, badge: "Vinyl" },
-      { id: "cd-signed", name: "CD з автографом", description: "Колекційне видання, підписане гуртом", price: 590, shape: "vinyl", print: art6, badge: "Signed" },
-      { id: "flag", name: "Прапор-банер", description: "Тканинний банер 90×150 см", price: 750, shape: "flag", print: art3 },
-      { id: "tapestry", name: "Гобелен на стіну", description: "100×150 см, арт «Crimson Angel»", price: 990, shape: "tapestry", print: art1 },
-      { id: "box-set", name: "Колекційна коробка", description: "Постер, патч, значки, листівки в боксі", price: 1290, shape: "box", print: art2, badge: "Box Set" },
-      { id: "figurine", name: "Колекційна фігурка", description: "Лімітована смоляна статуетка янгола GF", price: 1890, shape: "figurine", print: art4, badge: "Limited" },
+      { id: "poster", name: "Постер «Янгол»", description: "Темний арт, опція з підписом гурту", price: 350, shape: "poster", print: legacyArt1, badge: "Limited", sizes: POSTER_SIZES, sizeLabel: "Формат" },
+      { id: "notebook", name: "Нотатник з тисненням", description: "Чорна обкладинка з тисненим лого GF", price: 390, shape: "notebook", print: legacyArt6 },
+      { id: "mug", name: "Термо-чашка", description: "Тримає тепло до 6 год", price: 490, shape: "mug", print: legacyArt2 },
+      { id: "case", name: "Чохол на телефон", description: "Арт «GF Monogram»", price: 420, shape: "case", print: legacyArt4, sizes: PHONE_MODELS, sizeLabel: "Модель" },
+      { id: "vinyl", name: "Вініл LP «!3 Messages»", description: "180-грамовий чорний вініл, гейтфолд", price: 1490, shape: "vinyl", print: legacyArt5, badge: "Vinyl" },
+      { id: "cd-signed", name: "CD з автографом", description: "Колекційне видання, підписане гуртом", price: 590, shape: "vinyl", print: legacyArt6, badge: "Signed" },
+      { id: "flag", name: "Прапор-банер", description: "Тканинний банер 90×150 см", price: 750, shape: "flag", print: legacyArt3 },
+      { id: "tapestry", name: "Гобелен на стіну", description: "100×150 см, арт «Crimson Angel»", price: 990, shape: "tapestry", print: legacyArt1 },
+      { id: "box-set", name: "Колекційна коробка", description: "Постер, патч, значки, листівки в боксі", price: 1290, shape: "box", print: legacyArt2, badge: "Box Set" },
+      { id: "figurine", name: "Колекційна фігурка", description: "Лімітована смоляна статуетка янгола GF", price: 1890, shape: "figurine", print: legacyArt4, badge: "Limited" },
     ],
   },
 ];
@@ -110,17 +161,55 @@ const FILTERS: { id: FilterId; label: string }[] = [
 
 function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }) {
   const [previewColor, setPreviewColor] = useState(item.colors?.[0]?.hex ?? "#0a0a0a");
+  const hasImages = !!item.images && item.images.length > 0;
+  const [hoverIdx, setHoverIdx] = useState(0);
+  const heroImg = hasImages ? item.images![hoverIdx] ?? item.images![0] : undefined;
 
   return (
     <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
-      <button onClick={() => onOpen(item)} className="relative aspect-[4/5] w-full overflow-hidden" aria-label={`Відкрити ${item.name}`}>
-        <ProductMockup shape={item.shape} color={previewColor} print={item.print} />
+      <div className={`relative w-full overflow-hidden ${hasImages ? "h-[320px] bg-[#0a0a0a]" : "aspect-[4/5]"}`}>
+        <button
+          type="button"
+          onClick={() => onOpen(item)}
+          aria-label={`Відкрити ${item.name}`}
+          className="absolute inset-0 w-full h-full z-0"
+        >
+          {hasImages ? (
+            <img
+              src={heroImg}
+              alt={item.name}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            />
+          ) : (
+            <ProductMockup shape={item.shape} color={previewColor} print={item.print} />
+          )}
+        </button>
         {item.badge && (
-          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-sm border border-[#8a2be2]/60 bg-black/85 font-mono text-[10px] uppercase tracking-[0.3em] text-[#a855f7]">
+          <span className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-sm border border-[#8a2be2]/60 bg-black/85 font-mono text-[10px] uppercase tracking-[0.3em] text-[#a855f7] pointer-events-none">
             {item.badge}
           </span>
         )}
-      </button>
+        {hasImages && item.images!.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {item.images!.map((_, i) => {
+              const active = i === hoverIdx;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHoverIdx(i);
+                  }}
+                  aria-label={`Фото ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${active ? "w-6 bg-[#00f0ff]" : "w-2 bg-white/40 hover:bg-white/70"}`}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col flex-1 p-4 gap-3">
         <div>
@@ -128,7 +217,7 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
           <p className="mt-2 text-sm font-mono text-white/55 leading-snug min-h-[2.5em]">{item.description}</p>
         </div>
 
-        {item.colors && item.colors.length > 1 && (
+        {!hasImages && item.colors && item.colors.length > 1 && (
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">Колір</span>
             <div className="flex gap-1.5">
@@ -180,6 +269,7 @@ export default function Merch() {
         price: item.price,
         shape: item.shape,
         print: item.print,
+        images: item.images,
         colors: item.colors,
         sizes: item.sizes,
         sizeLabel: item.sizeLabel,
@@ -208,13 +298,13 @@ export default function Merch() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-2">
           {FILTERS.map((f) => {
-            const active = filter === f.id;
+            const isActive = filter === f.id;
             return (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={`px-4 py-2 font-mono text-[11px] uppercase tracking-[0.3em] border transition-all ${
-                  active
+                  isActive
                     ? "border-[#8a2be2] text-white bg-[#8a2be2]/20 shadow-[0_0_18px_rgba(0,240,255,0.45)]"
                     : "border-white/15 text-white/55 hover:border-[#8a2be2]/70 hover:text-white"
                 }`}

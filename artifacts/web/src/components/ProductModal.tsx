@@ -16,6 +16,7 @@ export interface ModalProduct {
   price: number;
   shape: MockupShape;
   print?: string;
+  images?: string[];
   colors?: ProductColor[];
   sizes?: string[];
   sizeLabel?: string;
@@ -31,12 +32,14 @@ export function ProductModal({ product, onClose }: Props) {
   const [colorId, setColorId] = useState<string | undefined>(undefined);
   const [size, setSize] = useState<string | undefined>(undefined);
   const [qty, setQty] = useState(1);
+  const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
     if (!product) return;
     setColorId(product.colors?.[0]?.id);
     setSize(product.sizes?.[0]);
     setQty(1);
+    setActiveImg(0);
   }, [product]);
 
   useEffect(() => {
@@ -55,6 +58,8 @@ export function ProductModal({ product, onClose }: Props) {
 
   if (!product) return null;
   const color = product.colors?.find((c) => c.id === colorId) ?? product.colors?.[0];
+  const hasImages = !!product.images && product.images.length > 0;
+  const currentImg = hasImages ? product.images![Math.min(activeImg, product.images!.length - 1)] : undefined;
 
   const handleAdd = () => {
     addItem({
@@ -64,6 +69,7 @@ export function ProductModal({ product, onClose }: Props) {
       qty,
       color,
       size,
+      image: currentImg,
     });
     onClose();
     openCart();
@@ -89,9 +95,38 @@ export function ProductModal({ product, onClose }: Props) {
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          <div className="bg-gradient-to-br from-[#0a0014] via-black to-[#10001f] aspect-square md:aspect-auto">
-            <ProductMockup shape={product.shape} color={color?.hex ?? "#0a0a0a"} print={product.print} />
-          </div>
+          {hasImages ? (
+            <div className="bg-[#0a0a0a] flex flex-col">
+              <div className="relative w-full aspect-square overflow-hidden bg-[#0a0a0a]">
+                <img
+                  src={currentImg}
+                  alt={product.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
+              {product.images!.length > 1 && (
+                <div className="flex gap-2 p-3 bg-black border-t border-white/10 overflow-x-auto">
+                  {product.images!.map((src, i) => {
+                    const active = i === activeImg;
+                    return (
+                      <button
+                        key={src}
+                        onClick={() => setActiveImg(i)}
+                        className={`relative h-20 w-20 flex-none overflow-hidden rounded border-2 transition-all ${active ? "border-[#00f0ff] shadow-[0_0_14px_rgba(0,240,255,0.5)]" : "border-white/15 hover:border-white/40"}`}
+                        aria-label={`Фото ${i + 1}`}
+                      >
+                        <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-[#0a0014] via-black to-[#10001f] aspect-square md:aspect-auto">
+              <ProductMockup shape={product.shape} color={color?.hex ?? "#0a0a0a"} print={product.print} />
+            </div>
+          )}
 
           <div className="p-6 md:p-8 flex flex-col gap-5">
             <div>

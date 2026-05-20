@@ -1,0 +1,65 @@
+Update the merch page with real product images. 
+I have the following actual product mockup images ready to upload.
+
+STEP 1 — Create an assets folder:
+Create folder: public/assets/merch/
+I will upload images there with these exact filenames:
+
+CLOTHING:
+- tshirt-angel-front.jpg       (oversized t-shirt, angel art, front)
+- tshirt-angel-back.jpg        (oversized t-shirt, back view purple)
+- tshirt-red-angel.jpg         (t-shirt with red hair angel)
+- tshirt-gtf-logo-back.jpg     (t-shirt back, purple GtF logo only)
+- tshirt-purple-back.jpg       (t-shirt back, purple thorns design)
+- hoodie-red-angel.jpg         (hoodie front, red fallen angel)
+- hoodie-dark-castle.jpg       (hoodie back, dark castle + wings)
+- hoodie-purple-angel.jpg      (hoodie front, purple red-hair angel)
+- bomber-angel-back.jpg        (bomber jacket, angel art back)
+- bomber-logo-front.jpg        (bomber jacket, GtF logo front)
+
+STEP 2 — Update all product cards on the merch page:
+Replace ALL black placeholder boxes with these real images.
+
+Product mapping:
+1. "Оверсайз футболка — Янгол" 
+   → image: tshirt-angel-front.jpg
+   → gallery: [tshirt-angel-front.jpg, tshirt-angel-back.jpg]
+   → price: 850 ₴
+
+2. "Оверсайз футболка — Пурпур"
+   → image: tshirt-purple-back.jpg  
+   → gallery: [tshirt-purple-back.jpg, tshirt-gtf-logo-back.jpg]
+   → price: 850 ₴
+
+3. "Оверсайз футболка — Вогонь"
+   → image: tshirt-red-angel.jpg
+   → price: 850 ₴
+
+4. "Худі — Занепалий Янгол"
+   → image: hoodie-red-angel.jpg
+   → gallery: [hoodie-red-angel.jpg, hoodie-dark-castle.jpg]
+   → price: 1450 ₴
+
+5. "Худі — Пурпурна Богиня"
+   → image: hoodie-purple-angel.jpg
+   → price: 1450 ₴
+
+6. "Бомбер — Gathering of the Fallen"
+   → image: bomber-logo-front.jpg
+   → gallery: [bomber-logo-front.jpg, bomber-angel-back.jpg]
+   → price: 2200 ₴
+
+STEP 3 — Image display requirements:
+- Images must fill the card top area completely (object-fit: cover)
+- Card image height: 320px
+- On hover: slight zoom effect (transform: scale(1.03))
+- Background behind image: #0a0a0a (near black)
+- If image has transparent/checkered background, set card bg to #111
+
+STEP 4 — Fix all JavaScript (still broken from before):
+- Filter buttons ВСЕ/ОДЯГ/АКСЕСУАРИ/КОЛЕКЦІЙНЕ must work
+- КУПИТИ button must show "✓ Додано до кошика!" notification
+- Size selector S/M/L/XL/XXL must highlight selected
+- Quantity +/- must work
+
+Do NOT change the overall page design or color scheme.
