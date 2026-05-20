@@ -25,7 +25,23 @@ app.use(
     },
   }),
 );
-app.use(cors());
+const ALLOWED_ORIGINS = new Set([
+  "https://gathering-of-the-fallen.replit.app",
+  "http://localhost:5000",
+  "http://localhost:80",
+]);
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
+      if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/i.test(origin)) return callback(null, true);
+      if (/^https:\/\/[a-z0-9-]+\.replit\.app$/i.test(origin)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+  }),
+);
 
 app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 app.use("/api/webhook/stripe", express.raw({ type: "application/json" }));

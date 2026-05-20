@@ -21,10 +21,12 @@ export default function Home() {
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
         <motion.video
           src={logoVideo}
+          poster={groupImg}
           autoPlay
           loop
           muted
           playsInline
+          preload="metadata"
           aria-label="Герб гурту Gathering Of The Fallen"
           className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
           style={{
