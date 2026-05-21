@@ -222,8 +222,11 @@ export default function Merch() {
               values="1 0 0 0 0
                       0 1 0 0 0
                       0 0 1 0 0
-                      -3.7 -3.7 -3.7 0 11"
+                      -1.9 -1.9 -1.9 0 4.45"
             />
+            <feComponentTransfer>
+              <feFuncA type="gamma" amplitude="1" exponent="0.55" offset="0" />
+            </feComponentTransfer>
           </filter>
         </defs>
       </svg>
