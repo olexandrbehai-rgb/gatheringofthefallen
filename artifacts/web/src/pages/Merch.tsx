@@ -81,20 +81,53 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
 
   return (
     <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
-      <div className="relative w-full aspect-[3/4] overflow-hidden">
+      <div
+        className="merch-card-stage relative w-full aspect-[3/4] overflow-hidden"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #160826 38%, #0a0414 70%, #050208 100%)",
+        }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 40%, rgba(138,43,226,0.28) 0%, rgba(0,240,255,0.06) 35%, transparent 65%)",
+            mixBlendMode: "screen",
+          }}
+        />
         <button
           type="button"
           onClick={() => onOpen(item)}
           aria-label={`Відкрити ${item.name}`}
-          className="absolute inset-0 w-full h-full z-0"
+          className="absolute inset-0 w-full h-full"
         >
           <img
             src={heroImg}
             alt={item.name}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            style={{ filter: "url(#gtf-knockout-white)" }}
           />
         </button>
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 55%), linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.45) 100%)",
+          }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 1px, transparent 1px, transparent 3px)",
+            mixBlendMode: "overlay",
+          }}
+        />
         {item.badge && (
           <span className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-sm border border-[#8a2be2]/60 bg-black/85 font-mono text-[10px] uppercase tracking-[0.3em] text-[#a855f7] pointer-events-none">
             {item.badge}
@@ -180,6 +213,20 @@ export default function Merch() {
           Одяг для тих, хто йде з нами крізь попіл.
         </p>
       </header>
+
+      <svg width="0" height="0" className="absolute" aria-hidden>
+        <defs>
+          <filter id="gtf-knockout-white" colorInterpolationFilters="sRGB">
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0
+                      0 1 0 0 0
+                      0 0 1 0 0
+                      -3.7 -3.7 -3.7 0 11"
+            />
+          </filter>
+        </defs>
+      </svg>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
         {ITEMS.map((item) => (

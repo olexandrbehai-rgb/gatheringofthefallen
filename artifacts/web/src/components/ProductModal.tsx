@@ -84,11 +84,35 @@ export function ProductModal({ product, onClose }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           <div className="flex flex-col bg-black">
-            <div className="relative w-full aspect-square overflow-hidden">
+            <div
+              className="relative w-full aspect-square overflow-hidden"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #160826 38%, #0a0414 70%, #050208 100%)",
+              }}
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 50% 40%, rgba(138,43,226,0.28) 0%, rgba(0,240,255,0.06) 35%, transparent 65%)",
+                  mixBlendMode: "screen",
+                }}
+              />
               <img
                 src={currentImg}
                 alt={product.name}
                 className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: "url(#gtf-knockout-white)" }}
+              />
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 55%), linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.45) 100%)",
+                }}
               />
             </div>
             {product.images.length > 1 && (
@@ -100,9 +124,18 @@ export function ProductModal({ product, onClose }: Props) {
                       key={src}
                       onClick={() => setActiveImg(i)}
                       className={`relative h-20 w-20 flex-none overflow-hidden rounded border-2 transition-all ${active ? "border-[#00f0ff] shadow-[0_0_14px_rgba(0,240,255,0.5)]" : "border-white/15 hover:border-white/40"}`}
+                      style={{
+                        background:
+                          "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #0a0414 100%)",
+                      }}
                       aria-label={`Фото ${i + 1}`}
                     >
-                      <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                      <img
+                        src={src}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ filter: "url(#gtf-knockout-white)" }}
+                      />
                     </button>
                   );
                 })}
