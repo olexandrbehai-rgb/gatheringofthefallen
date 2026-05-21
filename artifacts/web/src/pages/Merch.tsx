@@ -222,10 +222,10 @@ export default function Merch() {
               values="1 0 0 0 0
                       0 1 0 0 0
                       0 0 1 0 0
-                      -1.9 -1.9 -1.9 0 4.45"
+                      -1.4 -1.4 -1.4 0 3.1"
             />
             <feComponentTransfer>
-              <feFuncA type="gamma" amplitude="1" exponent="0.55" offset="0" />
+              <feFuncA type="linear" slope="6" intercept="-2.4" />
             </feComponentTransfer>
           </filter>
         </defs>
