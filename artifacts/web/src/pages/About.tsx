@@ -37,7 +37,7 @@ export default function About() {
             initial={{ opacity: 0, x: i === 0 ? -30 : 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.2, duration: 0.6 }}
-            className={`photo-frame-neon overflow-hidden group relative ${i === 0 ? "no-scanlines z-[50] -mt-20 md:-mt-28" : "z-0"}`}
+            className={`photo-frame-neon overflow-hidden group${i === 0 ? " no-scanlines" : ""}`}
           >
             <div className="w-full aspect-[3/4] overflow-hidden bg-black">
               <img
