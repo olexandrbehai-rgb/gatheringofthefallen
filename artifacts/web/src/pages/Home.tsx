@@ -5,7 +5,11 @@ import { useT } from "@/i18n/LanguageContext";
 import logoVideo from "@assets/grok-video-4e191f5f-3c1c-4e03-97ea-bc727051f844_1778193049750.mp4";
 import groupImg from "@assets/Група_1777383007687.png";
 import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
-import merchAllImg from "@assets/photo_2026-03-19_11-20-07_1776018973005.jpg";
+import merchTshirt1 from "@assets/1backt-shirt_1779322287600.png";
+import merchTshirt2 from "@assets/2frontt-shirt_1779322287600.png";
+import merchTshirt3 from "@assets/3frontt-shirt_1779322287600.png";
+import merchHoodie4 from "@assets/4backhoodie_1779322287601.png";
+import merchHoodie5 from "@assets/5backhoodie_1779322287601.png";
 
 type Release = { title: string; type: string; date: string };
 
@@ -136,20 +140,66 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-16 max-w-5xl">
+      <section className="container mx-auto px-4 py-16 max-w-6xl">
         <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">{t("home.merchHeading")}</h2>
-        <Link href="/merch" className="block">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="rusted-border overflow-hidden group cursor-pointer"
-          >
-            <img
-              src={merchAllImg}
-              alt={t("home.merchAlt")}
-              loading="lazy"
-              className="w-full h-auto object-cover group-hover:brightness-110 transition-all duration-500"
-            />
-          </motion.div>
+
+        <svg width="0" height="0" className="absolute" aria-hidden>
+          <defs>
+            <filter id="gtf-knockout-white-home" colorInterpolationFilters="sRGB">
+              <feColorMatrix
+                type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        -1.4 -1.4 -1.4 0 3.1"
+              />
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="6" intercept="-2.4" />
+              </feComponentTransfer>
+            </filter>
+          </defs>
+        </svg>
+
+        <Link href="/merch" className="block group">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            {[merchTshirt1, merchTshirt2, merchTshirt3, merchHoodie4, merchHoodie5].map((src, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -4 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="relative aspect-[3/4] overflow-hidden rounded-md border border-white/10 group-hover:border-[#00f0ff]/40 transition-colors"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #160826 38%, #0a0414 70%, #050208 100%)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at 50% 40%, rgba(138,43,226,0.28) 0%, rgba(0,240,255,0.06) 35%, transparent 65%)",
+                    mixBlendMode: "screen",
+                  }}
+                />
+                <img
+                  src={src}
+                  alt={t("home.merchAlt")}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  style={{ filter: "url(#gtf-knockout-white-home)" }}
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 55%)",
+                  }}
+                />
+              </motion.div>
+            ))}
+          </div>
         </Link>
       </section>
     </motion.div>
