@@ -5,16 +5,16 @@ import { ProductModal, type ModalProduct } from "@/components/ProductModal";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ProductType } from "@/lib/pricing";
 
-import tshirtAngelFront from "@assets/grok-991a2d3c-06ad-4ee7-a665-a3b4c2d1948f_1779282522766.jpg";
-import tshirtAngelBack from "@assets/grok-b4a9d081-9274-42db-9074-319f1b8ae94a_1779282522766.jpg";
-import tshirtPurpleBack from "@assets/grok-eb168b15-a8fd-485f-87b0-6a6e78936ff8_1779282522767.jpg";
-import tshirtGtfLogoBack from "@assets/grok-e4486323-2796-4b7c-b1fc-7d8484dbb2cd_1779282522767.jpg";
-import tshirtRedAngel from "@assets/grok-d2da9d56-5ce6-429a-b6fd-005521590e2b_1779282522767.jpg";
-import hoodieRedAngel from "@assets/grok-62f1c14f-7ee4-4589-ad3f-2e4568fdfcba_1779282522766.jpg";
-import hoodieDarkCastle from "@assets/grok-27084c76-2b65-453a-8662-ea1dab68ff29_1779282522766.jpg";
-import hoodiePurpleAngel from "@assets/grok-f5aaf40a-1ced-416e-8573-df8b2f9ecc7f_1779282522767.jpg";
-import bomberLogoFront from "@assets/grok-facb31e0-2ffb-4b4a-8b65-bf04c6396de1_1779282522767.jpg";
-import bomberAngelBack from "@assets/grok-1f76129b-b460-4b4a-80e7-c812c3e98e1a_1779282522766.jpg";
+import tshirt1Front from "@assets/1frontt-shirt_1779322287600.png";
+import tshirt1Back from "@assets/1backt-shirt_1779322287600.png";
+import tshirt2Front from "@assets/2frontt-shirt_1779322287600.png";
+import tshirt2Back from "@assets/2backt-shirt_1779322287600.png";
+import tshirt3Front from "@assets/3frontt-shirt_1779322287600.png";
+import tshirt3Back from "@assets/3backt-shirt_1779322287600.png";
+import hoodie4Front from "@assets/4fronthoodie_1779322287601.png";
+import hoodie4Back from "@assets/4backhoodie_1779322287601.png";
+import hoodie5Front from "@assets/5fronthoodie_1779322287601.png";
+import hoodie5Back from "@assets/5backhoodie_1779322287601.png";
 
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -30,51 +30,44 @@ interface Item {
 
 const ITEMS: Item[] = [
   {
-    id: "tshirt-angel",
+    id: "tshirt-01-thorns",
     productType: "tee-premium",
-    name: "Оверсайз футболка — Янгол (преміум)",
-    description: "Повний арт занепалого янгола, фронт + спина",
-    images: [tshirtAngelFront, tshirtAngelBack],
+    name: "Футболка №1 — Терновий Янгол",
+    description: "Фронт — лого в терновому ореолі. Спина — повний арт янгола GtF",
+    images: [tshirt1Front, tshirt1Back],
     sizes: APPAREL_SIZES,
   },
   {
-    id: "tshirt-purple",
+    id: "tshirt-02-eclipse",
     productType: "tee-premium",
-    name: "Оверсайз футболка — Пурпур (преміум)",
-    description: "Спинний дизайн з тернами та логотипом GtF",
-    images: [tshirtPurpleBack, tshirtGtfLogoBack],
+    name: "Футболка №2 — Затемнення",
+    description: "Фронт — мінімалістичне лого GtF у тернах. Спина — янгол із затемненням",
+    images: [tshirt2Front, tshirt2Back],
     sizes: APPAREL_SIZES,
   },
   {
-    id: "tshirt-fire",
-    productType: "tee-basic",
-    name: "Оверсайз футболка — Вогонь (базова)",
-    description: "Янгол з вогняним волоссям, фронт-принт",
-    images: [tshirtRedAngel],
+    id: "tshirt-03-cathedral",
+    productType: "tee-premium",
+    name: "Футболка №3 — Катедраль",
+    description: "Фронт — янгол у колі. Спина — сцена катедралі з янголом і служителями",
+    images: [tshirt3Front, tshirt3Back],
     sizes: APPAREL_SIZES,
+    badge: "New",
   },
   {
-    id: "hoodie-fallen",
+    id: "hoodie-04-goddess",
     productType: "hoodie",
-    name: "Худі — Занепалий Янгол",
-    description: "Фронт-принт + великий арт замку на спині",
-    images: [hoodieRedAngel, hoodieDarkCastle],
+    name: "Худі №4 — Пурпурна Богиня",
+    description: "Фронт — лого GtF. Спина — повний арт богині з крилами",
+    images: [hoodie4Front, hoodie4Back],
     sizes: APPAREL_SIZES,
   },
   {
-    id: "hoodie-goddess",
+    id: "hoodie-05-cemetery",
     productType: "hoodie",
-    name: "Худі — Пурпурна Богиня",
-    description: "Фронт-принт пурпурного янгола",
-    images: [hoodiePurpleAngel],
-    sizes: APPAREL_SIZES,
-  },
-  {
-    id: "bomber-gtf",
-    productType: "bomber",
-    name: "Бомбер — Gathering of the Fallen",
-    description: "Лого GtF на грудях, арт янгола на спині",
-    images: [bomberLogoFront, bomberAngelBack],
+    name: "Худі №5 — Цвинтар",
+    description: "Фронт — мала емблема GtF. Спина — янгол над цвинтарем",
+    images: [hoodie5Front, hoodie5Back],
     sizes: APPAREL_SIZES,
     badge: "New",
   },
