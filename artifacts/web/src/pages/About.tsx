@@ -47,9 +47,6 @@ export default function About() {
                 className="w-full h-full object-cover block group-hover:scale-[1.03] transition-transform duration-700"
               />
             </div>
-            <div className="p-4 bg-black/55 border-t border-primary/20 text-center font-mono text-xs uppercase tracking-widest text-primary/90">
-              {item.title}
-            </div>
           </motion.div>
         ))}
       </div>
