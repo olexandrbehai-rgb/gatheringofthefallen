@@ -3,13 +3,16 @@ import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import { useT } from "@/i18n/LanguageContext";
 import logoVideo from "@assets/grok-video-4e191f5f-3c1c-4e03-97ea-bc727051f844_1778193049750.mp4";
-import groupImg from "@assets/Група_1777383007687.png";
-import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
+import lineup1Img from "@assets/a33ec048-5ffc-400a-8499-f0246ed136d2_1779324411927.png";
+import lineup2Img from "@assets/b48431c4-d5c2-4651-8fba-08b27f82595e_1779324411927.png";
+import lineup3Img from "@assets/grok-image-3ba37ea6-9c2c-42f3-93a1-0da705b2bdc9_1779324411927.png";
 import merchTshirt1 from "@assets/1backt-shirt_1779322287600.png";
 import merchTshirt2 from "@assets/2frontt-shirt_1779322287600.png";
 import merchTshirt3 from "@assets/3frontt-shirt_1779322287600.png";
 import merchHoodie4 from "@assets/4backhoodie_1779322287601.png";
 import merchHoodie5 from "@assets/5backhoodie_1779322287601.png";
+
+const lineupImages = [lineup1Img, lineup2Img, lineup3Img];
 
 type Release = { title: string; type: string; date: string };
 
@@ -25,7 +28,7 @@ export default function Home() {
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
         <motion.video
           src={logoVideo}
-          poster={groupImg}
+          poster={lineup1Img}
           autoPlay
           loop
           muted
@@ -96,24 +99,18 @@ export default function Home() {
       </section>
 
       <section className="container mx-auto px-4 py-16">
-        <h2 className="font-creepster text-4xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">{t("home.bandHeading")}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div className="rusted-border overflow-hidden group no-scanlines">
-            <img
-              src={groupImg}
-              alt={t("home.groupAlt")}
-              loading="lazy"
-              className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
-            />
-          </div>
-          <div className="rusted-border overflow-hidden group">
-            <img
-              src={oleksandrImg}
-              alt={t("home.oleksandrAlt")}
-              loading="lazy"
-              className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
-            />
-          </div>
+        <h2 className="font-creepster text-4xl md:text-5xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">{t("home.bandHeading")}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+          {lineupImages.map((src, i) => (
+            <div key={src} className={`rusted-border overflow-hidden group ${i === 0 ? "no-scanlines md:col-span-1 md:row-span-2" : ""}`}>
+              <img
+                src={src}
+                alt={t("home.groupAlt")}
+                loading="lazy"
+                className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${i === 0 ? "aspect-[4/5]" : "aspect-[4/5]"}`}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
