@@ -54,6 +54,7 @@ export function CheckoutModal({ open, onClose }: Props) {
 
   const countryMeta =
     CURRENCIES.find((c) => c.countryCode === countryCode) ?? CURRENCIES[0];
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +63,7 @@ export function CheckoutModal({ open, onClose }: Props) {
     setError("");
 
     try {
-      const res = await fetch("/api/cart-order", {
+      const res = await fetch(`${apiBaseUrl}/api/cart-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

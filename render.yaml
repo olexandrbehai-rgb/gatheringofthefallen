@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: gathering-of-the-fallen-api
+    env: node
+    rootDir: artifacts/api-server
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGINS
+        sync: false
+  - type: web
+    name: gathering-of-the-fallen-web
+    env: node
+    rootDir: artifacts/web
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run serve -- --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_PATH
+        value: /
+      - key: VITE_API_BASE_URL
+        sync: false

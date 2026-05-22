@@ -30,11 +30,15 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:5000",
   "http://localhost:80",
 ]);
+const EXTRA_ALLOWED_ORIGINS = process.env.CORS_ORIGINS?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean) ?? [];
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
       if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
+      if (EXTRA_ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
       if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/i.test(origin)) return callback(null, true);
       if (/^https:\/\/[a-z0-9-]+\.replit\.app$/i.test(origin)) return callback(null, true);
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
