@@ -150,31 +150,42 @@
             }
           }
         }
+        function isOurUI(el) {
+          var n = el;
+          for (var depth = 0; depth < 8 && n; depth++) {
+            if (n.id === 'root') return true;
+            n = n.parentElement;
+          }
+          return false;
+        }
         function nukeAnyCornerBadge() {
-          var all = document.querySelectorAll('*');
+          var all = document.querySelectorAll('body > *, body > * *');
           for (var i = 0; i < all.length; i++) {
             var el = all[i];
-            if (!el || el.id === 'root') continue;
+            if (!el) continue;
             var tag = (el.tagName || '').toLowerCase();
-            if (tag === 'script' || tag === 'style' || tag === 'link' || tag === 'meta') continue;
+            if (tag === 'script' || tag === 'style' || tag === 'link' || tag === 'meta' || tag === 'noscript') continue;
+            if (isOurUI(el)) continue;
             var cs;
             try { cs = window.getComputedStyle(el); } catch (e) { continue; }
-            if (!cs || (cs.position !== 'fixed' && cs.position !== 'sticky' && cs.position !== 'absolute')) continue;
+            if (!cs) continue;
+            if (cs.position !== 'fixed' && cs.position !== 'sticky' && cs.position !== 'absolute') continue;
             var r;
             try { r = el.getBoundingClientRect(); } catch (e) { continue; }
             if (!r || r.width === 0 || r.height === 0) continue;
-            if (r.width > 260 || r.height > 140) continue;
-            var nearBottom = (window.innerHeight - r.bottom) < 90;
-            var nearRight = (window.innerWidth - r.right) < 90;
+            if (r.width > 300 || r.height > 160) continue;
+            var nearBottom = (window.innerHeight - r.bottom) < 100;
+            var nearRight = (window.innerWidth - r.right) < 100;
             if (!nearBottom || !nearRight) continue;
-            var html = (el.outerHTML || '').toLowerCase();
-            var text = (el.textContent || '').toLowerCase();
-            if (html.indexOf('replit') !== -1 || html.indexOf('badge') !== -1 || text.indexOf('made on') !== -1 || text.indexOf('powered by') !== -1 || text.indexOf('share your') !== -1 || el.src && el.src.indexOf('replit') !== -1) {
-              try { el.remove(); } catch (e) {
+            try { el.remove(); } catch (e) {
+              try {
                 el.style.setProperty('display', 'none', 'important');
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('opacity', '0', 'important');
-              }
+                el.style.setProperty('pointer-events', 'none', 'important');
+                el.style.setProperty('width', '0', 'important');
+                el.style.setProperty('height', '0', 'important');
+              } catch (e2) {}
             }
           }
         }
