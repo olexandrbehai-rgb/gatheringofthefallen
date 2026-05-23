@@ -56,9 +56,9 @@ export default function Home() {
           <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold">
             {t("home.albumBadge")}
           </div>
-          <h2 className="font-creepster text-3xl md:text-5xl text-primary mb-4" style={{ textShadow: '0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)' }}>
+          <h1 className="font-creepster text-3xl md:text-5xl text-primary mb-4" style={{ textShadow: '0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)' }}>
             {t("home.albumTitle")}
-          </h2>
+          </h1>
           <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed mb-5">
             {t("home.albumDesc")}
           </p>
