@@ -102,7 +102,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="container mx-auto px-4 text-center font-mono text-xs text-muted-foreground">
             <img src={logoImg} alt="GotF" className="h-8 mx-auto mb-4 opacity-50" />
             <p className="mb-2">&copy; {new Date().getFullYear()} GATHERING OF THE FALLEN</p>
-            <p className="text-secondary/50">{t("footer.transmission")}</p>
+            <p className="text-secondary/50 mb-6">{t("footer.transmission")}</p>
+            <div className="flex flex-wrap justify-center gap-3 mb-4">
+              <a href="https://www.instagram.com/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+                Instagram
+              </a>
+              <a href="https://www.tiktok.com/@gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+                TikTok
+              </a>
+              <a href="https://www.youtube.com/channel/UCJNjRvO6Nce6qExLl2hFuAw" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+                YouTube
+              </a>
+              <a href="https://www.facebook.com/share/1CYJR7yWJz/" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+                Facebook
+              </a>
+              <a href="https://open.spotify.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-secondary transition-colors">
+                Spotify
+              </a>
+              <a href="https://music.apple.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-secondary transition-colors">
+                Apple Music
+              </a>
+            </div>
           </div>
         </footer>
       </div>

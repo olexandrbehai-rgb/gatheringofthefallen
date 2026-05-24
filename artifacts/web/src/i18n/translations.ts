@@ -25,7 +25,9 @@ const ua: Dict = {
     albumDesc:
       "!3 Послань — це музичний маніфест, що складається з трьох ключових меседжів для тих, хто вижив у руїнах старого світу. Це голос нового племені живих.",
     listenAlbum: "Слухати альбом",
-    slogan: "З руїн цивілізації. З попелу — вічність.",
+    slogan: "З попелу встаємо 🔥",
+    bandDesc:
+      "Gathering Of The Fallen — український gothic / cinematic industrial metal гурт. 65+ треків, нові релізи кожен місяць. Музика народжується з вогню, шрамів і незламної волі.",
     listenMusic: "Слухати музику",
     goMerch: "Перейти до мерчу",
     bandHeading: "Гурт — Новий склад 2026",
@@ -186,7 +188,9 @@ const en: Dict = {
     albumDesc:
       "!3 Messages is a musical manifesto built from three key transmissions for those who survived the ruins of the old world. It is the voice of a new tribe of the living.",
     listenAlbum: "Listen to the album",
-    slogan: "From the ruins of civilization. From the ashes — eternity.",
+    slogan: "Rising from the ashes 🔥",
+    bandDesc:
+      "Gathering Of The Fallen — Ukrainian gothic / cinematic industrial metal band. 65+ tracks, new releases every month. Music born from fire, scars, and unbreakable will.",
     listenMusic: "Listen to music",
     goMerch: "Go to merch",
     bandHeading: "The Band — New Lineup 2026",
@@ -347,7 +351,9 @@ const fr: Dict = {
     albumDesc:
       "!3 Messages est un manifeste musical composé de trois messages clés pour ceux qui ont survécu aux ruines de l'ancien monde. C'est la voix d'une nouvelle tribu des vivants.",
     listenAlbum: "Écouter l'album",
-    slogan: "Des ruines de la civilisation. Des cendres — l'éternité.",
+    slogan: "On se relève des cendres 🔥",
+    bandDesc:
+      "Gathering Of The Fallen — groupe ukrainien de gothic / cinematic industrial metal. 65+ titres, nouvelles sorties chaque mois. Musique née du feu, des cicatrices et d'une volonté inébranlable.",
     listenMusic: "Écouter la musique",
     goMerch: "Voir le merch",
     bandHeading: "Le groupe — Nouvelle formation 2026",

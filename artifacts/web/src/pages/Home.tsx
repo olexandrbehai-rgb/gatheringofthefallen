@@ -70,13 +70,22 @@ export default function Home() {
         </motion.div>
 
         <motion.p
-          className="font-mono text-xl md:text-2xl text-secondary mb-12 uppercase tracking-widest text-center"
+          className="font-creepster text-2xl md:text-4xl text-primary mb-6 uppercase tracking-widest text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          style={{ textShadow: '0 0 10px rgba(138,43,226,0.8), 0 0 20px rgba(138,43,226,0.4)' }}
+          style={{ textShadow: '0 0 15px rgba(0,240,255,0.7), 0 0 30px rgba(138,43,226,0.5)' }}
         >
           {t("home.slogan")}
+        </motion.p>
+
+        <motion.p
+          className="font-mono text-sm md:text-base text-white/80 max-w-2xl text-center mb-10 leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          {t("home.bandDesc")}
         </motion.p>
 
         <motion.div
