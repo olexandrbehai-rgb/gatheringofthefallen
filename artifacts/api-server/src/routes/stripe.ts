@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { Pool } from "pg";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger";
+import { processCartPaidSession } from "./cart-order";
 
 const router = Router();
 
@@ -357,7 +358,11 @@ async function stripeWebhookHandler(req: Request, res: Response): Promise<void> 
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.payment_status === "paid") {
-          await processPaidSession(session);
+          if (session.metadata?.flow === "cart") {
+            await processCartPaidSession(session);
+          } else {
+            await processPaidSession(session);
+          }
         } else {
           logger.info({
             msg: "Webhook: session completed but not paid",

@@ -63,7 +63,7 @@ export function CheckoutModal({ open, onClose }: Props) {
     setError("");
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/cart-order`, {
+      const res = await fetch(`${apiBaseUrl}/api/cart-stripe-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -88,14 +88,14 @@ export function CheckoutModal({ open, onClose }: Props) {
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.message || "Помилка відправки");
+      if (!res.ok || !data?.success || !data?.url) {
+        throw new Error(data?.message || "Не вдалося створити сесію оплати");
       }
+      // Clear cart before redirect; on cancel the user can re-add items.
       clear();
-      setSuccess(true);
+      window.location.href = data.url as string;
     } catch (err: any) {
-      setError(err?.message || "Не вдалося відправити замовлення");
-    } finally {
+      setError(err?.message || "Не вдалося перейти до оплати");
       setSubmitting(false);
     }
   };
@@ -278,10 +278,10 @@ export function CheckoutModal({ open, onClose }: Props) {
               {submitting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Відправка...
+                  Перехід на оплату...
                 </>
               ) : (
-                <>Відправити замовлення</>
+                <>Перейти до оплати 💳</>
               )}
             </button>
           </form>

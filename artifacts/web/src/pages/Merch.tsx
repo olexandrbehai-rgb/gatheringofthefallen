@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, CheckCircle, XCircle } from "lucide-react";
 import { ProductModal, type ModalProduct } from "@/components/ProductModal";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ProductType } from "@/lib/pricing";
@@ -180,6 +180,21 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
 
 export default function Merch() {
   const [active, setActive] = useState<ModalProduct | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<"success" | "cancelled" | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success" || payment === "cancelled") {
+      setPaymentStatus(payment);
+      // Clean URL so refresh doesn't re-trigger the banner.
+      const url = new URL(window.location.href);
+      url.searchParams.delete("payment");
+      url.searchParams.delete("order_id");
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
 
   const open = useMemo(
     () => (item: Item) =>
@@ -201,6 +216,25 @@ export default function Merch() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 py-12 md:py-20 max-w-7xl"
     >
+      {paymentStatus === "success" && (
+        <div className="mb-8 mx-auto max-w-2xl rounded border border-[#22ff88]/60 bg-[#0a4d2e]/30 p-5 text-center shadow-[0_0_30px_rgba(34,255,136,0.35)]">
+          <CheckCircle size={40} className="mx-auto text-[#22ff88] mb-3" />
+          <h2 className="font-creepster text-2xl text-white mb-2">Оплату прийнято!</h2>
+          <p className="font-mono text-sm text-white/75">
+            Дякуємо за замовлення. Ми зв'яжемось з тобою найближчим часом для уточнення доставки.
+          </p>
+        </div>
+      )}
+      {paymentStatus === "cancelled" && (
+        <div className="mb-8 mx-auto max-w-2xl rounded border border-[#ffcc22]/60 bg-[#4d3a0a]/30 p-5 text-center">
+          <XCircle size={40} className="mx-auto text-[#ffcc22] mb-3" />
+          <h2 className="font-creepster text-2xl text-white mb-2">Оплату скасовано</h2>
+          <p className="font-mono text-sm text-white/75">
+            Замовлення не оформлено. Можеш додати товари знову і спробувати ще раз.
+          </p>
+        </div>
+      )}
+
       <header className="mb-10 md:mb-14 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.4em] text-[#8a2be2] mb-3">Gathering of the Fallen</p>
         <h1
