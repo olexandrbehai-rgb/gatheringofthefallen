@@ -45,5 +45,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-STRIPE_PUBLISHABLE_KEY = "pk_test_51TLj7PFVOwJwoOB26RztfZmvCQAPDb5OXyIkoxfr55CpHoo636viesnKLN9yigUMcuhe5mjSeRrRfW4PnoD5m0gp00QetMLPQK"
-STRIPE_SECRET_KEY = "sk_test_51TLj7PFVOwJwoOB25WYXstgiEORZDVTjbEa1GTBdBSVrJDFl4tHTuXd4EgYWp2cmaxcu5s31ChOjnVSGS7gFuUMa00AdJfSEmg"
