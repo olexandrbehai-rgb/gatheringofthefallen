@@ -1,13 +1,9 @@
 import { motion } from "framer-motion";
 import { useT } from "@/i18n/LanguageContext";
-import darynaImg from "@assets/Daryna_1777381963168.png";
-import oleksandrImg from "@assets/Oleksandr_1777381963172.png";
-import tetianaImg from "@assets/Tetiana_1777381963174.png";
-import yaroslavImg from "@assets/Yaroslav_1777381963176.jpg";
 import topPhoto1 from "@assets/10d732b0-afa9-454d-a747-67bbd71c2a46_1779324797787.png";
 import topPhoto2 from "@assets/grok-image-9a334eb7-32dd-49b4-b46f-87e83a7adc02_1779324797788.png";
 
-const IMAGES = [oleksandrImg, tetianaImg, yaroslavImg, darynaImg];
+const IMAGES = ["/band/oleksandr.jpg", "/band/tetiana.jpg", "/band/yaroslav.jpg", "/band/daryna.jpg"];
 
 type Member = { name: string; role: string; description: string };
 
