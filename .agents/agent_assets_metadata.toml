@@ -29,3 +29,9 @@ id = "vMdrMfSKo-EWAJIv2ZJwb"
 uri = "file://exports/gathering-of-the-fallen-source.tar.gz"
 type = "unspecified"
 title = "Gathering Of The Fallen — повний код сайту"
+
+[[outputs]]
+id = "KMVZJfpd4Xk787PE5mUip"
+uri = "file://exports/gathering-of-the-fallen-code.tar.gz"
+type = "unspecified"
+title = "Повний код сайту Gathering Of The Fallen"
