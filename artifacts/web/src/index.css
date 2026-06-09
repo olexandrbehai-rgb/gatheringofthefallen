@@ -453,7 +453,7 @@
   border-radius: 20px;
   overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), filter 0.4s ease;
-  animation: ember-border 3.4s ease-in-out infinite;
+  animation: ember-border 6s ease-in-out infinite;
 }
 
 /* "Язички полум'я", що визирають за рамку (несиметричне миготіння) */
@@ -481,7 +481,7 @@
 .hover-image:hover {
   transform: scale(1.05) translateY(-8px);
   filter: brightness(1.13);
-  animation: ember-border-hot 0.85s ease-in-out infinite;
+  animation: ember-border-hot 2s ease-in-out infinite;
 }
 
 @keyframes ember-border-hot {
