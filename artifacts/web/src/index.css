@@ -440,3 +440,64 @@
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
+/* ============================================================
+   ВОГНЯНІ ІНТЕРАКТИВНІ ЕФЕКТИ (демо — сторінка Мерч)
+   ============================================================ */
+
+/* Картки й фото: заокруглення + вогняне сяйво на hover */
+.apoc-card,
+.hover-image {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+.apoc-card:hover,
+.hover-image:hover {
+  transform: scale(1.05) translateY(-8px);
+  box-shadow:
+    0 0 40px #8b0000,
+    0 0 60px #ff4500;
+  filter: brightness(1.12);
+}
+
+/* Кнопки — метал + glitch */
+.metal-btn {
+  position: relative;
+  background: #111;
+  color: #fff;
+  border: 2px solid #8b0000;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px #8b0000;
+}
+
+.metal-btn:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 35px #ff0000,
+    0 0 55px #ff4500;
+  animation: fire-glitch 0.4s linear;
+}
+
+@keyframes fire-glitch {
+  0% { transform: scale(1.06) translate(0); }
+  20% { transform: scale(1.06) translate(-3px, 3px); }
+  40% { transform: scale(1.06) translate(3px, -3px); }
+  100% { transform: scale(1.06) translate(0); }
+}
+
+/* Neon-пульс для тексту на hover */
+.glitch-text:hover {
+  animation: fire-neon-pulse 1s infinite alternate;
+}
+
+@keyframes fire-neon-pulse {
+  from { text-shadow: 0 0 10px #ff0000; }
+  to   { text-shadow: 0 0 30px #ff0000, 0 0 50px #ff4500; }
+}

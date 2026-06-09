@@ -80,7 +80,7 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
   const price = priceFor(item.productType);
 
   return (
-    <article className="merch-card group relative flex flex-col h-full overflow-hidden rounded-md border border-white/10 bg-black transition-all duration-300 hover:border-[#00f0ff]/70 hover:shadow-[0_0_30px_rgba(0,240,255,0.35)]">
+    <article className="apoc-card merch-card group relative flex flex-col h-full border border-white/10 bg-black">
       <div
         className="merch-card-stage relative w-full aspect-[3/4] overflow-hidden"
         style={{
@@ -156,7 +156,7 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
 
       <div className="flex flex-col flex-1 p-4 gap-3">
         <div>
-          <h3 className="font-creepster text-2xl text-white leading-none tracking-wide">{item.name}</h3>
+          <h3 className="glitch-text font-creepster text-2xl text-white leading-none tracking-wide">{item.name}</h3>
           <p className="mt-2 text-sm font-mono text-white/55 leading-snug min-h-[2.5em]">{item.description}</p>
         </div>
 
@@ -164,13 +164,13 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
           <div className="font-mono text-lg text-[#00f0ff]">{format(price)}</div>
           <button
             onClick={() => onOpen(item)}
-            className="group/btn relative overflow-hidden rounded-sm border border-[#8a2be2]/70 bg-black px-4 py-2 font-mono text-xs uppercase tracking-[0.3em] text-[#00f0ff] transition-all hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_18px_rgba(0,240,255,0.55)]"
+            className="metal-btn font-mono text-xs uppercase tracking-[0.3em]"
+            style={{ padding: "10px 18px" }}
           >
             <span className="relative z-10 inline-flex items-center gap-2">
               <ShoppingCart size={12} />
               Купити
             </span>
-            <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(138,43,226,0.4)_0%,transparent_70%)]" />
           </button>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function Merch() {
       <header className="mb-10 md:mb-14 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.4em] text-[#8a2be2] mb-3">Gathering of the Fallen</p>
         <h1
-          className="font-creepster text-6xl md:text-8xl text-white leading-none"
+          className="glitch-text font-creepster text-6xl md:text-8xl text-white leading-none"
           style={{ textShadow: "0 0 28px rgba(138,43,226,0.55), 0 0 4px rgba(255,255,255,0.15)" }}
         >
           MERCH
