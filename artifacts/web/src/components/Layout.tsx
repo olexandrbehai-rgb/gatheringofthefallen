@@ -9,10 +9,10 @@ import { CartDrawer } from "./CartDrawer";
 import { ShoppingCart } from "lucide-react";
 import logoImg from "@assets/logo_1776018973004.png";
 import bgHome from "@assets/f696c6bc-1e83-49d8-a36a-90d5c6251f08_1781045951908.png";
-import bgAbout from "@assets/generated_images/bg-about.png";
-import bgMusic from "@assets/generated_images/bg-music.png";
-import bgMerch from "@assets/generated_images/bg-merch.png";
-import bgContacts from "@assets/generated_images/bg-contacts.png";
+import bgAbout from "@assets/3f3d238a-b813-45ed-b7ef-48eed199098c_1781048063605.png";
+import bgMusic from "@assets/4ca4b9e4-f8d5-4bae-af3c-11137c6e2398_1781048063605.png";
+import bgMerch from "@assets/75ea4f64-8652-4cd1-bcfc-95bee264e9d5_1781048063606.png";
+import bgContacts from "@assets/772beca9-400c-4f53-8e13-47c71cdcb65a_1781048063606.png";
 
 const PAGE_BACKGROUNDS: Record<string, string> = {
   "/": bgHome,
