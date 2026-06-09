@@ -80,7 +80,7 @@ function ItemCard({ item, onOpen }: { item: Item; onOpen: (item: Item) => void }
   const price = priceFor(item.productType);
 
   return (
-    <article className="sleepy apoc-card merch-card group relative flex flex-col h-full border border-white/10 bg-black">
+    <article className="apoc-card merch-card group relative flex flex-col h-full border border-white/10 bg-black">
       <div
         className="merch-card-stage relative w-full aspect-[3/4] overflow-hidden"
         style={{

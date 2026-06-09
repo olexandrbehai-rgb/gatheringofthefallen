@@ -48,7 +48,7 @@ export default function Home() {
         />
 
         <motion.div
-          className="sleepy w-full max-w-4xl mb-12 apoc-card bg-black/70 border border-primary/40 backdrop-blur-sm p-6 md:p-8 text-center"
+          className="w-full max-w-4xl mb-12 apoc-card bg-black/70 border border-primary/40 backdrop-blur-sm p-6 md:p-8 text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
@@ -111,7 +111,7 @@ export default function Home() {
         <h2 className="glitch-text font-creepster text-4xl md:text-5xl text-primary mb-8 border-b border-primary/20 pb-4 text-center">{t("home.bandHeading")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
           {lineupImages.map((src, i) => (
-            <div key={src} className={`sleepy apoc-card overflow-hidden group ${i === 0 ? "no-scanlines md:col-span-1 md:row-span-2" : ""}`}>
+            <div key={src} className={`apoc-card overflow-hidden group ${i === 0 ? "no-scanlines md:col-span-1 md:row-span-2" : ""}`}>
               <img
                 src={src}
                 alt={t("home.groupAlt")}
@@ -131,7 +131,7 @@ export default function Home() {
             return (
               <Link key={i} href="/music" className="block">
                 <motion.div
-                  className={`sleepy apoc-card backdrop-blur-sm p-6 transition-colors group cursor-pointer h-full ${featured ? "bg-primary/10 border-primary/60 hover:bg-primary/15" : "bg-black/40 hover:bg-black/50"}`}
+                  className={`apoc-card backdrop-blur-sm p-6 transition-colors group cursor-pointer h-full ${featured ? "bg-primary/10 border-primary/60 hover:bg-primary/15" : "bg-black/40 hover:bg-black/50"}`}
                 >
                   <div className={`text-xs font-mono mb-2 ${featured ? "text-red-300" : "text-secondary"}`}>{release.type} // {release.date}</div>
                   <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors">{release.title}</h3>
@@ -170,7 +170,7 @@ export default function Home() {
             {[merchTshirt1, merchTshirt2, merchTshirt3, merchHoodie4, merchHoodie5].map((src, i) => (
               <motion.div
                 key={i}
-                className="sleepy apoc-card relative aspect-[3/4] overflow-hidden border border-white/10 group-hover:border-[#00f0ff]/40 transition-colors"
+                className="apoc-card relative aspect-[3/4] overflow-hidden border border-white/10 group-hover:border-[#00f0ff]/40 transition-colors"
                 style={{
                   background:
                     "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #160826 38%, #0a0414 70%, #050208 100%)",

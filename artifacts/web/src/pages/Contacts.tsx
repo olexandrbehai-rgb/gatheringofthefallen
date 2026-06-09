@@ -16,7 +16,7 @@ export default function Contacts() {
       <h1 className="glitch-text font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">{t("contacts.title")}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div className="sleepy apoc-card p-8 bg-black/40 backdrop-blur-sm font-mono">
+        <div className="apoc-card p-8 bg-black/40 backdrop-blur-sm font-mono">
           <div className="flex items-center gap-3 mb-8 text-primary border-b border-primary/20 pb-4">
             <TerminalSquare size={28} />
             <h2 className="glitch-text font-bold text-2xl uppercase tracking-widest">{t("contacts.terminalHeading")}</h2>
@@ -65,7 +65,7 @@ export default function Contacts() {
           </div>
         </div>
 
-        <div className="sleepy apoc-card p-8 bg-black/40 backdrop-blur-sm font-mono flex flex-col">
+        <div className="apoc-card p-8 bg-black/40 backdrop-blur-sm font-mono flex flex-col">
           <div className="flex items-center gap-3 mb-8 text-secondary border-b border-secondary/20 pb-4">
             <span className="w-3 h-3 bg-secondary rounded-full animate-pulse"></span>
             <h2 className="glitch-text font-bold text-2xl uppercase tracking-widest">{t("contacts.sendHeading")}</h2>
