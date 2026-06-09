@@ -62,8 +62,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
         <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20">
           <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <img src={logoImg} alt="Gathering Of The Fallen" className="h-12 md:h-14 w-auto neon-glow-img" />
+            <Link href="/" className="glitch-text font-creepster text-xl md:text-2xl text-primary hover:text-white transition-colors tracking-widest">
+              GATHERING OF THE FALLEN
             </Link>
             <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-mono uppercase">
               {links.map((link) => {
@@ -90,7 +90,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={openCart}
                 aria-label={`Кошик (${cartCount})`}
-                className="relative inline-flex items-center gap-2 px-3 py-2 rounded border border-white/15 text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-colors"
+                className="apoc-card relative inline-flex items-center gap-2 px-3 py-2 text-white/70 hover:text-[#00f0ff] transition-colors"
+                style={{ borderRadius: "12px", padding: "10px 14px" }}
               >
                 <ShoppingCart size={16} />
                 <span className="font-mono text-xs uppercase tracking-[0.2em]">Кошик</span>
@@ -113,26 +114,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <footer className="border-t border-primary/30 bg-black/50 backdrop-blur-sm py-8 mt-16">
           <div className="container mx-auto px-4 text-center font-mono text-xs text-muted-foreground">
-            <img src={logoImg} alt="GotF" className="h-8 mx-auto mb-4 opacity-50" />
+            <p className="glitch-text font-creepster text-lg text-primary mb-4 tracking-widest">GATHERING OF THE FALLEN</p>
             <p className="mb-2">&copy; {new Date().getFullYear()} GATHERING OF THE FALLEN</p>
             <p className="text-secondary/50 mb-6">{t("footer.transmission")}</p>
             <div className="flex flex-wrap justify-center gap-3 mb-4">
-              <a href="https://www.instagram.com/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+              <a href="https://www.instagram.com/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-primary transition-colors" style={{ borderRadius: "10px" }}>
                 Instagram
               </a>
-              <a href="https://www.tiktok.com/@gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+              <a href="https://www.tiktok.com/@gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-primary transition-colors" style={{ borderRadius: "10px" }}>
                 TikTok
               </a>
-              <a href="https://www.youtube.com/@gathering-of-the-fallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+              <a href="https://www.youtube.com/@gathering-of-the-fallen" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-primary transition-colors" style={{ borderRadius: "10px" }}>
                 YouTube
               </a>
-              <a href="https://www.facebook.com/share/1BJU7ec7ft/" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-primary transition-colors">
+              <a href="https://www.facebook.com/share/1BJU7ec7ft/" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-primary transition-colors" style={{ borderRadius: "10px" }}>
                 Facebook
               </a>
-              <a href="https://open.spotify.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-secondary transition-colors">
+              <a href="https://open.spotify.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-secondary transition-colors" style={{ borderRadius: "10px" }}>
                 Spotify
               </a>
-              <a href="https://music.apple.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-secondary transition-colors">
+              <a href="https://music.apple.com/artist/gatheringofthefallen" target="_blank" rel="noopener noreferrer" className="apoc-card px-3 py-1.5 text-white/50 hover:text-secondary transition-colors" style={{ borderRadius: "10px" }}>
                 Apple Music
               </a>
             </div>

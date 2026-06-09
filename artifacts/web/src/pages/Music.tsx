@@ -49,7 +49,7 @@ export default function Music() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rusted-border bg-black/65 border border-primary/40 backdrop-blur-sm p-6 md:p-10 mb-14 shadow-[0_0_50px_rgba(138,43,226,0.25)]"
+        className="apoc-card bg-black/65 border border-primary/40 backdrop-blur-sm p-6 md:p-10 mb-14"
       >
         <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold text-center">
           {t("music.newAlbumBadge")}
@@ -65,7 +65,7 @@ export default function Music() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 items-start">
-          <div className="aspect-video w-full relative rusted-border overflow-hidden">
+          <div className="aspect-video w-full relative hover-image overflow-hidden">
             <iframe
               width="100%"
               height="100%"

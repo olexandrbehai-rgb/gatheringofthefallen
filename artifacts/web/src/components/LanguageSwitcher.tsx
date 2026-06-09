@@ -4,7 +4,7 @@ import { LANGS, type Lang } from "@/i18n/translations";
 export function LanguageSwitcher() {
   const { lang, setLang } = useT();
   return (
-    <div className="flex gap-1 border border-primary/30 bg-black/40 backdrop-blur-sm font-mono text-xs">
+    <div className="apoc-card flex gap-1 bg-black/40 backdrop-blur-sm font-mono text-xs" style={{ borderRadius: "12px" }}>
       {LANGS.map((l) => {
         const active = lang === l.code;
         return (
