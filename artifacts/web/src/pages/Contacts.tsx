@@ -19,7 +19,7 @@ export default function Contacts() {
         <div className="rusted-border p-8 bg-black/40 backdrop-blur-sm font-mono">
           <div className="flex items-center gap-3 mb-8 text-primary border-b border-primary/20 pb-4">
             <TerminalSquare size={28} />
-            <h2 className="font-bold text-2xl uppercase tracking-widest">{t("contacts.terminalHeading")}</h2>
+            <h2 className="glitch-text font-bold text-2xl uppercase tracking-widest">{t("contacts.terminalHeading")}</h2>
           </div>
 
           <div className="space-y-6">
@@ -68,7 +68,7 @@ export default function Contacts() {
         <div className="rusted-border p-8 bg-black/40 backdrop-blur-sm font-mono flex flex-col">
           <div className="flex items-center gap-3 mb-8 text-secondary border-b border-secondary/20 pb-4">
             <span className="w-3 h-3 bg-secondary rounded-full animate-pulse"></span>
-            <h2 className="font-bold text-2xl uppercase tracking-widest">{t("contacts.sendHeading")}</h2>
+            <h2 className="glitch-text font-bold text-2xl uppercase tracking-widest">{t("contacts.sendHeading")}</h2>
           </div>
 
           <form className="flex-1 flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>

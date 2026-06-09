@@ -55,8 +55,8 @@ export default function Music() {
           {t("music.newAlbumBadge")}
         </div>
         <h2
-          className="font-creepster text-4xl md:text-6xl text-primary text-center mb-5"
-          style={{ textShadow: "0 0 18px rgba(0,240,255,0.55), 0 0 38px rgba(138,43,226,0.5)" }}
+          className="glitch-text font-creepster text-4xl md:text-6xl text-white text-center mb-5"
+          style={{ textShadow: "0 0 28px rgba(138,43,226,0.55), 0 0 4px rgba(255,255,255,0.15)" }}
         >
           {t("music.albumTitle")}
         </h2>
@@ -82,7 +82,7 @@ export default function Music() {
             <div className="text-[11px] uppercase tracking-[0.3em] text-red-300 font-mono mb-2">
               {t("music.mainSingleLabel")}
             </div>
-            <h3 className="font-creepster text-3xl md:text-4xl text-primary mb-4">
+            <h3 className="glitch-text font-creepster text-3xl md:text-4xl text-primary mb-4">
               {featured.title}
             </h3>
             <p className="font-mono text-sm md:text-base text-white/90 leading-relaxed mb-5">
@@ -114,7 +114,7 @@ export default function Music() {
         </div>
       </motion.section>
 
-      <h2 className="font-creepster text-3xl md:text-4xl text-primary mb-8 border-b border-primary/20 pb-3">
+      <h2 className="glitch-text font-creepster text-3xl md:text-4xl text-primary mb-8 border-b border-primary/20 pb-3">
         {t("music.otherTracks")}
       </h2>
 
@@ -127,7 +127,7 @@ export default function Music() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="rusted-border bg-black/40 backdrop-blur-sm overflow-hidden group"
+              className="apoc-card bg-black/40 backdrop-blur-sm overflow-hidden group"
             >
               <div className="aspect-video w-full relative">
                 <iframe
@@ -143,7 +143,7 @@ export default function Music() {
                 />
               </div>
               <div className="p-5">
-                <h3 className="font-creepster text-2xl text-primary mb-3 group-hover:text-white transition-colors">
+                <h3 className="glitch-text font-creepster text-2xl text-primary mb-3 group-hover:text-white transition-colors">
                   {track.title}
                 </h3>
                 <p className="font-mono text-sm text-muted-foreground leading-relaxed mb-4">

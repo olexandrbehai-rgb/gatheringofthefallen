@@ -33,7 +33,7 @@ export default function About() {
             initial={{ opacity: 0, x: i === 0 ? -30 : 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.2, duration: 0.6 }}
-            className={`photo-frame-neon overflow-hidden group${i === 0 ? " no-scanlines" : ""}`}
+            className={`hover-image overflow-hidden group${i === 0 ? " no-scanlines" : ""}`}
           >
             <div className="w-full aspect-[3/4] overflow-hidden bg-black">
               <img
@@ -48,7 +48,7 @@ export default function About() {
       </div>
 
       <div className="space-y-8 font-mono text-lg text-muted-foreground leading-relaxed">
-        <div className="rusted-border bg-black/50 backdrop-blur-sm p-8 relative">
+        <div className="apoc-card bg-black/50 backdrop-blur-sm p-8 relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
           <p className="text-xl md:text-2xl text-white font-bold italic pl-4">
             {t("about.quote")}
@@ -57,8 +57,8 @@ export default function About() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {members.map((member, i) => (
-            <div key={member.name} className="bg-black/35 backdrop-blur-sm p-6 rounded border border-primary/20">
-              <div className="rusted-border overflow-hidden mb-5">
+            <div key={member.name} className="apoc-card bg-black/35 backdrop-blur-sm p-6 border border-primary/20">
+              <div className="hover-image overflow-hidden mb-5">
                 <img
                   src={IMAGES[i]}
                   alt={member.name}
@@ -66,7 +66,7 @@ export default function About() {
                   className="w-full h-auto object-contain block"
                 />
               </div>
-              <h2 className="text-primary text-2xl mb-2 uppercase tracking-widest border-b border-primary/20 pb-2">
+              <h2 className="glitch-text text-primary text-2xl mb-2 uppercase tracking-widest border-b border-primary/20 pb-2">
                 &gt; {member.name} — {member.role}
               </h2>
               <p className="text-white/90 leading-relaxed">{member.description}</p>
