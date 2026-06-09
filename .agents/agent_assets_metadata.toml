@@ -24,6 +24,36 @@ uri = "file://artifacts/web/src/assets/band-ruins.png"
 type = "image"
 title = "Band in post-apocalyptic ruins"
 
+[[generated]]
+id = "Wd5p3H7vRxuJ4R6U0qvWi"
+uri = "file://attached_assets/generated_images/bg-home.png"
+type = "image"
+title = "apocalyptic city skyline home bg"
+
+[[generated]]
+id = "I-XQwLxzSsvo5jIqvzXzx"
+uri = "file://attached_assets/generated_images/bg-about.png"
+type = "image"
+title = "ruined cathedral about bg"
+
+[[generated]]
+id = "x9ptAnTgNIYHfAOOUvqTn"
+uri = "file://attached_assets/generated_images/bg-music.png"
+type = "image"
+title = "ruined concert stage music bg"
+
+[[generated]]
+id = "6KwUH9VboDZw4a8Xdoy6s"
+uri = "file://attached_assets/generated_images/bg-merch.png"
+type = "image"
+title = "apocalyptic forge merch bg"
+
+[[generated]]
+id = "MxkqLwbLRzBbxtHxAK_iy"
+uri = "file://attached_assets/generated_images/bg-contacts.png"
+type = "image"
+title = "wasteland radio tower contacts bg"
+
 [[outputs]]
 id = "vMdrMfSKo-EWAJIv2ZJwb"
 uri = "file://exports/gathering-of-the-fallen-source.tar.gz"

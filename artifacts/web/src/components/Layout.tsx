@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { AnimatedFog } from "./AnimatedFog";
+import { FallingAsh } from "./FallingAsh";
 import { SecretLevel } from "./SecretLevel";
 import { GlitchText } from "./GlitchText";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -8,12 +8,25 @@ import { useCart } from "@/hooks/useCart";
 import { CartDrawer } from "./CartDrawer";
 import { ShoppingCart } from "lucide-react";
 import logoImg from "@assets/logo_1776018973004.png";
-import heroBg from "@assets/hero-bg.png_1776018973003.png";
+import bgHome from "@assets/generated_images/bg-home.png";
+import bgAbout from "@assets/generated_images/bg-about.png";
+import bgMusic from "@assets/generated_images/bg-music.png";
+import bgMerch from "@assets/generated_images/bg-merch.png";
+import bgContacts from "@assets/generated_images/bg-contacts.png";
+
+const PAGE_BACKGROUNDS: Record<string, string> = {
+  "/": bgHome,
+  "/about": bgAbout,
+  "/music": bgMusic,
+  "/merch": bgMerch,
+  "/contacts": bgContacts,
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { t } = useT();
   const { count: cartCount, open: openCart } = useCart();
+  const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -26,10 +39,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen">
       <img
-        src={heroBg}
+        key={location}
+        src={bg}
         alt=""
         aria-hidden="true"
-        className="fixed inset-0 w-full h-full object-cover"
+        className="page-bg fixed inset-0 w-full h-full object-cover"
         style={{ zIndex: 0 }}
       />
 
@@ -37,11 +51,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         className="fixed inset-0"
         style={{
           zIndex: 1,
-          background: 'linear-gradient(to bottom, rgba(10,10,30,0.55), rgba(75,0,130,0.35), rgba(10,10,30,0.6))',
+          background:
+            'radial-gradient(ellipse at 50% 38%, rgba(5,5,12,0.12) 0%, rgba(8,5,20,0.4) 70%, rgba(4,4,10,0.66) 100%)',
         }}
       />
 
-      <AnimatedFog />
+      <FallingAsh />
       <SecretLevel />
 
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>

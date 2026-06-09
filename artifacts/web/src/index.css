@@ -302,6 +302,7 @@
 .rusted-border {
   border: 1px solid #8a2be2;
   box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2);
+  animation: ember-border 3.8s ease-in-out infinite;
 }
 
 .neon-glow-img {
@@ -442,25 +443,120 @@
 }
 
 /* ============================================================
-   ВОГНЯНІ ІНТЕРАКТИВНІ ЕФЕКТИ (демо — сторінка Мерч)
+   ВОГНЯНІ ІНТЕРАКТИВНІ ЕФЕКТИ
    ============================================================ */
 
-/* Картки й фото: заокруглення + вогняне сяйво на hover */
+/* Картки й фото: заокруглення + миготливе вогняне сяйво по контуру */
 .apoc-card,
 .hover-image {
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), filter 0.4s ease;
+  animation: ember-border 3.4s ease-in-out infinite;
+}
+
+/* "Язички полум'я", що визирають за рамку (несиметричне миготіння) */
+@keyframes ember-border {
+  0%, 100% {
+    box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2),
+      0 0 7px rgba(139, 0, 0, 0.5),
+      0 0 16px rgba(255, 69, 0, 0.2);
+  }
+  35% {
+    box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2),
+      0 0 14px rgba(255, 69, 0, 0.55),
+      -7px 2px 22px rgba(255, 106, 0, 0.32),
+      0 0 28px rgba(255, 100, 0, 0.25);
+  }
+  65% {
+    box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2),
+      0 0 12px rgba(255, 34, 0, 0.5),
+      7px -3px 24px rgba(255, 106, 0, 0.3),
+      0 0 26px rgba(255, 80, 0, 0.22);
+  }
 }
 
 .apoc-card:hover,
 .hover-image:hover {
   transform: scale(1.05) translateY(-8px);
-  box-shadow:
-    0 0 40px #8b0000,
-    0 0 60px #ff4500;
-  filter: brightness(1.12);
+  filter: brightness(1.13);
+  animation: ember-border-hot 0.85s ease-in-out infinite;
+}
+
+@keyframes ember-border-hot {
+  0% {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6),
+      0 0 24px #8b0000, 0 0 44px #ff4500, inset 0 0 10px rgba(255, 106, 0, 0.35);
+  }
+  35% {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6),
+      0 0 36px #ff0000, 0 0 64px #ff6a00, -9px 0 34px #ff4500,
+      inset 0 0 12px rgba(255, 140, 0, 0.45);
+  }
+  70% {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6),
+      0 0 30px #ff2200, 0 0 54px #ff4500, 9px -5px 38px #ff6a00,
+      inset 0 0 10px rgba(255, 106, 0, 0.4);
+  }
+  100% {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6),
+      0 0 24px #8b0000, 0 0 44px #ff4500, inset 0 0 10px rgba(255, 106, 0, 0.35);
+  }
+}
+
+/* ============================================================
+   ПАДАЮЧИЙ ПОПІЛ + ЖАРИНИ (на всіх сторінках)
+   ============================================================ */
+.ash-bit {
+  position: absolute;
+  top: -6vh;
+  border-radius: 50%;
+  background: rgba(150, 150, 150, 0.5);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: ash-fall, ash-sway;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: normal, alternate;
+}
+
+.ash-bit.ember {
+  background: radial-gradient(circle, #ffe2a8 0%, #ff6a00 45%, #8b0000 100%);
+  box-shadow: 0 0 6px #ff6a00, 0 0 11px rgba(255, 69, 0, 0.65);
+  animation-name: ash-fall, ash-flicker;
+}
+
+@keyframes ash-fall {
+  0% { transform: translate(0, 0); opacity: 0; }
+  8% { opacity: 1; }
+  88% { opacity: 0.85; }
+  100% { transform: translate(var(--drift, 0), 110vh); opacity: 0; }
+}
+
+@keyframes ash-sway {
+  0% { margin-left: -9px; }
+  100% { margin-left: 9px; }
+}
+
+/* Жарина то тухне, то знову жевріє */
+@keyframes ash-flicker {
+  0% { transform: translate(0, 0); opacity: 0; }
+  8% { opacity: 1; }
+  28% { opacity: 0.35; }
+  50% { opacity: 1; }
+  72% { opacity: 0.45; }
+  100% { transform: translate(var(--drift, 0), 110vh); opacity: 0; }
+}
+
+/* Плавна поява фону при зміні сторінки */
+.page-bg {
+  animation: bg-fade-in 0.9s ease both;
+}
+
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Кнопки — метал + glitch */
@@ -500,4 +596,22 @@
 @keyframes fire-neon-pulse {
   from { text-shadow: 0 0 10px #ff0000; }
   to   { text-shadow: 0 0 30px #ff0000, 0 0 50px #ff4500; }
+}
+
+/* ============================================================
+   ДОСТУПНІСТЬ: вимикаємо рух для тих, хто його не хоче
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .ash-bit {
+    display: none;
+  }
+  .rusted-border,
+  .apoc-card,
+  .hover-image,
+  .apoc-card:hover,
+  .hover-image:hover,
+  .page-bg,
+  .glitch-text:hover {
+    animation: none !important;
+  }
 }
