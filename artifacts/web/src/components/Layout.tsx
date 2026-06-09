@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     href={link.href}
                     className={`relative inline-flex items-center gap-1.5 transition-colors hover:text-primary ${location === link.href ? "text-primary border-b border-primary" : "text-muted-foreground"}`}
                   >
-                    <span className="glitch-text hover:scale-105 transition-transform inline-block">{link.label}</span>
+                    <span className="glitch-text nav-spark hover:scale-105 transition-transform inline-block">{link.label}</span>
                     {isMerch && cartCount > 0 && (
                       <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full bg-secondary/25 border border-secondary/60 text-[10px] leading-none text-secondary shadow-[0_0_10px_rgba(138,43,226,0.65)]">
                         <ShoppingCart size={10} />

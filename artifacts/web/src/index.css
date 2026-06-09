@@ -593,6 +593,62 @@
   animation: fire-neon-pulse 1s infinite alternate;
 }
 
+/* Spark для вкладок навігації */
+.nav-spark {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-spark::before,
+.nav-spark::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff4500;
+  box-shadow: 0 0 8px #ff0000, 0 0 16px #ff4500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.nav-spark::before { left: -10px; }
+.nav-spark::after { right: -10px; }
+
+.nav-spark:hover::before,
+.nav-spark:hover::after,
+.nav-spark:active::before,
+.nav-spark:active::after {
+  animation: spark-pop 0.6s ease-out infinite;
+  opacity: 1;
+}
+
+.nav-spark:hover::before { animation-delay: 0s; }
+.nav-spark:hover::after { animation-delay: 0.3s; }
+.nav-spark:active::before { animation-delay: 0s; }
+.nav-spark:active::after { animation-delay: 0.3s; }
+
+@keyframes spark-pop {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.4) translateY(-6px);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1) translateY(-10px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0) translateY(-14px);
+    opacity: 0;
+  }
+}
+
 @keyframes fire-neon-pulse {
   from { text-shadow: 0 0 10px #ff0000; }
   to   { text-shadow: 0 0 30px #ff0000, 0 0 50px #ff4500; }
