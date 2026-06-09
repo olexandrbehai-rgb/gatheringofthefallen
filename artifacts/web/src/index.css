@@ -657,6 +657,83 @@
 /* ============================================================
    ДОСТУПНІСТЬ: вимикаємо рух для тих, хто його не хоче
    ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .sleepy {
+    opacity: 0.28;
+    filter: brightness(0.65);
+    transition: opacity 0.45s ease, filter 0.45s ease, background-color 0.45s ease, box-shadow 0.45s ease;
+  }
+  .sleepy:hover {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  .sleepy:not(.apoc-card):not(.hover-image):not(.glitch-btn):not(.nav-spark) {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-color: rgba(255,255,255,0.1) !important;
+  }
+  .sleepy:not(.apoc-card):not(.hover-image):not(.glitch-btn):not(.nav-spark):hover {
+    background-color: rgba(0,0,0,0.55) !important;
+    border-color: rgba(0,240,255,0.4) !important;
+  }
+  .sleepy.apoc-card,
+  .sleepy.hover-image {
+    background-color: rgba(0,0,0,0.15) !important;
+  }
+  .sleepy.apoc-card:hover,
+  .sleepy.hover-image:hover {
+    background-color: rgba(0,0,0,0.55) !important;
+  }
+  .sleepy.glitch-btn {
+    background-color: rgba(0,0,0,0.12) !important;
+    border-color: rgba(0,240,255,0.2) !important;
+    box-shadow: none !important;
+  }
+  .sleepy.glitch-btn:hover {
+    background-color: rgba(0,0,0,0.55) !important;
+    border-color: rgba(0,240,255,0.5) !important;
+  }
+  .sleepy img,
+  .sleepy iframe {
+    opacity: 0.45;
+    filter: brightness(0.55);
+    transition: opacity 0.45s ease, filter 0.45s ease;
+  }
+  .sleepy:hover img,
+  .sleepy:hover iframe {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  .sleepy input,
+  .sleepy textarea {
+    background-color: rgba(0,0,0,0.12) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    transition: background-color 0.45s ease, border-color 0.45s ease;
+  }
+  .sleepy:hover input,
+  .sleepy:hover textarea,
+  .sleepy input:focus,
+  .sleepy textarea:focus {
+    background-color: rgba(0,0,0,0.45) !important;
+    border-color: rgba(0,240,255,0.4) !important;
+  }
+  .sleepy .glitch-text,
+  .sleepy .glitch-text {
+    text-shadow: none !important;
+    transition: text-shadow 0.45s ease, color 0.45s ease;
+  }
+  .sleepy:hover .glitch-text,
+  .sleepy:active .glitch-text {
+    text-shadow: inherit;
+  }
+  .sleepy .glitch-text:hover {
+    animation: none;
+  }
+  .sleepy:hover .glitch-text:hover {
+    animation: fire-neon-pulse 1s infinite alternate;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ash-bit {
     display: none;

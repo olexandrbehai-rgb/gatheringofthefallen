@@ -33,7 +33,7 @@ export default function About() {
             initial={{ opacity: 0, x: i === 0 ? -30 : 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.2, duration: 0.6 }}
-            className={`hover-image overflow-hidden group${i === 0 ? " no-scanlines" : ""}`}
+            className={`sleepy hover-image overflow-hidden group${i === 0 ? " no-scanlines" : ""}`}
           >
             <div className="w-full aspect-[3/4] overflow-hidden bg-black">
               <img
@@ -48,7 +48,7 @@ export default function About() {
       </div>
 
       <div className="space-y-8 font-mono text-lg text-muted-foreground leading-relaxed">
-        <div className="apoc-card bg-black/50 backdrop-blur-sm p-8 relative">
+        <div className="sleepy apoc-card bg-black/50 backdrop-blur-sm p-8 relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
           <p className="text-xl md:text-2xl text-white font-bold italic pl-4">
             {t("about.quote")}
@@ -57,8 +57,8 @@ export default function About() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {members.map((member, i) => (
-            <div key={member.name} className="apoc-card bg-black/35 backdrop-blur-sm p-6 border border-primary/20">
-              <div className="hover-image overflow-hidden mb-5">
+            <div key={member.name} className="sleepy apoc-card bg-black/35 backdrop-blur-sm p-6 border border-primary/20">
+              <div className="sleepy hover-image overflow-hidden mb-5">
                 <img
                   src={IMAGES[i]}
                   alt={member.name}
