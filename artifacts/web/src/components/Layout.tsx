@@ -60,12 +60,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <SecretLevel />
 
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
-        <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20">
+        <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20" style={{ boxShadow: "0 0 20px rgba(139,0,0,0.3), 0 0 40px rgba(255,69,0,0.1)" }}>
           <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
             <Link href="/" className="glitch-text font-creepster text-xl md:text-2xl text-primary hover:text-white transition-colors tracking-widest">
               GATHERING OF THE FALLEN
             </Link>
-            <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-mono uppercase">
+            <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-mono uppercase tracking-widest">
               {links.map((link) => {
                 const isMerch = link.href === "/merch";
                 return (
@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     href={link.href}
                     className={`relative inline-flex items-center gap-1.5 transition-colors hover:text-primary ${location === link.href ? "text-primary border-b border-primary" : "text-muted-foreground"}`}
                   >
-                    <GlitchText>{link.label}</GlitchText>
+                    <span className="glitch-text hover:scale-105 transition-transform inline-block">{link.label}</span>
                     {isMerch && cartCount > 0 && (
                       <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full bg-secondary/25 border border-secondary/60 text-[10px] leading-none text-secondary shadow-[0_0_10px_rgba(138,43,226,0.65)]">
                         <ShoppingCart size={10} />
@@ -94,7 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 style={{ borderRadius: "12px", padding: "10px 14px" }}
               >
                 <ShoppingCart size={16} />
-                <span className="font-mono text-xs uppercase tracking-[0.2em]">Кошик</span>
+                <span className="glitch-text font-mono text-xs uppercase tracking-[0.2em]">Кошик</span>
                 {cartCount > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#8a2be2] border border-[#a855f7] text-[10px] font-mono text-white shadow-[0_0_10px_rgba(138,43,226,0.7)]">
                     {cartCount}
