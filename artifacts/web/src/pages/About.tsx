@@ -24,7 +24,7 @@ export default function About() {
       exit={{ opacity: 0 }}
       className="container mx-auto px-4 py-12 md:py-24 max-w-6xl"
     >
-      <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">{t("about.title")}</h1>
+      <h1 className="glitch-text font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">{t("about.title")}</h1>
 
       <div className="mb-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {photos.map((item, i) => (

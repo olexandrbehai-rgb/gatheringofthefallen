@@ -7,7 +7,7 @@ interface GlitchTextProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export function GlitchText({ children, className, ...props }: GlitchTextProps) {
   return (
-    <span className={cn("glitch-hover cursor-pointer", className)} {...props}>
+    <span className={cn("glitch-hover glitch-text cursor-pointer", className)} {...props}>
       {children}
     </span>
   );

@@ -13,7 +13,7 @@ export default function Contacts() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 py-12 md:py-24 max-w-5xl"
     >
-      <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">{t("contacts.title")}</h1>
+      <h1 className="glitch-text font-creepster text-5xl md:text-7xl text-primary mb-12 text-center">{t("contacts.title")}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="rusted-border p-8 bg-black/40 backdrop-blur-sm font-mono">

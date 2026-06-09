@@ -32,7 +32,7 @@ export default function Music() {
       animate={{ opacity: 1 }}
       className="container mx-auto px-4 py-12 md:py-24 max-w-6xl"
     >
-      <h1 className="font-creepster text-5xl md:text-7xl text-primary mb-4 text-center">
+      <h1 className="glitch-text font-creepster text-5xl md:text-7xl text-primary mb-4 text-center">
         {t("music.title")}
       </h1>
       <p

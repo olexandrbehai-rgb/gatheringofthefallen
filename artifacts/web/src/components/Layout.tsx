@@ -8,7 +8,7 @@ import { useCart } from "@/hooks/useCart";
 import { CartDrawer } from "./CartDrawer";
 import { ShoppingCart } from "lucide-react";
 import logoImg from "@assets/logo_1776018973004.png";
-import bgHome from "@assets/generated_images/bg-home.png";
+import bgHome from "@assets/f696c6bc-1e83-49d8-a36a-90d5c6251f08_1781045951908.png";
 import bgAbout from "@assets/generated_images/bg-about.png";
 import bgMusic from "@assets/generated_images/bg-music.png";
 import bgMerch from "@assets/generated_images/bg-merch.png";
