@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import { useT } from "@/i18n/LanguageContext";
 import logoVideo from "@assets/grok-video-4e191f5f-3c1c-4e03-97ea-bc727051f844_1778193049750.mp4";
-import lineup1Img from "@assets/a33ec048-5ffc-400a-8499-f0246ed136d2_1779324411927.png";
+import lineup1Img from "@assets/photo_2026-06-07_20-29-09_1781050027752.jpg";
 import lineup2Img from "@assets/b48431c4-d5c2-4651-8fba-08b27f82595e_1779324411927.png";
 import lineup3Img from "@assets/grok-image-3ba37ea6-9c2c-42f3-93a1-0da705b2bdc9_1779324411927.png";
 import merchTshirt1 from "@assets/1backt-shirt_1779322287600.png";
