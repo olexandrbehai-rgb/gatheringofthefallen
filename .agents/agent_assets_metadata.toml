@@ -65,3 +65,9 @@ id = "KMVZJfpd4Xk787PE5mUip"
 uri = "file://exports/gathering-of-the-fallen-code.tar.gz"
 type = "unspecified"
 title = "Повний код сайту Gathering Of The Fallen"
+
+[[outputs]]
+id = "aVfuTxvUdANGL6eU2PQC4"
+uri = "file://exports/gathering-of-the-fallen.zip"
+type = "unspecified"
+title = "Gathering Of The Fallen — повний код для деплою"
