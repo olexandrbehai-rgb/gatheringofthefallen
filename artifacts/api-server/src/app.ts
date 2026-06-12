@@ -1,3 +1,4 @@
+import path from "node:path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -41,6 +42,7 @@ app.use(
       if (EXTRA_ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
       if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/i.test(origin)) return callback(null, true);
       if (/^https:\/\/[a-z0-9-]+\.replit\.app$/i.test(origin)) return callback(null, true);
+      if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin)) return callback(null, true);
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
@@ -54,5 +56,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  const clientDir = path.resolve(import.meta.dirname, "../../web/dist/public");
+  app.use(express.static(clientDir));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return next();
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDir, "index.html"));
+  });
+}
 
 export default app;

@@ -1,0 +1,1 @@
+- [Render deployment](render-deploy.md) — deploys as ONE Render service (Express serves Vite build) + Postgres; frontend uses relative /api so single-origin is required.
