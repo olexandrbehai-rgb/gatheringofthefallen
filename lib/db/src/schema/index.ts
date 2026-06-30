@@ -54,6 +54,14 @@ export const ordersTable = pgTable("orders", {
   address2: text("address2"),
   address_line1: text("address_line1"),
   address_line2: text("address_line2"),
+
+  street: text("street"),
+  street_address: text("street_address"),
+  house_number: text("house_number"),
+  building: text("building"),
+  door_code: text("door_code"),
+  delivery_instructions: text("delivery_instructions"),
+
   apartment: text("apartment"),
   unit: text("unit"),
   city: text("city"),
@@ -71,10 +79,14 @@ export const ordersTable = pgTable("orders", {
   billing_email: text("billing_email"),
   billing_phone: text("billing_phone"),
   billing_address: text("billing_address"),
+  billing_address_line1: text("billing_address_line1"),
+  billing_address_line2: text("billing_address_line2"),
+  billing_street: text("billing_street"),
   billing_city: text("billing_city"),
   billing_province: text("billing_province"),
   billing_state: text("billing_state"),
   billing_postal_code: text("billing_postal_code"),
+  billing_zip: text("billing_zip"),
   billing_country: text("billing_country"),
 
   // Price / money fields, usually cents
