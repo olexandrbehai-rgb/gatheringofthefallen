@@ -89,19 +89,20 @@ export const ordersTable = pgTable("orders", {
   billing_zip: text("billing_zip"),
   billing_country: text("billing_country"),
 
-  // Price / money fields, usually cents
-  price: integer("price").notNull().default(0),
-  unit_price: integer("unit_price").notNull().default(0),
-  subtotal: integer("subtotal").notNull().default(0),
-  shipping: integer("shipping").notNull().default(0),
-  shipping_cost: integer("shipping_cost").notNull().default(0),
-  tax: integer("tax").notNull().default(0),
-  taxes: integer("taxes").notNull().default(0),
-  discount: integer("discount").notNull().default(0),
-  total: integer("total").notNull().default(0),
-  amount: integer("amount").notNull().default(0),
-  amount_total: integer("amount_total").notNull().default(0),
-  total_amount: integer("total_amount").notNull().default(0),
+  // Price / money fields
+  // Text because frontend sends values like "CA$58"
+  price: text("price").notNull().default("0"),
+  unit_price: text("unit_price").notNull().default("0"),
+  subtotal: text("subtotal").notNull().default("0"),
+  shipping: text("shipping").notNull().default("0"),
+  shipping_cost: text("shipping_cost").notNull().default("0"),
+  tax: text("tax").notNull().default("0"),
+  taxes: text("taxes").notNull().default("0"),
+  discount: text("discount").notNull().default("0"),
+  total: text("total").notNull().default("0"),
+  amount: text("amount").notNull().default("0"),
+  amount_total: text("amount_total").notNull().default("0"),
+  total_amount: text("total_amount").notNull().default("0"),
   currency: text("currency").notNull().default("cad"),
 
   // Status fields
@@ -121,16 +122,16 @@ export const ordersTable = pgTable("orders", {
   payment_url: text("payment_url"),
 
   // PayPal / generic payment fields
-paypal_order_id: text("paypal_order_id"),
-paypal_capture_id: text("paypal_capture_id"),
-paypal_payer_id: text("paypal_payer_id"),
-paypal_payment_id: text("paypal_payment_id"),
-paypal_status: text("paypal_status"),
-payment_provider: text("payment_provider"),
-payment_method: text("payment_method"),
-provider: text("provider"),
-transaction_id: text("transaction_id"),
-  
+  paypal_order_id: text("paypal_order_id"),
+  paypal_capture_id: text("paypal_capture_id"),
+  paypal_payer_id: text("paypal_payer_id"),
+  paypal_payment_id: text("paypal_payment_id"),
+  paypal_status: text("paypal_status"),
+  payment_provider: text("payment_provider"),
+  payment_method: text("payment_method"),
+  provider: text("provider"),
+  transaction_id: text("transaction_id"),
+
   // Delivery / shipping provider fields
   delivery_method: text("delivery_method"),
   shipping_method: text("shipping_method"),
