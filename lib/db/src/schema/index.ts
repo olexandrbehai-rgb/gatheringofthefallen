@@ -120,6 +120,17 @@ export const ordersTable = pgTable("orders", {
   checkout_url: text("checkout_url"),
   payment_url: text("payment_url"),
 
+  // PayPal / generic payment fields
+paypal_order_id: text("paypal_order_id"),
+paypal_capture_id: text("paypal_capture_id"),
+paypal_payer_id: text("paypal_payer_id"),
+paypal_payment_id: text("paypal_payment_id"),
+paypal_status: text("paypal_status"),
+payment_provider: text("payment_provider"),
+payment_method: text("payment_method"),
+provider: text("provider"),
+transaction_id: text("transaction_id"),
+  
   // Delivery / shipping provider fields
   delivery_method: text("delivery_method"),
   shipping_method: text("shipping_method"),
