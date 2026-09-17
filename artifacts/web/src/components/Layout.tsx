@@ -86,6 +86,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
             <div className="flex items-center gap-3">
+              <Link
+                href="/owner-analytics"
+                className="apoc-card inline-flex items-center px-3 py-2 font-mono text-xs uppercase tracking-[0.16em] text-[#ffb49a] transition-colors hover:border-[#ff9b71] hover:bg-[#ff6b35]/15 hover:text-white"
+                style={{ borderRadius: "12px" }}
+              >
+                {t("home.ownerStats")}
+              </Link>
               <button
                 type="button"
                 onClick={openCart}

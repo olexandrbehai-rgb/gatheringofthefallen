@@ -1,32 +1,143 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { ClerkProvider, SignIn, SignUp } from "@clerk/react";
+import { publishableKeyFromHost } from "@clerk/react/internal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { CartProvider } from "@/hooks/useCart";
 import { CurrencyProvider } from "@/hooks/useCurrency";
-import NotFound from "@/pages/not-found";
+import { trackEvent } from "@/lib/analytics";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Music from "@/pages/Music";
 import Merch from "@/pages/Merch";
 import Contacts from "@/pages/Contacts";
+import OwnerAnalytics from "@/pages/OwnerAnalytics";
+import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
-function Router() {
+const clerkAppearance = {
+  theme: "simple" as const,
+  options: {
+    logoPlacement: "inside" as const,
+    logoLinkUrl: basePath || "/",
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+  },
+  variables: {
+    colorPrimary: "#ff4500",
+    colorForeground: "#f4e9ff",
+    colorMutedForeground: "#b5a6c6",
+    colorDanger: "#ff6b6b",
+    colorBackground: "#0b0614",
+    colorInput: "#160d22",
+    colorInputForeground: "#ffffff",
+    colorNeutral: "#542873",
+    fontFamily: "'Share Tech Mono', monospace",
+    borderRadius: "0.75rem",
+  },
+};
+
+function SignInPage() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/about" component={About} />
-        <Route path="/music" component={Music} />
-        <Route path="/merch" component={Merch} />
-        <Route path="/contacts" component={Contacts} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <div className="flex min-h-[100dvh] items-center justify-center bg-[#050208] px-4 py-10">
+      <SignIn
+        routing="path"
+        path={`${basePath}/sign-in`}
+        signUpUrl={`${basePath}/sign-up`}
+        appearance={clerkAppearance}
+      />
+    </div>
+  );
+}
+
+function SignUpPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-[#050208] px-4 py-10">
+      <SignUp
+        routing="path"
+        path={`${basePath}/sign-up`}
+        signInUrl={`${basePath}/sign-in`}
+        appearance={clerkAppearance}
+      />
+    </div>
+  );
+}
+
+function OwnerAnalyticsRoute() {
+  return <OwnerAnalytics />;
+}
+
+function SiteRouter() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    trackEvent("page_viewed", { path: location });
+  }, [location]);
+
+  return (
+    <Switch>
+      <Route path="/sign-in/*?" component={SignInPage} />
+      <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/owner-analytics" component={OwnerAnalyticsRoute} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/about" component={About} />
+            <Route path="/music" component={Music} />
+            <Route path="/merch" component={Merch} />
+            <Route path="/contacts" component={Contacts} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
+  );
+}
+
+function AuthenticatedApp() {
+  const [, setLocation] = useLocation();
+
+  if (!clerkPubKey) {
+    throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
+  }
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={import.meta.env.PROD ? clerkProxyUrl : undefined}
+      appearance={clerkAppearance}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      routerPush={(to) => setLocation(to.replace(basePath, "") || "/")}
+      routerReplace={(to) => setLocation(to.replace(basePath, "") || "/")}
+      localization={{
+        signIn: {
+          start: {
+            title: "Вхід до приватної панелі",
+            subtitle: "Тільки для власника сайту",
+          },
+        },
+        signUp: {
+          start: {
+            title: "Створення доступу власника",
+            subtitle: "Підтвердь свій email для продовження",
+          },
+        },
+      }}
+    >
+      <SiteRouter />
+    </ClerkProvider>
   );
 }
 
@@ -34,16 +145,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-       <CurrencyProvider>
-        <CartProvider>
-         <TooltipProvider>
-           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-             <Router />
-           </WouterRouter>
-           <Toaster />
-         </TooltipProvider>
-        </CartProvider>
-       </CurrencyProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <WouterRouter base={basePath}>
+                <AuthenticatedApp />
+              </WouterRouter>
+              <Toaster />
+            </TooltipProvider>
+          </CartProvider>
+        </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

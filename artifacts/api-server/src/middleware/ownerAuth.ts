@@ -1,0 +1,223 @@
+import type { NextFunction, Request, Response } from "express";
+import { clerkClient, getAuth } from "@clerk/express";
+import crypto from "node:crypto";
+import { Pool } from "pg";
+import { sendTrustedDeviceReplacementEmail } from "../lib/email";
+import { logger } from "../lib/logger";
+
+const OWNER_DEVICE_COOKIE = "gtf_owner_device";
+const DEVICE_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
+// Keep trusted-device registration and replacement history for one year. Cleanup
+// runs opportunistically after successful owner-device operations so the table
+// stays bounded without relying on a separate scheduler.
+const OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS = 365;
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+declare global {
+  namespace Express {
+    interface Request {
+      ownerEmail?: string;
+    }
+  }
+}
+
+async function getOwnerEmail(req: Request, userId: string): Promise<string | null> {
+  const claims = getAuth(req).sessionClaims as Record<string, unknown> | null | undefined;
+  const email =
+    claims?.email ??
+    claims?.email_address ??
+    claims?.primary_email_address;
+  if (typeof email === "string") return email.trim().toLowerCase();
+
+  const user = await clerkClient.users.getUser(userId);
+  return user.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? null;
+}
+
+function signDeviceToken(token: string): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) throw new Error("SESSION_SECRET must be set for owner access");
+  return crypto.createHmac("sha256", secret).update(token).digest("hex");
+}
+
+function hashDeviceToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function getDeviceCookie(req: Request): string | undefined {
+  return req.headers.cookie
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${OWNER_DEVICE_COOKIE}=`))
+    ?.slice(OWNER_DEVICE_COOKIE.length + 1);
+}
+
+function isValidDeviceCookie(value: string | undefined): boolean {
+  if (!value) return false;
+  const [token, signature] = value.split(".");
+  if (!token || !signature) return false;
+  const expected = signDeviceToken(token);
+  return signature.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+
+function setDeviceCookie(res: Response, token: string): void {
+  const signed = `${token}.${signDeviceToken(token)}`;
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  res.setHeader(
+    "Set-Cookie",
+    `${OWNER_DEVICE_COOKIE}=${signed}; Max-Age=${DEVICE_COOKIE_MAX_AGE / 1000}; Path=/; HttpOnly; SameSite=Lax${secure}`,
+  );
+}
+
+async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
+  try {
+    await pool.query(
+      `DELETE FROM owner_device_security_events
+       WHERE email = $1
+         AND created_at < NOW() - ($2 * INTERVAL '1 day')`,
+      [email, OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS],
+    );
+  } catch (error) {
+    logger.warn({
+      msg: "Trusted device security event cleanup failed",
+      ownerEmail: email,
+      error,
+    });
+  }
+}
+
+async function ensureOwnerDevice(req: Request, res: Response, email: string): Promise<boolean> {
+  const existing = await pool.query(
+    "SELECT token_hash FROM owner_devices WHERE email = $1 LIMIT 1",
+    [email],
+  );
+  const cookie = getDeviceCookie(req);
+
+  if (existing.rows[0]) {
+    const [token] = cookie?.split(".") ?? [];
+    const valid = Boolean(
+      token &&
+      isValidDeviceCookie(cookie) &&
+      hashDeviceToken(token) === existing.rows[0].token_hash,
+    );
+    if (valid) await pruneOwnerDeviceSecurityEvents(email);
+    return valid;
+  }
+
+  const token = crypto.randomBytes(24).toString("hex");
+  const inserted = await pool.query(
+    `WITH registered_device AS (
+       INSERT INTO owner_devices (email, token_hash)
+       VALUES ($1, $2)
+       ON CONFLICT (email) DO NOTHING
+       RETURNING email
+     )
+     INSERT INTO owner_device_security_events (email, event_type)
+     SELECT email, 'registered' FROM registered_device
+     RETURNING created_at`,
+    [email, hashDeviceToken(token)],
+  );
+  if (inserted.rowCount !== 1) return false;
+
+  setDeviceCookie(res, token);
+  await pruneOwnerDeviceSecurityEvents(email);
+  return true;
+}
+
+async function getVerifiedOwnerEmail(req: Request, res: Response): Promise<string | null> {
+  const auth = getAuth(req);
+  if (!auth.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+
+  const ownerEmail = process.env.OWNER_EMAIL?.trim().toLowerCase();
+  let email: string | null = null;
+  try {
+    email = await getOwnerEmail(req, auth.userId);
+  } catch {
+    res.status(403).json({ error: "Unable to verify owner access" });
+    return null;
+  }
+  if (!ownerEmail || !email || email !== ownerEmail) {
+    res.status(403).json({ error: "Owner access required" });
+    return null;
+  }
+
+  return email;
+}
+
+export async function requireOwnerIdentity(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const email = await getVerifiedOwnerEmail(req, res);
+  if (!email) return;
+  req.ownerEmail = email;
+  next();
+}
+
+export async function recoverOwnerDevice(req: Request, res: Response): Promise<void> {
+  if (!req.ownerEmail) {
+    res.status(500).json({ error: "Owner recovery is unavailable" });
+    return;
+  }
+  if (req.body?.confirm !== true) {
+    res.status(400).json({ error: "Recovery confirmation required" });
+    return;
+  }
+
+  const token = crypto.randomBytes(24).toString("hex");
+  let replacedAt: Date;
+  try {
+    const replacement = await pool.query(
+      `WITH replaced_device AS (
+         INSERT INTO owner_devices (email, token_hash)
+         VALUES ($1, $2)
+         ON CONFLICT (email) DO UPDATE
+         SET token_hash = EXCLUDED.token_hash, created_at = NOW()
+         RETURNING email, created_at
+       ),
+       recorded_event AS (
+         INSERT INTO owner_device_security_events (email, event_type, created_at)
+         SELECT email, 'replaced', created_at FROM replaced_device
+       )
+       SELECT created_at FROM replaced_device`,
+      [req.ownerEmail, hashDeviceToken(token)],
+    );
+    replacedAt = new Date(replacement.rows[0].created_at);
+  } catch {
+    res.status(503).json({ error: "Unable to reset trusted device" });
+    return;
+  }
+  await pruneOwnerDeviceSecurityEvents(req.ownerEmail);
+  setDeviceCookie(res, token);
+  res.status(204).end();
+
+  void sendTrustedDeviceReplacementEmail({
+      ownerEmail: req.ownerEmail,
+      replacedAt,
+    })
+    .catch((error) => {
+      logger.error({
+      msg: "Trusted device replacement notification failed",
+      ownerEmail: req.ownerEmail,
+      replacedAt: replacedAt.toISOString(),
+      error,
+      });
+    });
+}
+
+export async function requireOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const email = await getVerifiedOwnerEmail(req, res);
+  if (!email) return;
+
+  try {
+    if (!(await ensureOwnerDevice(req, res, email))) {
+      res.status(403).json({ error: "Trusted device required" });
+      return;
+    }
+  } catch {
+    res.status(503).json({ error: "Trusted device verification unavailable" });
+    return;
+  }
+  req.ownerEmail = email;
+  next();
+}

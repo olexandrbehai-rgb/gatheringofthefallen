@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import { useT } from "@/i18n/LanguageContext";
-import logoVideo from "@assets/grok-video-4e191f5f-3c1c-4e03-97ea-bc727051f844_1778193049750.mp4";
+import { trackEvent } from "@/lib/analytics";
+import logoVideo from "@/assets/oracle-logo-transparent.webm";
 import lineup1Img from "@assets/a33ec048-5ffc-400a-8499-f0246ed136d2_1779324411927.png";
 import lineup2Img from "@assets/photo_2026-06-07_20-29-09_1781050027752.jpg";
 import lineup3Img from "@assets/grok-image-3ba37ea6-9c2c-42f3-93a1-0da705b2bdc9_1779324411927.png";
@@ -11,6 +12,8 @@ import merchTshirt2 from "@assets/2frontt-shirt_1779322287600.png";
 import merchTshirt3 from "@assets/3frontt-shirt_1779322287600.png";
 import merchHoodie4 from "@assets/4backhoodie_1779322287601.png";
 import merchHoodie5 from "@assets/5backhoodie_1779322287601.png";
+
+import { OracleChat } from "@/components/OracleChat";
 
 const lineupImages = [lineup1Img, lineup2Img, lineup3Img];
 
@@ -25,6 +28,7 @@ export default function Home() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
+      <OracleChat />
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
         <motion.video
           src={logoVideo}
@@ -35,12 +39,12 @@ export default function Home() {
           playsInline
           preload="metadata"
           aria-label="Герб гурту Gathering Of The Fallen"
-          className="w-full max-w-3xl mx-auto mb-10 mix-blend-screen neon-glow-img-strong"
+          className="w-full max-w-3xl mx-auto mb-10 neon-glow-img-strong"
           style={{
             WebkitMaskImage:
-              "radial-gradient(ellipse 42% 55% at center, #000 20%, rgba(0,0,0,0.75) 50%, rgba(0,0,0,0.25) 78%, transparent 100%)",
+              "radial-gradient(circle at center, #000 22%, rgba(0,0,0,0.92) 34%, rgba(0,0,0,0.55) 46%, rgba(0,0,0,0.12) 57%, transparent 66%)",
             maskImage:
-              "radial-gradient(ellipse 42% 55% at center, #000 20%, rgba(0,0,0,0.75) 50%, rgba(0,0,0,0.25) 78%, transparent 100%)",
+              "radial-gradient(circle at center, #000 22%, rgba(0,0,0,0.92) 34%, rgba(0,0,0,0.55) 46%, rgba(0,0,0,0.12) 57%, transparent 66%)",
           }}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -64,9 +68,10 @@ export default function Home() {
               {t("home.albumDesc")}
             </p>
             <a
-              href="https://music.youtube.com/playlist?list=OLAK5uy_mjgusq730f6SJQAf2dWo3yt13h4UhFqRc&si=gof3fur9m8FMVMOW"
+              href="https://music.youtube.com/playlist?list=OLAK5uy_mjgusq730f6SJQAf2dWo3yt13h4UhFqRc&si=7M4neQt1SgfrJ1Oy"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent("external_link_clicked", { destination: "youtube_music", category: "album", album: "messages" })}
             >
               <GlitchButton className="text-sm py-2 px-5">
                 {t("home.listenAlbum")}
@@ -98,6 +103,7 @@ export default function Home() {
                 href="https://music.youtube.com/playlist?list=OLAK5uy_m5-pewnWbtUl1LuVIfeV96mzvr1g2RquY&si=07DED5eHVaSFpFLa"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent("external_link_clicked", { destination: "youtube_music", category: "album", album: "memories" })}
               >
                 <GlitchButton className="text-sm py-2 px-5 border-[#ff6b35] text-[#ffb49a] hover:bg-[#ff6b35]/15 hover:border-[#ff9b71]">
                   {t("home.listenMemoryAlbum")}

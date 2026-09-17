@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { GlitchButton } from "@/components/GlitchButton";
 import { useT } from "@/i18n/LanguageContext";
+import { trackEvent } from "@/lib/analytics";
 
 const FEATURED_ID = "3Kkywl6MFfw";
 const TRACK_IDS = [
@@ -93,6 +94,7 @@ export default function Music() {
                 href={`https://www.youtube.com/watch?v=${FEATURED_ID}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent("external_link_clicked", { destination: "youtube", category: "music", track: FEATURED_ID })}
               >
                 <GlitchButton className="text-sm py-2 px-4">
                   <ExternalLink size={14} className="inline mr-2" />
@@ -103,6 +105,7 @@ export default function Music() {
                 href="https://music.youtube.com/channel/UCJNjRvO6Nce6qExLl2hFuAw"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent("external_link_clicked", { destination: "youtube_music", category: "music" })}
               >
                 <GlitchButton className="text-sm py-2 px-4 border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
                   <ExternalLink size={14} className="inline mr-2" />
@@ -153,6 +156,7 @@ export default function Music() {
                   href={`https://www.youtube.com/watch?v=${id}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent("external_link_clicked", { destination: "youtube", category: "track", track: id })}
                 >
                   <GlitchButton className="text-sm py-2 px-4">
                     <ExternalLink size={14} className="inline mr-2" />
@@ -175,6 +179,7 @@ export default function Music() {
           href="https://www.youtube.com/@gathering-of-the-fallen"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent("external_link_clicked", { destination: "youtube", category: "music_channel" })}
         >
           <GlitchButton className="text-lg py-4 px-8 border-secondary text-secondary hover:bg-secondary/20 hover:border-secondary">
             <ExternalLink size={18} className="inline mr-2" />

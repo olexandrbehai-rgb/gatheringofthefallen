@@ -30,6 +30,7 @@ const ua: Dict = {
     memoryAlbumDesc:
       "Нова платівка про те, що залишається з нами після падіння: голоси, вулиці, любов і пам'ять, яку неможливо знищити.",
     listenMemoryAlbum: "Слухати альбом",
+    ownerStats: "Моя статистика",
     slogan: "З попелу встаємо 🔥",
     bandDesc:
       "Gathering Of The Fallen — український gothic / cinematic industrial metal гурт. 65+ треків, нові релізи кожен місяць. Музика народжується з вогню, шрамів і незламної волі.",
@@ -233,6 +234,7 @@ const en: Dict = {
     memoryAlbumDesc:
       "A new record about what remains after the fall: voices, streets, love, and memories that cannot be erased.",
     listenMemoryAlbum: "Listen to the album",
+    ownerStats: "My statistics",
     slogan: "Rising from the ashes 🔥",
     bandDesc:
       "Gathering Of The Fallen — Ukrainian gothic / cinematic industrial metal band. 65+ tracks, new releases every month. Music born from fire, scars, and unbreakable will.",
@@ -436,6 +438,7 @@ const fr: Dict = {
     memoryAlbumDesc:
       "Un nouvel album sur ce qui reste après la chute : les voix, les rues, l'amour et les souvenirs impossibles à effacer.",
     listenMemoryAlbum: "Écouter l'album",
+    ownerStats: "Mes statistiques",
     slogan: "On se relève des cendres 🔥",
     bandDesc:
       "Gathering Of The Fallen — groupe ukrainien de gothic / cinematic industrial metal. 65+ titres, nouvelles sorties chaque mois. Musique née du feu, des cicatrices et d'une volonté inébranlable.",

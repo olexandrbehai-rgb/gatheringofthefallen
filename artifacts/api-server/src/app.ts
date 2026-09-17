@@ -2,10 +2,21 @@ import path from "node:path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { clerkMiddleware } from "@clerk/express";
+import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import {
+  CLERK_PROXY_PATH,
+  clerkProxyMiddleware,
+  getClerkProxyHost,
+} from "./middlewares/clerkProxyMiddleware";
 
 const app: Express = express();
+
+// Trust the platform's forwarding headers so per-client protections see the
+// visitor address instead of the shared reverse proxy address.
+app.set("trust proxy", true);
 
 app.use(
   pinoHttp({
@@ -26,8 +37,11 @@ app.use(
     },
   }),
 );
+app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 const ALLOWED_ORIGINS = new Set([
   "https://gathering-of-the-fallen.replit.app",
+  "https://gatheringofthefallen.com",
+  "https://www.gatheringofthefallen.com",
   "http://localhost:5000",
   "http://localhost:80",
 ]);
@@ -40,8 +54,9 @@ app.use(
       if (!origin) return callback(null, true);
       if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
       if (EXTRA_ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/i.test(origin)) return callback(null, true);
-      if (/^https:\/\/[a-z0-9-]+\.replit\.app$/i.test(origin)) return callback(null, true);
+       if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return callback(null, true);
+       if (/^https:\/\/[a-z0-9.-]+\.replit\.dev$/i.test(origin)) return callback(null, true);
+       if (/^https:\/\/[a-z0-9.-]+\.replit\.app$/i.test(origin)) return callback(null, true);
       if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin)) return callback(null, true);
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
@@ -54,6 +69,15 @@ app.use("/api/webhook/stripe", express.raw({ type: "application/json" }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  clerkMiddleware((req) => ({
+    publishableKey: publishableKeyFromHost(
+      getClerkProxyHost(req) ?? "",
+      process.env.CLERK_PUBLISHABLE_KEY,
+    ),
+  })),
+);
 
 app.use("/api", router);
 
