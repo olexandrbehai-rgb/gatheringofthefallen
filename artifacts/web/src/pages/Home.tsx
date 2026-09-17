@@ -47,27 +47,61 @@ export default function Home() {
           transition={{ duration: 1.2, ease: "easeOut" }}
         />
 
-        <motion.div
-          className="w-full max-w-4xl mb-12 apoc-card bg-black/70 border border-primary/40 backdrop-blur-sm p-6 md:p-8 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
-          <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold">
-            {t("home.albumBadge")}
-          </div>
-          <h1 className="glitch-text font-creepster text-3xl md:text-5xl text-white mb-4" style={{ textShadow: '0 0 28px rgba(138,43,226,0.55), 0 0 4px rgba(255,255,255,0.15)' }}>
-            {t("home.albumTitle")}
-          </h1>
-          <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed mb-5">
-            {t("home.albumDesc")}
-          </p>
-          <Link href="/music">
-            <GlitchButton className="text-sm py-2 px-5">
-              {t("home.listenAlbum")}
-            </GlitchButton>
-          </Link>
-        </motion.div>
+        <div className="w-full max-w-6xl mb-12 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <motion.div
+            className="apoc-card bg-black/70 border border-primary/40 backdrop-blur-sm p-6 md:p-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-red-400 mb-3 font-mono font-bold">
+              {t("home.albumBadge")}
+            </div>
+            <h1 className="glitch-text font-creepster text-3xl md:text-5xl text-white mb-4" style={{ textShadow: '0 0 28px rgba(138,43,226,0.55), 0 0 4px rgba(255,255,255,0.15)' }}>
+              {t("home.albumTitle")}
+            </h1>
+            <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed mb-5">
+              {t("home.albumDesc")}
+            </p>
+            <Link href="/music">
+              <GlitchButton className="text-sm py-2 px-5">
+                {t("home.listenAlbum")}
+              </GlitchButton>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            className="relative overflow-hidden apoc-card bg-[linear-gradient(145deg,rgba(62,18,7,0.88),rgba(8,5,12,0.96))] border border-[#ff6b35]/60 backdrop-blur-sm p-6 md:p-8 text-center shadow-[0_0_30px_rgba(255,107,53,0.14)]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.36 }}
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#ff6b35]/20 blur-3xl"
+            />
+            <div className="relative">
+              <div className="text-xs md:text-sm uppercase tracking-[0.35em] text-[#ff9b71] mb-3 font-mono font-bold">
+                {t("home.memoryAlbumBadge")}
+              </div>
+              <h2 className="font-creepster text-3xl md:text-5xl text-[#ffd7c7] mb-4" style={{ textShadow: '0 0 24px rgba(255,107,53,0.5)' }}>
+                {t("home.memoryAlbumTitle")}
+              </h2>
+              <p className="text-white/85 font-mono text-sm md:text-base leading-relaxed mb-5">
+                {t("home.memoryAlbumDesc")}
+              </p>
+              <a
+                href="https://music.youtube.com/playlist?list=OLAK5uy_m5-pewnWbtUl1LuVIfeV96mzvr1g2RquY&si=07DED5eHVaSFpFLa"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GlitchButton className="text-sm py-2 px-5 border-[#ff6b35] text-[#ffb49a] hover:bg-[#ff6b35]/15 hover:border-[#ff9b71]">
+                  {t("home.listenMemoryAlbum")}
+                </GlitchButton>
+              </a>
+            </div>
+          </motion.div>
+        </div>
 
         <motion.p
           className="glitch-text font-creepster text-2xl md:text-4xl text-primary mb-6 uppercase tracking-widest text-center"
