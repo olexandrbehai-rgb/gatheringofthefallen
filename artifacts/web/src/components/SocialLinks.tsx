@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 const socials = [
   {
@@ -79,6 +80,13 @@ export function SocialLinks() {
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("external_link_clicked", {
+                destination: s.name.toLowerCase(),
+                category: "social",
+                location: "social_links",
+              })
+            }
             className="flex items-center gap-2 px-3 py-2 rounded border border-white/15 text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 hover:bg-[#00f0ff]/5 transition-all text-sm font-mono"
           >
             {s.icon}
@@ -93,6 +101,13 @@ export function SocialLinks() {
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("external_link_clicked", {
+                destination: s.name.toLowerCase().replaceAll(" ", "_"),
+                category: "streaming",
+                location: "social_links",
+              })
+            }
             className="flex items-center gap-2 px-3 py-2 rounded border border-secondary/20 text-secondary/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/40 hover:bg-[#00f0ff]/5 transition-all text-sm font-mono"
           >
             {s.icon}

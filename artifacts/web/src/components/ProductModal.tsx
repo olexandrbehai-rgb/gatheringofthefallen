@@ -3,6 +3,7 @@ import { X, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ProductType } from "@/lib/pricing";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ModalProduct {
   id: string;
@@ -30,6 +31,11 @@ export function ProductModal({ product, onClose }: Props) {
     setSize(product.sizes[0]);
     setQty(1);
     setActiveImg(0);
+    trackEvent("product_viewed", {
+      product_id: product.id,
+      product_type: product.productType,
+      image_count: product.images.length,
+    });
   }, [product]);
 
   useEffect(() => {

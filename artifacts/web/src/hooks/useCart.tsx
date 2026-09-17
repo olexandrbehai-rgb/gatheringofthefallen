@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Check } from "lucide-react";
 import type { ProductType } from "@/lib/pricing";
 import { useCurrency } from "@/hooks/useCurrency";
+import { trackEvent } from "@/lib/analytics";
 
 export interface CartLine {
   key: string;
@@ -33,7 +34,7 @@ function makeKey(productId: string, size?: string) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { priceFor } = useCurrency();
+  const { currency, priceFor } = useCurrency();
   const [items, setItems] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ name: string; ts: number } | null>(null);
@@ -49,7 +50,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { ...item, key, qty }];
     });
     setToast({ name: item.name, ts: Date.now() });
-  }, []);
+    trackEvent("cart_item_added", {
+      product_id: item.productId,
+      product_type: item.productType,
+      quantity: qty,
+      size: item.size ?? "none",
+      currency,
+      value: priceFor(item.productType) * qty,
+    });
+  }, [currency, priceFor]);
 
   useEffect(() => {
     if (!toast) return;
@@ -58,8 +67,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const removeItem = useCallback((key: string) => {
-    setItems((prev) => prev.filter((l) => l.key !== key));
-  }, []);
+    setItems((prev) => {
+      const removed = prev.find((line) => line.key === key);
+      if (removed) {
+        trackEvent("cart_item_removed", {
+          product_id: removed.productId,
+          product_type: removed.productType,
+          quantity: removed.qty,
+          currency,
+          value: priceFor(removed.productType) * removed.qty,
+        });
+      }
+      return prev.filter((l) => l.key !== key);
+    });
+  }, [currency, priceFor]);
 
   const updateQty = useCallback((key: string, qty: number) => {
     setItems((prev) =>

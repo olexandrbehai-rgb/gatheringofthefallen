@@ -3,6 +3,7 @@ import { X, CheckCircle, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useCurrency, CURRENCIES } from "@/hooks/useCurrency";
 import { priceOf } from "@/lib/pricing";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   open: boolean;
@@ -91,10 +92,24 @@ export function CheckoutModal({ open, onClose }: Props) {
       if (!res.ok || !data?.success || !data?.url) {
         throw new Error(data?.message || "Не вдалося створити сесію оплати");
       }
+      trackEvent("payment_redirect_created", {
+        provider: "stripe",
+        currency,
+        value: total,
+        value_cad: totalCad,
+        item_count: items.reduce((sum, item) => sum + item.qty, 0),
+        line_count: items.length,
+        country_code: countryCode,
+      });
       // Clear cart before redirect; on cancel the user can re-add items.
       clear();
       window.location.href = data.url as string;
     } catch (err: any) {
+      trackEvent("checkout_failed", {
+        provider: "stripe",
+        currency,
+        item_count: items.reduce((sum, item) => sum + item.qty, 0),
+      });
       setError(err?.message || "Не вдалося перейти до оплати");
       setSubmitting(false);
     }
