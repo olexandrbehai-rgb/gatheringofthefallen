@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Redirect } from "wouter";
-import { useUser } from "@clerk/react";
+import { useClerk, useUser } from "@clerk/react";
 import { GlitchButton } from "@/components/GlitchButton";
 
 type Stats = {
@@ -26,6 +26,12 @@ type Stats = {
       event_type: "registered" | "replaced";
       created_at: string;
     }>;
+    replacementBurst: {
+      count: number;
+      threshold: number;
+      windowHours: number;
+      warning: boolean;
+    };
   };
 };
 
@@ -78,6 +84,7 @@ function referrerLabel(value: string): string {
 }
 
 export default function OwnerAnalytics() {
+  const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<AccessError | null>(null);
@@ -156,9 +163,18 @@ export default function OwnerAnalytics() {
               Останні 30 днів · {user?.primaryEmailAddress?.emailAddress ?? "власник"}
             </p>
           </div>
-          <Link href="/">
-            <GlitchButton className="w-full text-sm sm:w-auto">Повернутися на сайт</GlitchButton>
-          </Link>
+          <div className="flex flex-col gap-2 sm:min-w-48">
+            <Link href="/">
+              <GlitchButton className="w-full text-sm">Повернутися на сайт</GlitchButton>
+            </Link>
+            <button
+              type="button"
+              className="w-full border border-white/25 px-4 py-2 font-mono text-xs uppercase tracking-widest text-white/70 transition hover:border-primary/70 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={() => void signOut()}
+            >
+              Вийти з акаунта
+            </button>
+          </div>
         </header>
 
         {error ? (
@@ -228,6 +244,24 @@ export default function OwnerAnalytics() {
               <p className="mt-2 text-xs leading-relaxed text-white/60">
                 Заміна довіреного пристрою анулює cookie попереднього пристрою та одразу забирає його доступ.
               </p>
+              {stats.trustedDevice.replacementBurst.warning && (
+                <div
+                  role="alert"
+                  className="mt-4 border border-red-400/70 bg-red-950/50 p-4 text-red-100"
+                >
+                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-red-300">
+                    Попередження безпеки
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed">
+                    За останні {stats.trustedDevice.replacementBurst.windowHours} годин зафіксовано{" "}
+                    {stats.trustedDevice.replacementBurst.count} заміни довіреного пристрою.
+                    Це може свідчити про підозрілу активність.
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-red-200/80">
+                    Якщо ви не виконували всі ці заміни, негайно захистіть обліковий запис і зверніться до підтримки.
+                  </p>
+                </div>
+              )}
               <div className="mt-5 border-t border-secondary/20 pt-4">
                 <div className="mb-3 text-[10px] uppercase tracking-[0.2em] text-white/50">
                   Історія безпеки

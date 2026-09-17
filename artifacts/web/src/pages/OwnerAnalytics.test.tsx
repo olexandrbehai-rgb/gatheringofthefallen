@@ -5,9 +5,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OwnerAnalytics from "./OwnerAnalytics";
 
+const useClerk = vi.hoisted(() => vi.fn());
 const useUser = vi.hoisted(() => vi.fn());
 
-vi.mock("@clerk/react", () => ({ useUser }));
+vi.mock("@clerk/react", () => ({ useClerk, useUser }));
 vi.mock("wouter", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Redirect: () => null,
@@ -54,6 +55,7 @@ function response(status: number, body?: unknown) {
 
 describe("OwnerAnalytics trusted-device recovery", () => {
   beforeEach(() => {
+    useClerk.mockReturnValue({ signOut: vi.fn().mockResolvedValue(undefined) });
     useUser.mockReturnValue({
       isLoaded: true,
       isSignedIn: true,
@@ -146,6 +148,19 @@ describe("OwnerAnalytics trusted-device recovery", () => {
     expect(screen.getByText(/анулює cookie попереднього пристрою/)).toBeTruthy();
     expect(screen.getByText("Заміна довіреного пристрою")).toBeTruthy();
     expect(screen.getByText("Реєстрація довіреного пристрою")).toBeTruthy();
+  });
+
+  it("lets the owner sign out from the analytics page", async () => {
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    useClerk.mockReturnValue({ signOut });
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(200, stats));
+
+    render(<OwnerAnalytics />);
+
+    await screen.findByText("Перегляди сторінок");
+    await userEvent.click(screen.getByRole("button", { name: "Вийти з акаунта" }));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
 
   it("highlights an unusual burst of trusted-device replacements", async () => {
