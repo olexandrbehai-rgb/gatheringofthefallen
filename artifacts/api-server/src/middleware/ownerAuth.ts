@@ -279,13 +279,15 @@ export async function requireOwner(req: Request, res: Response, next: NextFuncti
   if (!email) return;
 
   try {
-    if (!(await ensureOwnerDevice(req, res, email))) {
-      res.status(403).json({ error: "Trusted device required" });
-      return;
-    }
-  } catch {
-    res.status(503).json({ error: "Trusted device verification unavailable" });
-    return;
+    // Device registration is informational only. Owner access is determined by
+    // the verified Clerk email; a missing or stale device cookie must not hide
+    // the owner dashboard or turn an available database into a 503.
+    await ensureOwnerDevice(req, res, email);
+  } catch (error) {
+    logger.warn({
+      msg: "Trusted device registration unavailable; continuing with owner access",
+      error,
+    });
   }
   req.ownerEmail = email;
   next();

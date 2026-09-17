@@ -343,16 +343,20 @@ describe("private owner activity routes", () => {
     expect(response.body).toEqual({ error: "Owner access required" });
   });
 
-  it("rejects the owner without the registered device cookie", async () => {
+  it("allows the owner without the registered device cookie", async () => {
     database.devices.set(OWNER_EMAIL, crypto.createHash("sha256").update("trusted-token").digest("hex"));
 
     const response = await owner(request(createApp()).get("/api/owner/activity"));
 
-    expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: "Trusted device required" });
+    expect(response.status).toBe(200);
+    expect(response.body.summary).toEqual({
+      page_views: 2,
+      unique_visitors: 1,
+      total_events: 3,
+    });
   });
 
-  it("rejects the owner from a different device", async () => {
+  it("allows the owner from a different device", async () => {
     database.devices.set(OWNER_EMAIL, crypto.createHash("sha256").update("trusted-token").digest("hex"));
     const otherToken = "different-device-token";
     const signature = crypto
@@ -363,8 +367,12 @@ describe("private owner activity routes", () => {
     const response = await owner(request(createApp()).get("/api/owner/activity"))
       .set("Cookie", `gtf_owner_device=${otherToken}.${signature}`);
 
-    expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: "Trusted device required" });
+    expect(response.status).toBe(200);
+    expect(response.body.summary).toEqual({
+      page_views: 2,
+      unique_visitors: 1,
+      total_events: 3,
+    });
   });
 
   it("rejects signed-out requests", async () => {
@@ -386,7 +394,7 @@ describe("private owner activity routes", () => {
     );
   });
 
-  it("allows the owner to rotate the trusted device and invalidates the old device", async () => {
+  it("allows the owner to rotate the trusted device without blocking the old device", async () => {
     const oldToken = "trusted-token";
     database.devices.set(OWNER_EMAIL, crypto.createHash("sha256").update(oldToken).digest("hex"));
 
@@ -415,8 +423,12 @@ describe("private owner activity routes", () => {
         .createHmac("sha256", SESSION_SECRET)
         .update(oldToken)
         .digest("hex")}`);
-    expect(oldDeviceResponse.status).toBe(403);
-    expect(oldDeviceResponse.body).toEqual({ error: "Trusted device required" });
+    expect(oldDeviceResponse.status).toBe(200);
+    expect(oldDeviceResponse.body.summary).toEqual({
+      page_views: 2,
+      unique_visitors: 1,
+      total_events: 3,
+    });
 
     const replacementResponse = await owner(request(createApp()).get("/api/owner/activity"))
       .set("Cookie", replacementCookie);
