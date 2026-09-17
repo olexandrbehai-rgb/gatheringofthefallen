@@ -70,16 +70,14 @@ app.use("/api/webhook/stripe", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.CLERK_SECRET_KEY && process.env.CLERK_PUBLISHABLE_KEY) {
-  app.use(
-    clerkMiddleware((req) => ({
-      publishableKey: publishableKeyFromHost(
-        getClerkProxyHost(req) ?? "",
-        process.env.CLERK_PUBLISHABLE_KEY,
-      ),
-    })),
-  );
-}
+app.use(
+  clerkMiddleware((req) => ({
+    publishableKey: publishableKeyFromHost(
+      getClerkProxyHost(req) ?? "",
+      process.env.CLERK_PUBLISHABLE_KEY,
+    ),
+  })),
+);
 
 app.use("/api", router);
 

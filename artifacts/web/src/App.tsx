@@ -77,7 +77,7 @@ function OwnerAnalyticsRoute() {
   return <OwnerAnalytics />;
 }
 
-function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
+function SiteRouter() {
   const [location] = useLocation();
 
   useEffect(() => {
@@ -86,12 +86,9 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
 
   return (
     <Switch>
-      {authEnabled && <Route path="/sign-in/*?" component={SignInPage} />}
-      {authEnabled && <Route path="/sign-up/*?" component={SignUpPage} />}
-      {authEnabled && <Route path="/owner-analytics" component={OwnerAnalyticsRoute} />}
-      {!authEnabled && <Route path="/sign-in/*?"><Redirect to="/" /></Route>}
-      {!authEnabled && <Route path="/sign-up/*?"><Redirect to="/" /></Route>}
-      {!authEnabled && <Route path="/owner-analytics"><Redirect to="/" /></Route>}
+      <Route path="/sign-in/*?" component={SignInPage} />
+      <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/owner-analytics" component={OwnerAnalyticsRoute} />
       <Route>
         <Layout>
           <Switch>
@@ -112,7 +109,7 @@ function AuthenticatedApp() {
   const [, setLocation] = useLocation();
 
   if (!clerkPubKey) {
-    return <SiteRouter authEnabled={false} />;
+    throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
   }
 
   return (

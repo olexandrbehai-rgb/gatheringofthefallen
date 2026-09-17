@@ -26,12 +26,6 @@ type Stats = {
       event_type: "registered" | "replaced";
       created_at: string;
     }>;
-    replacementBurst: {
-      count: number;
-      threshold: number;
-      windowHours: number;
-      warning: boolean;
-    };
   };
 };
 
@@ -234,24 +228,6 @@ export default function OwnerAnalytics() {
               <p className="mt-2 text-xs leading-relaxed text-white/60">
                 Заміна довіреного пристрою анулює cookie попереднього пристрою та одразу забирає його доступ.
               </p>
-              {stats.trustedDevice.replacementBurst.warning && (
-                <div
-                  role="alert"
-                  className="mt-4 border border-red-400/70 bg-red-950/50 p-4 text-red-100"
-                >
-                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-red-300">
-                    Попередження безпеки
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed">
-                    За останні {stats.trustedDevice.replacementBurst.windowHours} годин зафіксовано{" "}
-                    {stats.trustedDevice.replacementBurst.count} заміни довіреного пристрою.
-                    Це може свідчити про підозрілу активність.
-                  </p>
-                  <p className="mt-2 text-xs leading-relaxed text-red-200/80">
-                    Якщо ви не виконували всі ці заміни, негайно захистіть обліковий запис і зверніться до підтримки.
-                  </p>
-                </div>
-              )}
               <div className="mt-5 border-t border-secondary/20 pt-4">
                 <div className="mb-3 text-[10px] uppercase tracking-[0.2em] text-white/50">
                   Історія безпеки

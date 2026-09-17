@@ -1,25 +1,18 @@
 import OpenAI from "openai";
 
-let client: OpenAI | undefined;
-
-export function getOpenAI(): OpenAI {
-  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
-
-  if (!baseURL || !apiKey) {
-    throw new Error(
-      "OpenAI integration is not configured. Set AI_INTEGRATIONS_OPENAI_BASE_URL and AI_INTEGRATIONS_OPENAI_API_KEY.",
-    );
-  }
-
-  client ??= new OpenAI({ apiKey, baseURL });
-  return client;
+if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
+  throw new Error(
+    "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
+  );
 }
 
-export const openai = new Proxy({} as OpenAI, {
-  get(_target, property) {
-    const configuredClient = getOpenAI();
-    const value = Reflect.get(configuredClient, property, configuredClient);
-    return typeof value === "function" ? value.bind(configuredClient) : value;
-  },
+if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+  throw new Error(
+    "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
+  );
+}
+
+export const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });

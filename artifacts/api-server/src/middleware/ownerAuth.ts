@@ -4,7 +4,6 @@ import crypto from "node:crypto";
 import { Pool } from "pg";
 import { sendTrustedDeviceReplacementEmail } from "../lib/email";
 import { logger } from "../lib/logger";
-import { OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS } from "../lib/ownerDeviceSecurity";
 
 const OWNER_DEVICE_COOKIE = "gtf_owner_device";
 const DEVICE_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
@@ -85,18 +84,6 @@ async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
       error,
     });
   }
-}
-
-export async function getRecentOwnerDeviceReplacementCount(email: string): Promise<number> {
-  const result = await pool.query(
-    `SELECT COUNT(*)::int AS replacement_count
-     FROM owner_device_security_events
-     WHERE email = $1
-       AND event_type = 'replaced'
-       AND created_at >= NOW() - ($2 * INTERVAL '1 hour')`,
-    [email, OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS],
-  );
-  return Number(result.rows[0]?.replacement_count ?? 0);
 }
 
 async function ensureOwnerDevice(req: Request, res: Response, email: string): Promise<boolean> {
@@ -200,25 +187,14 @@ export async function recoverOwnerDevice(req: Request, res: Response): Promise<v
     res.status(503).json({ error: "Unable to reset trusted device" });
     return;
   }
-  let replacementCount = 1;
-  try {
-    replacementCount = Math.max(1, await getRecentOwnerDeviceReplacementCount(req.ownerEmail));
-  } catch (error) {
-    logger.warn({
-      msg: "Trusted device replacement frequency check failed",
-      ownerEmail: req.ownerEmail,
-      error,
-    });
-  }
   await pruneOwnerDeviceSecurityEvents(req.ownerEmail);
   setDeviceCookie(res, token);
   res.status(204).end();
 
   void sendTrustedDeviceReplacementEmail({
-    ownerEmail: req.ownerEmail,
-    replacedAt,
-    replacementCount,
-  })
+      ownerEmail: req.ownerEmail,
+      replacedAt,
+    })
     .catch((error) => {
       logger.error({
       msg: "Trusted device replacement notification failed",
