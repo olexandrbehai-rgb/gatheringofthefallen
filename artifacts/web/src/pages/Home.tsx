@@ -63,11 +63,15 @@ export default function Home() {
             <p className="text-white/95 font-mono text-sm md:text-base leading-relaxed mb-5">
               {t("home.albumDesc")}
             </p>
-            <Link href="/music">
+            <a
+              href="https://music.youtube.com/playlist?list=OLAK5uy_mjgusq730f6SJQAf2dWo3yt13h4UhFqRc&si=gof3fur9m8FMVMOW"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <GlitchButton className="text-sm py-2 px-5">
                 {t("home.listenAlbum")}
               </GlitchButton>
-            </Link>
+            </a>
           </motion.div>
 
           <motion.div
