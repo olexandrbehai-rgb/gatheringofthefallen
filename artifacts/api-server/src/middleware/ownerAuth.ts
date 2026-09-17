@@ -2,8 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import crypto from "node:crypto";
 import { Pool } from "pg";
-import { sendTrustedDeviceReplacementEmail } from "../lib/email";
+import {
+  sendTrustedDeviceCleanupAlertEmail,
+  sendTrustedDeviceReplacementEmail,
+} from "../lib/email";
 import { logger } from "../lib/logger";
+import { OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS } from "../lib/ownerDeviceSecurity";
 
 const OWNER_DEVICE_COOKIE = "gtf_owner_device";
 const DEVICE_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
@@ -11,7 +15,12 @@ const DEVICE_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
 // runs opportunistically after successful owner-device operations so the table
 // stays bounded without relying on a separate scheduler.
 const OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS = 365;
+const OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD = 3;
+export const TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE =
+  "Trusted-device security event cleanup is failing repeatedly. Check database connectivity and the owner-device security events table health.";
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+let consecutiveCleanupFailures = 0;
 
 declare global {
   namespace Express {
@@ -22,15 +31,17 @@ declare global {
 }
 
 async function getOwnerEmail(req: Request, userId: string): Promise<string | null> {
-  const claims = getAuth(req).sessionClaims as Record<string, unknown> | null | undefined;
-  const email =
-    claims?.email ??
-    claims?.email_address ??
-    claims?.primary_email_address;
-  if (typeof email === "string") return email.trim().toLowerCase();
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    const primaryEmail = user.primaryEmailAddress?.emailAddress;
+    if (primaryEmail) return primaryEmail.trim().toLowerCase();
+  } catch {
+    // Fall back to the verified session claims if Clerk's user lookup is unavailable.
+  }
 
-  const user = await clerkClient.users.getUser(userId);
-  return user.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? null;
+  const claims = getAuth(req).sessionClaims as Record<string, unknown> | null | undefined;
+  const email = claims?.email ?? claims?.email_address ?? claims?.primary_email_address;
+  return typeof email === "string" ? email.trim().toLowerCase() : null;
 }
 
 function signDeviceToken(token: string): string {
@@ -77,13 +88,60 @@ async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
          AND created_at < NOW() - ($2 * INTERVAL '1 day')`,
       [email, OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS],
     );
+    if (consecutiveCleanupFailures >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
+      logger.info({
+        msg: "Trusted device security event cleanup recovered",
+        previousFailureCount: consecutiveCleanupFailures,
+      });
+    }
+    consecutiveCleanupFailures = 0;
   } catch (error) {
+    consecutiveCleanupFailures += 1;
     logger.warn({
       msg: "Trusted device security event cleanup failed",
-      ownerEmail: email,
+      failureCount: consecutiveCleanupFailures,
+      failureThreshold: OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD,
       error,
     });
+    if (consecutiveCleanupFailures === OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
+      logger.error({
+        msg: "Trusted device security event cleanup repeatedly failing",
+        failureCount: consecutiveCleanupFailures,
+        failureThreshold: OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD,
+        action:
+          "Check database connectivity and the owner-device security events table",
+        error,
+      });
+      void sendTrustedDeviceCleanupAlertEmail().catch((alertError) => {
+        logger.error({
+          msg: "Trusted device security event cleanup alert delivery failed",
+          error: alertError,
+        });
+      });
+    }
   }
+}
+
+export function getTrustedDeviceCleanupHealth(): {
+  status: "ok" | "degraded";
+  message?: string;
+} {
+  const degraded = consecutiveCleanupFailures >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD;
+  return degraded
+    ? { status: "degraded", message: TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE }
+    : { status: "ok" };
+}
+
+export async function getRecentOwnerDeviceReplacementCount(email: string): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS replacement_count
+     FROM owner_device_security_events
+     WHERE email = $1
+       AND event_type = 'replaced'
+       AND created_at >= NOW() - ($2 * INTERVAL '1 hour')`,
+    [email, OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS],
+  );
+  return Number(result.rows[0]?.replacement_count ?? 0);
 }
 
 async function ensureOwnerDevice(req: Request, res: Response, email: string): Promise<boolean> {
@@ -187,14 +245,25 @@ export async function recoverOwnerDevice(req: Request, res: Response): Promise<v
     res.status(503).json({ error: "Unable to reset trusted device" });
     return;
   }
+  let replacementCount = 1;
+  try {
+    replacementCount = Math.max(1, await getRecentOwnerDeviceReplacementCount(req.ownerEmail));
+  } catch (error) {
+    logger.warn({
+      msg: "Trusted device replacement frequency check failed",
+      ownerEmail: req.ownerEmail,
+      error,
+    });
+  }
   await pruneOwnerDeviceSecurityEvents(req.ownerEmail);
   setDeviceCookie(res, token);
   res.status(204).end();
 
   void sendTrustedDeviceReplacementEmail({
-      ownerEmail: req.ownerEmail,
-      replacedAt,
-    })
+    ownerEmail: req.ownerEmail,
+    replacedAt,
+    replacementCount,
+  })
     .catch((error) => {
       logger.error({
       msg: "Trusted device replacement notification failed",

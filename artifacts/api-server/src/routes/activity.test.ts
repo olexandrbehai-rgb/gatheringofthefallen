@@ -7,17 +7,22 @@ const database = vi.hoisted(() => ({
   devices: new Map<string, string>(),
   deviceRegisteredAt: new Map<string, string>(),
   deviceSecurityEvents: [] as Array<{ email: string; event_type: string; created_at: string }>,
+  failSecurityEventCleanup: false,
   activityInserts: 0,
   query: vi.fn(),
 }));
 
 const email = vi.hoisted(() => ({
+  sendTrustedDeviceCleanupAlertEmail: vi.fn(),
   sendTrustedDeviceReplacementEmail: vi.fn(),
 }));
 
 const log = vi.hoisted(() => ({
   error: vi.fn(),
+  warn: vi.fn(),
 }));
+
+const getUser = vi.hoisted(() => vi.fn());
 
 vi.mock("pg", () => ({
   Pool: class {
@@ -30,7 +35,7 @@ vi.mock("../lib/email", () => email);
 vi.mock("../lib/logger", () => ({
   logger: {
     error: log.error,
-    warn: vi.fn(),
+    warn: log.warn,
     info: vi.fn(),
   },
 }));
@@ -46,12 +51,13 @@ vi.mock("@clerk/express", () => ({
   },
   clerkClient: {
     users: {
-      getUser: vi.fn(),
+      getUser,
     },
   },
 }));
 
 import activityRouter from "./activity";
+import healthRouter from "./health";
 
 const OWNER_EMAIL = "owner@example.com";
 const SESSION_SECRET = "activity-route-test-secret";
@@ -59,6 +65,7 @@ const SESSION_SECRET = "activity-route-test-secret";
 function createApp() {
   const app = express();
   app.use(express.json());
+  app.use("/api", healthRouter);
   app.use("/api", activityRouter);
   return app;
 }
@@ -76,10 +83,15 @@ describe("private owner activity routes", () => {
     database.devices.clear();
     database.deviceRegisteredAt.clear();
     database.deviceSecurityEvents.length = 0;
+    database.failSecurityEventCleanup = false;
     database.activityInserts = 0;
+    email.sendTrustedDeviceCleanupAlertEmail.mockReset();
+    email.sendTrustedDeviceCleanupAlertEmail.mockResolvedValue(undefined);
     email.sendTrustedDeviceReplacementEmail.mockReset();
     email.sendTrustedDeviceReplacementEmail.mockResolvedValue(undefined);
     log.error.mockReset();
+    log.warn.mockReset();
+    getUser.mockReset();
     database.query.mockReset();
     database.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
       if (sql.includes("SELECT token_hash FROM owner_devices")) {
@@ -87,6 +99,9 @@ describe("private owner activity routes", () => {
         return { rows: tokenHash ? [{ token_hash: tokenHash }] : [], rowCount: tokenHash ? 1 : 0 };
       }
       if (sql.includes("DELETE FROM owner_device_security_events")) {
+        if (database.failSecurityEventCleanup) {
+          throw new Error("security history cleanup unavailable");
+        }
         const retentionCutoff = new Date("2025-09-17T12:30:00.000Z");
         const beforeCleanup = database.deviceSecurityEvents.length;
         database.deviceSecurityEvents = database.deviceSecurityEvents.filter(
@@ -95,6 +110,16 @@ describe("private owner activity routes", () => {
         return {
           rows: [],
           rowCount: beforeCleanup - database.deviceSecurityEvents.length,
+        };
+      }
+      if (sql.includes("COUNT(*)::int AS replacement_count")) {
+        return {
+          rows: [{
+            replacement_count: database.deviceSecurityEvents.filter(
+              (event) => event.email === String(params[0]) && event.event_type === "replaced",
+            ).length,
+          }],
+          rowCount: 1,
         };
       }
       if (sql.includes("INSERT INTO owner_devices")) {
@@ -151,8 +176,28 @@ describe("private owner activity routes", () => {
         event_type: "registered",
         created_at: "2026-09-17T12:30:00.000Z",
       }],
+      replacementBurst: {
+        count: 0,
+        threshold: 3,
+        windowHours: 24,
+        warning: false,
+      },
     });
     expect(database.deviceSecurityEvents).toHaveLength(1);
+  });
+
+  it("uses the Clerk primary email when session claims contain a different email", async () => {
+    getUser.mockResolvedValue({
+      primaryEmailAddress: { emailAddress: OWNER_EMAIL },
+    });
+
+    const response = await request(createApp())
+      .get("/api/owner/activity")
+      .set("x-test-user-id", "owner-user")
+      .set("x-test-email", "stale-claim@example.com");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["set-cookie"]?.[0]).toContain("gtf_owner_device=");
   });
 
   it("removes security events older than one year while keeping recent history", async () => {
@@ -192,11 +237,100 @@ describe("private owner activity routes", () => {
       event_type: "replaced",
       created_at: "2026-09-16T12:30:00.000Z",
     }]);
+    expect(response.body.trustedDevice.replacementBurst).toEqual({
+      count: 1,
+      threshold: 3,
+      windowHours: 24,
+      warning: false,
+    });
     const cleanupCall = database.query.mock.calls.find(([sql]) =>
       String(sql).includes("DELETE FROM owner_device_security_events"),
     );
     expect(cleanupCall?.[0]).toContain("INTERVAL '1 day'");
     expect(cleanupCall?.[1]).toEqual([OWNER_EMAIL, 365]);
+  });
+
+  it("keeps the owner dashboard available when security history cleanup fails", async () => {
+    const trustedToken = "trusted-token";
+    database.devices.set(
+      OWNER_EMAIL,
+      crypto.createHash("sha256").update(trustedToken).digest("hex"),
+    );
+    database.deviceRegisteredAt.set(OWNER_EMAIL, "2026-09-17T12:30:00.000Z");
+    database.deviceSecurityEvents.push({
+      email: OWNER_EMAIL,
+      event_type: "replaced",
+      created_at: "2026-09-16T12:30:00.000Z",
+    });
+    database.failSecurityEventCleanup = true;
+    const signature = crypto
+      .createHmac("sha256", SESSION_SECRET)
+      .update(trustedToken)
+      .digest("hex");
+
+    const response = await owner(request(createApp()).get("/api/owner/activity"))
+      .set("Cookie", `gtf_owner_device=${trustedToken}.${signature}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.trustedDevice.recentEvents).toEqual([{
+      event_type: "replaced",
+      created_at: "2026-09-16T12:30:00.000Z",
+    }]);
+    expect(log.warn).toHaveBeenCalledWith(expect.objectContaining({
+      msg: "Trusted device security event cleanup failed",
+      failureCount: 1,
+      failureThreshold: 3,
+      error: expect.any(Error),
+    }));
+    expect(log.warn.mock.calls[0][0]).not.toHaveProperty("ownerEmail");
+  });
+
+  it("reports degraded health after repeated security history cleanup failures", async () => {
+    const trustedToken = "trusted-token";
+    database.devices.set(
+      OWNER_EMAIL,
+      crypto.createHash("sha256").update(trustedToken).digest("hex"),
+    );
+    database.failSecurityEventCleanup = true;
+    const signature = crypto
+      .createHmac("sha256", SESSION_SECRET)
+      .update(trustedToken)
+      .digest("hex");
+    const cookie = `gtf_owner_device=${trustedToken}.${signature}`;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await owner(request(createApp()).get("/api/owner/activity"))
+        .set("Cookie", cookie);
+      expect(response.status).toBe(200);
+    }
+
+    const health = await request(createApp()).get("/api/healthz");
+
+    expect(health.status).toBe(503);
+    expect(health.body).toEqual({
+      status: "degraded",
+      message: "Trusted-device security event cleanup is failing repeatedly. Check database connectivity and the owner-device security events table health.",
+    });
+    expect(email.sendTrustedDeviceCleanupAlertEmail).toHaveBeenCalledTimes(1);
+    expect(email.sendTrustedDeviceCleanupAlertEmail.mock.calls[0]).toEqual([]);
+    expect(log.error).toHaveBeenCalledWith(expect.objectContaining({
+      msg: "Trusted device security event cleanup repeatedly failing",
+      failureCount: 3,
+      failureThreshold: 3,
+      action: expect.any(String),
+      error: expect.any(Error),
+    }));
+    expect(log.error.mock.calls[0][0]).not.toHaveProperty("ownerEmail");
+
+    database.failSecurityEventCleanup = false;
+    const recovered = await owner(request(createApp()).get("/api/owner/activity"))
+      .set("Cookie", cookie);
+    expect(recovered.status).toBe(200);
+    await expect(request(createApp()).get("/api/healthz")).resolves.toMatchObject({
+      status: 200,
+      body: { status: "ok" },
+    });
+    expect(email.sendTrustedDeviceCleanupAlertEmail).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a different authenticated email", async () => {
@@ -270,6 +404,7 @@ describe("private owner activity routes", () => {
     expect(email.sendTrustedDeviceReplacementEmail).toHaveBeenCalledWith({
       ownerEmail: OWNER_EMAIL,
       replacedAt: new Date("2026-09-17T12:30:00.000Z"),
+      replacementCount: 1,
     });
     const replacementCookie = recovery.headers["set-cookie"]?.[0];
     expect(replacementCookie).toContain("gtf_owner_device=");
@@ -286,6 +421,74 @@ describe("private owner activity routes", () => {
     const replacementResponse = await owner(request(createApp()).get("/api/owner/activity"))
       .set("Cookie", replacementCookie);
     expect(replacementResponse.status).toBe(200);
+  });
+
+  it("keeps device recovery successful when security history cleanup fails", async () => {
+    const oldToken = "trusted-token";
+    database.devices.set(OWNER_EMAIL, crypto.createHash("sha256").update(oldToken).digest("hex"));
+    database.failSecurityEventCleanup = true;
+
+    const response = await owner(request(createApp()).post("/api/owner/device/recover"))
+      .send({ confirm: true });
+
+    expect(response.status).toBe(204);
+    expect(response.headers["set-cookie"]?.[0]).toContain("gtf_owner_device=");
+    expect(database.devices.get(OWNER_EMAIL)).not.toBe(
+      crypto.createHash("sha256").update(oldToken).digest("hex"),
+    );
+    expect(database.deviceSecurityEvents).toEqual([{
+      email: OWNER_EMAIL,
+      event_type: "replaced",
+      created_at: "2026-09-17T12:30:00.000Z",
+    }]);
+    expect(log.warn).toHaveBeenCalledWith(expect.objectContaining({
+      msg: "Trusted device security event cleanup failed",
+      failureCount: 1,
+      failureThreshold: 3,
+      error: expect.any(Error),
+    }));
+    expect(log.warn.mock.calls[0][0]).not.toHaveProperty("ownerEmail");
+  });
+
+  it("counts repeated replacements in the last day and marks the owner activity as suspicious", async () => {
+    database.devices.set(
+      OWNER_EMAIL,
+      crypto.createHash("sha256").update("trusted-token").digest("hex"),
+    );
+    database.deviceSecurityEvents.push(
+      {
+        email: OWNER_EMAIL,
+        event_type: "replaced",
+        created_at: "2026-09-17T10:00:00.000Z",
+      },
+      {
+        email: OWNER_EMAIL,
+        event_type: "replaced",
+        created_at: "2026-09-17T11:00:00.000Z",
+      },
+    );
+
+    const recovery = await owner(request(createApp()).post("/api/owner/device/recover"))
+      .send({ confirm: true });
+
+    expect(recovery.status).toBe(204);
+    expect(email.sendTrustedDeviceReplacementEmail).toHaveBeenCalledWith({
+      ownerEmail: OWNER_EMAIL,
+      replacedAt: new Date("2026-09-17T12:30:00.000Z"),
+      replacementCount: 3,
+    });
+
+    const replacementCookie = recovery.headers["set-cookie"]?.[0];
+    const activity = await owner(request(createApp()).get("/api/owner/activity"))
+      .set("Cookie", replacementCookie);
+
+    expect(activity.status).toBe(200);
+    expect(activity.body.trustedDevice.replacementBurst).toEqual({
+      count: 3,
+      threshold: 3,
+      windowHours: 24,
+      warning: true,
+    });
   });
 
   it("keeps the device replacement successful when its security email fails", async () => {
