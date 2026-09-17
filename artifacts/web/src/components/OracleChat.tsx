@@ -205,26 +205,28 @@ export function OracleChat() {
 
             {/* Input Area */}
             <div className="p-3 border-t border-secondary/30 bg-black/60 relative z-10 shrink-0">
-              <div className="relative flex items-end bg-[#050208] border border-white/10 rounded-md focus-within:border-primary/50 focus-within:shadow-[0_0_15px_rgba(0,240,255,0.15)] transition-all overflow-hidden">
+              <div className="flex items-end gap-2 bg-[#050208] border border-white/10 rounded-md p-1 focus-within:border-primary/50 focus-within:shadow-[0_0_15px_rgba(0,240,255,0.15)] transition-all">
                 <textarea
                   ref={textareaRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Запитайте Оракула..."
-                  className="w-full bg-transparent py-3 pl-3 pr-10 text-white/90 placeholder:text-white/30 focus:outline-none resize-none font-mono text-sm"
+                  className="min-w-0 flex-1 bg-transparent py-2 pl-2 text-white/90 placeholder:text-white/30 focus:outline-none resize-none font-mono text-sm"
                   style={{ height: "48px" }}
                   disabled={isTyping}
                   data-testid="input-oracle-chat"
                 />
                 <button
+                  type="button"
                   onClick={handleSend}
                   disabled={!inputValue.trim() || isTyping}
-                  className="absolute right-2 bottom-1.5 p-1.5 text-primary/50 hover:text-primary hover:bg-primary/10 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="mb-0.5 flex h-10 shrink-0 items-center justify-center gap-1 rounded border border-primary/60 bg-primary/10 px-2 text-primary shadow-[0_0_8px_rgba(0,240,255,0.12)] transition-colors hover:bg-primary/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary"
                   aria-label="Надіслати повідомлення"
                   data-testid="button-send-oracle"
                 >
                   <Send size={16} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Надіслати</span>
                 </button>
               </div>
               <div className="text-[9px] text-white/30 text-right mt-1.5 uppercase tracking-widest">Shift+Enter — новий рядок</div>
