@@ -137,7 +137,7 @@ export function OracleChat() {
             initial={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
-            className="fixed top-48 left-4 md:top-24 md:left-8 z-50 w-[calc(100vw-32px)] md:w-[400px] h-[550px] max-h-[calc(100vh-208px)] md:max-h-[calc(100vh-120px)] rounded-[20px] bg-[#0a0414]/95 backdrop-blur-xl flex flex-col border border-secondary/40 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] overflow-hidden"
+            className="fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] flex-col overflow-hidden rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]"
             role="dialog"
             aria-label="Чат з Оракулом"
           >
@@ -205,12 +205,13 @@ export function OracleChat() {
 
             {/* Input Area */}
             <div className="p-3 border-t border-secondary/30 bg-black/60 relative z-10 shrink-0">
-              <div className="flex items-end gap-2 bg-[#050208] border border-white/10 rounded-md p-1 focus-within:border-primary/50 focus-within:shadow-[0_0_15px_rgba(0,240,255,0.15)] transition-all">
+              <div className="flex flex-col gap-2 rounded-md border border-white/10 bg-[#050208] p-1 transition-all focus-within:border-primary/50 focus-within:shadow-[0_0_15px_rgba(0,240,255,0.15)] sm:flex-row sm:items-end">
                 <textarea
                   ref={textareaRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  enterKeyHint="send"
                   placeholder="Запитайте Оракула..."
                   className="min-w-0 flex-1 bg-transparent py-2 pl-2 text-white/90 placeholder:text-white/30 focus:outline-none resize-none font-mono text-sm"
                   style={{ height: "48px" }}
@@ -221,7 +222,7 @@ export function OracleChat() {
                   type="button"
                   onClick={handleSend}
                   disabled={!inputValue.trim() || isTyping}
-                  className="mb-0.5 flex h-10 shrink-0 items-center justify-center gap-1 rounded border border-primary/60 bg-primary/10 px-2 text-primary shadow-[0_0_8px_rgba(0,240,255,0.12)] transition-colors hover:bg-primary/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded border border-primary/70 bg-primary/15 px-3 text-primary shadow-[0_0_12px_rgba(0,240,255,0.18)] transition-colors hover:bg-primary/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-primary/15 focus:outline-none focus:ring-2 focus:ring-primary sm:mb-0.5 sm:h-10 sm:w-auto sm:gap-1 sm:px-2"
                   aria-label="Надіслати повідомлення"
                   data-testid="button-send-oracle"
                 >
