@@ -1,7 +1,16 @@
 import { Router, type Request, type Response } from "express";
 import { Pool } from "pg";
-import { recoverOwnerDevice, requireOwner, requireOwnerIdentity } from "../middleware/ownerAuth";
+import {
+  getRecentOwnerDeviceReplacementCount,
+  recoverOwnerDevice,
+  requireOwner,
+  requireOwnerIdentity,
+} from "../middleware/ownerAuth";
 import { logger } from "../lib/logger";
+import {
+  OWNER_DEVICE_REPLACEMENT_BURST_THRESHOLD,
+  OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS,
+} from "../lib/ownerDeviceSecurity";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -188,6 +197,7 @@ router.get("/owner/activity", requireOwner, async (req: Request, res: Response) 
       recentResult,
       deviceResult,
       deviceSecurityEventResult,
+      replacementFrequencyResult,
     ] = await Promise.all([
       pool.query(`
         SELECT
@@ -248,7 +258,9 @@ router.get("/owner/activity", requireOwner, async (req: Request, res: Response) 
          LIMIT 20`,
         [req.ownerEmail],
       ),
+      getRecentOwnerDeviceReplacementCount(req.ownerEmail as string),
     ]);
+    const recentReplacementCount = replacementFrequencyResult;
 
     res.json({
       rangeDays: 30,
@@ -264,6 +276,12 @@ router.get("/owner/activity", requireOwner, async (req: Request, res: Response) 
       trustedDevice: {
         registeredAt: deviceResult.rows[0]?.created_at ?? null,
         recentEvents: deviceSecurityEventResult.rows,
+        replacementBurst: {
+          count: recentReplacementCount,
+          threshold: OWNER_DEVICE_REPLACEMENT_BURST_THRESHOLD,
+          windowHours: OWNER_DEVICE_REPLACEMENT_BURST_WINDOW_HOURS,
+          warning: recentReplacementCount >= OWNER_DEVICE_REPLACEMENT_BURST_THRESHOLD,
+        },
       },
     });
   } catch (error) {

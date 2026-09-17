@@ -97,6 +97,16 @@ describe("private owner activity routes", () => {
           rowCount: beforeCleanup - database.deviceSecurityEvents.length,
         };
       }
+      if (sql.includes("COUNT(*)::int AS replacement_count")) {
+        return {
+          rows: [{
+            replacement_count: database.deviceSecurityEvents.filter(
+              (event) => event.email === String(params[0]) && event.event_type === "replaced",
+            ).length,
+          }],
+          rowCount: 1,
+        };
+      }
       if (sql.includes("INSERT INTO owner_devices")) {
         const ownerEmail = String(params[0]);
         const isReplacement = sql.includes("'replaced'");
@@ -151,6 +161,12 @@ describe("private owner activity routes", () => {
         event_type: "registered",
         created_at: "2026-09-17T12:30:00.000Z",
       }],
+      replacementBurst: {
+        count: 0,
+        threshold: 3,
+        windowHours: 24,
+        warning: false,
+      },
     });
     expect(database.deviceSecurityEvents).toHaveLength(1);
   });
@@ -192,6 +208,12 @@ describe("private owner activity routes", () => {
       event_type: "replaced",
       created_at: "2026-09-16T12:30:00.000Z",
     }]);
+    expect(response.body.trustedDevice.replacementBurst).toEqual({
+      count: 1,
+      threshold: 3,
+      windowHours: 24,
+      warning: false,
+    });
     const cleanupCall = database.query.mock.calls.find(([sql]) =>
       String(sql).includes("DELETE FROM owner_device_security_events"),
     );
@@ -270,6 +292,7 @@ describe("private owner activity routes", () => {
     expect(email.sendTrustedDeviceReplacementEmail).toHaveBeenCalledWith({
       ownerEmail: OWNER_EMAIL,
       replacedAt: new Date("2026-09-17T12:30:00.000Z"),
+      replacementCount: 1,
     });
     const replacementCookie = recovery.headers["set-cookie"]?.[0];
     expect(replacementCookie).toContain("gtf_owner_device=");
@@ -286,6 +309,47 @@ describe("private owner activity routes", () => {
     const replacementResponse = await owner(request(createApp()).get("/api/owner/activity"))
       .set("Cookie", replacementCookie);
     expect(replacementResponse.status).toBe(200);
+  });
+
+  it("counts repeated replacements in the last day and marks the owner activity as suspicious", async () => {
+    database.devices.set(
+      OWNER_EMAIL,
+      crypto.createHash("sha256").update("trusted-token").digest("hex"),
+    );
+    database.deviceSecurityEvents.push(
+      {
+        email: OWNER_EMAIL,
+        event_type: "replaced",
+        created_at: "2026-09-17T10:00:00.000Z",
+      },
+      {
+        email: OWNER_EMAIL,
+        event_type: "replaced",
+        created_at: "2026-09-17T11:00:00.000Z",
+      },
+    );
+
+    const recovery = await owner(request(createApp()).post("/api/owner/device/recover"))
+      .send({ confirm: true });
+
+    expect(recovery.status).toBe(204);
+    expect(email.sendTrustedDeviceReplacementEmail).toHaveBeenCalledWith({
+      ownerEmail: OWNER_EMAIL,
+      replacedAt: new Date("2026-09-17T12:30:00.000Z"),
+      replacementCount: 3,
+    });
+
+    const replacementCookie = recovery.headers["set-cookie"]?.[0];
+    const activity = await owner(request(createApp()).get("/api/owner/activity"))
+      .set("Cookie", replacementCookie);
+
+    expect(activity.status).toBe(200);
+    expect(activity.body.trustedDevice.replacementBurst).toEqual({
+      count: 3,
+      threshold: 3,
+      windowHours: 24,
+      warning: true,
+    });
   });
 
   it("keeps the device replacement successful when its security email fails", async () => {

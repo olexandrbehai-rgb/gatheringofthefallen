@@ -35,6 +35,12 @@ const stats = {
         created_at: "2026-09-16T08:15:00.000Z",
       },
     ],
+    replacementBurst: {
+      count: 1,
+      threshold: 3,
+      windowHours: 24,
+      warning: false,
+    },
   },
 };
 
@@ -140,5 +146,25 @@ describe("OwnerAnalytics trusted-device recovery", () => {
     expect(screen.getByText(/анулює cookie попереднього пристрою/)).toBeTruthy();
     expect(screen.getByText("Заміна довіреного пристрою")).toBeTruthy();
     expect(screen.getByText("Реєстрація довіреного пристрою")).toBeTruthy();
+  });
+
+  it("highlights an unusual burst of trusted-device replacements", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(200, {
+      ...stats,
+      trustedDevice: {
+        ...stats.trustedDevice,
+        replacementBurst: {
+          count: 3,
+          threshold: 3,
+          windowHours: 24,
+          warning: true,
+        },
+      },
+    }));
+
+    render(<OwnerAnalytics />);
+
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByText(/зафіксовано 3 заміни довіреного пристрою/)).toBeTruthy();
   });
 });
