@@ -25,6 +25,11 @@ const ua: Dict = {
     albumDesc:
       "!3 Послань — це музичний маніфест, що складається з трьох ключових меседжів для тих, хто вижив у руїнах старого світу. Це голос нового племені живих.",
     listenAlbum: "Слухати альбом",
+    memoryAlbumBadge: "НОВИЙ АЛЬБОМ — ВЖЕ У МЕРЕЖІ",
+    memoryAlbumTitle: "ЗІБРАННЯ СПОГАДІВ",
+    memoryAlbumDesc:
+      "Нова платівка про те, що залишається з нами після падіння: голоси, вулиці, любов і пам'ять, яку неможливо знищити.",
+    listenMemoryAlbum: "Слухати альбом",
     slogan: "З попелу встаємо 🔥",
     bandDesc:
       "Gathering Of The Fallen — український gothic / cinematic industrial metal гурт. 65+ треків, нові релізи кожен місяць. Музика народжується з вогню, шрамів і незламної волі.",
@@ -223,6 +228,11 @@ const en: Dict = {
     albumDesc:
       "!3 Messages is a musical manifesto built from three key transmissions for those who survived the ruins of the old world. It is the voice of a new tribe of the living.",
     listenAlbum: "Listen to the album",
+    memoryAlbumBadge: "NEW ALBUM — OUT NOW",
+    memoryAlbumTitle: "GATHERING OF MEMORIES",
+    memoryAlbumDesc:
+      "A new record about what remains after the fall: voices, streets, love, and memories that cannot be erased.",
+    listenMemoryAlbum: "Listen to the album",
     slogan: "Rising from the ashes 🔥",
     bandDesc:
       "Gathering Of The Fallen — Ukrainian gothic / cinematic industrial metal band. 65+ tracks, new releases every month. Music born from fire, scars, and unbreakable will.",
@@ -421,6 +431,11 @@ const fr: Dict = {
     albumDesc:
       "!3 Messages est un manifeste musical composé de trois messages clés pour ceux qui ont survécu aux ruines de l'ancien monde. C'est la voix d'une nouvelle tribu des vivants.",
     listenAlbum: "Écouter l'album",
+    memoryAlbumBadge: "NOUVEL ALBUM — DISPONIBLE",
+    memoryAlbumTitle: "RÉUNION DES SOUVENIRS",
+    memoryAlbumDesc:
+      "Un nouvel album sur ce qui reste après la chute : les voix, les rues, l'amour et les souvenirs impossibles à effacer.",
+    listenMemoryAlbum: "Écouter l'album",
     slogan: "On se relève des cendres 🔥",
     bandDesc:
       "Gathering Of The Fallen — groupe ukrainien de gothic / cinematic industrial metal. 65+ titres, nouvelles sorties chaque mois. Musique née du feu, des cicatrices et d'une volonté inébranlable.",
