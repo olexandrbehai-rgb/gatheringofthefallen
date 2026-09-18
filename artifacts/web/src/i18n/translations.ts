@@ -15,6 +15,7 @@ const ua: Dict = {
     music: "Музика",
     merch: "Мерч",
     contacts: "Контакти",
+    game: "Гра",
   },
   footer: {
     transmission: "TRANSMISSION ENCRYPTED",
@@ -219,6 +220,7 @@ const en: Dict = {
     music: "Music",
     merch: "Merch",
     contacts: "Contacts",
+    game: "Game",
   },
   footer: {
     transmission: "TRANSMISSION ENCRYPTED",
@@ -423,6 +425,7 @@ const fr: Dict = {
     music: "Musique",
     merch: "Merch",
     contacts: "Contacts",
+    game: "Jeu",
   },
   footer: {
     transmission: "TRANSMISSION CHIFFRÉE",

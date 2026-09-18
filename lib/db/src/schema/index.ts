@@ -20,6 +20,8 @@
 import { index, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export * from "./owner-device-security-events";
+export * from "./trusted-device-cleanup-health";
+export * from "./authors-world";
 
 export const activityEventsTable = pgTable(
   "activity_events",

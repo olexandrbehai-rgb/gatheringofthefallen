@@ -151,9 +151,11 @@ export function OracleChat() {
   const [error, setError] = useState<string | null>(null);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [mobileViewportHeight, setMobileViewportHeight] = useState<number | null>(null);
+  const [mobileViewportTop, setMobileViewportTop] = useState<number | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     try {
@@ -178,6 +180,7 @@ export function OracleChat() {
     if (!isOpen) {
       setKeyboardInset(0);
       setMobileViewportHeight(null);
+      setMobileViewportTop(null);
       return;
     }
 
@@ -188,6 +191,7 @@ export function OracleChat() {
       if (window.innerWidth >= 768) {
         setKeyboardInset(0);
         setMobileViewportHeight(null);
+        setMobileViewportTop(null);
         return;
       }
 
@@ -195,8 +199,15 @@ export function OracleChat() {
         0,
         window.innerHeight - viewport.height - viewport.offsetTop,
       );
-      setKeyboardInset(rawKeyboardInset > 80 ? rawKeyboardInset : 0);
-      setMobileViewportHeight(viewport.height);
+      if (rawKeyboardInset > 80) {
+        setKeyboardInset(rawKeyboardInset);
+        setMobileViewportHeight(viewport.height);
+        setMobileViewportTop(viewport.offsetTop);
+      } else {
+        setKeyboardInset(0);
+        setMobileViewportHeight(null);
+        setMobileViewportTop(null);
+      }
     };
 
     updateViewport();
@@ -215,6 +226,10 @@ export function OracleChat() {
     if (!keyboardInset) return;
 
     const timer = window.setTimeout(() => {
+      const history = historyRef.current;
+      if (history) {
+        history.scrollTo({ top: history.scrollHeight, behavior: "smooth" });
+      }
       textareaRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
@@ -227,7 +242,14 @@ export function OracleChat() {
 
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const history = historyRef.current;
+      if (history) {
+        window.requestAnimationFrame(() => {
+          history.scrollTo({ top: history.scrollHeight, behavior: "smooth" });
+        });
+      } else {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
     }
   }, [messages, isOpen, isTyping, isOracleSpeaking, typewriterTick, error]);
 
@@ -240,6 +262,10 @@ export function OracleChat() {
 
   const handleInputFocus = () => {
     window.setTimeout(() => {
+      const history = historyRef.current;
+      if (history) {
+        history.scrollTo({ top: history.scrollHeight, behavior: "smooth" });
+      }
       textareaRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
@@ -298,11 +324,12 @@ export function OracleChat() {
   };
 
   const keyboardAwareStyle =
-    keyboardInset > 0 && mobileViewportHeight
+    keyboardInset > 0 && mobileViewportHeight !== null && mobileViewportTop !== null
       ? {
-          bottom: `${keyboardInset + 8}px`,
-          height: `${Math.max(mobileViewportHeight - 16, 220)}px`,
-          maxHeight: `${Math.max(mobileViewportHeight - 16, 220)}px`,
+          top: `${Math.max(mobileViewportTop + 8, 8)}px`,
+          bottom: "auto",
+          height: `${Math.max(mobileViewportHeight - 16, 180)}px`,
+          maxHeight: `${Math.max(mobileViewportHeight - 16, 180)}px`,
         }
       : undefined;
 
@@ -345,7 +372,7 @@ export function OracleChat() {
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
             style={keyboardAwareStyle}
-            className="fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] flex-col overflow-hidden rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]"
+            className="fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] min-h-0 flex-col overflow-hidden overscroll-y-contain rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl [touch-action:pan-y] md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]"
             role="dialog"
             aria-label="Чат з Оракулом"
           >
@@ -365,7 +392,10 @@ export function OracleChat() {
             </div>
 
             {/* Chat History */}
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-[#04020a]/95 p-4 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent">
+            <div
+              ref={historyRef}
+              className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-y-contain bg-[#04020a]/95 p-4 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent [-webkit-overflow-scrolling:touch] [touch-action:pan-y]"
+            >
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(

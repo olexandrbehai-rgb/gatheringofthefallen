@@ -8,6 +8,7 @@ const database = vi.hoisted(() => ({
   deviceRegisteredAt: new Map<string, string>(),
   deviceSecurityEvents: [] as Array<{ email: string; event_type: string; created_at: string }>,
   failSecurityEventCleanup: false,
+  cleanupHealthFailureCount: 0,
   activityInserts: 0,
   query: vi.fn(),
 }));
@@ -84,6 +85,7 @@ describe("private owner activity routes", () => {
     database.deviceRegisteredAt.clear();
     database.deviceSecurityEvents.length = 0;
     database.failSecurityEventCleanup = false;
+    database.cleanupHealthFailureCount = 0;
     database.activityInserts = 0;
     email.sendTrustedDeviceCleanupAlertEmail.mockReset();
     email.sendTrustedDeviceCleanupAlertEmail.mockResolvedValue(undefined);
@@ -94,6 +96,33 @@ describe("private owner activity routes", () => {
     getUser.mockReset();
     database.query.mockReset();
     database.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS trusted_device_cleanup_health")) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes("INSERT INTO trusted_device_cleanup_health")) {
+        return { rows: [], rowCount: 1 };
+      }
+      if (sql.includes("SET consecutive_failures = consecutive_failures + 1")) {
+        database.cleanupHealthFailureCount += 1;
+        return {
+          rows: [{ consecutive_failures: database.cleanupHealthFailureCount }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes("UPDATE trusted_device_cleanup_health AS health")) {
+        const previousFailureCount = database.cleanupHealthFailureCount;
+        database.cleanupHealthFailureCount = 0;
+        return {
+          rows: [{ previous_failure_count: previousFailureCount }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes("SELECT consecutive_failures")) {
+        return {
+          rows: [{ consecutive_failures: database.cleanupHealthFailureCount }],
+          rowCount: 1,
+        };
+      }
       if (sql.includes("SELECT token_hash FROM owner_devices")) {
         const tokenHash = database.devices.get(String(params[0]));
         return { rows: tokenHash ? [{ token_hash: tokenHash }] : [], rowCount: tokenHash ? 1 : 0 };
@@ -311,6 +340,15 @@ describe("private owner activity routes", () => {
       status: "degraded",
       message: "Trusted-device security event cleanup is failing repeatedly. Check database connectivity and the owner-device security events table health.",
     });
+    const secondInstanceHealth = await request(createApp()).get("/api/healthz");
+    expect(secondInstanceHealth.status).toBe(503);
+    expect(secondInstanceHealth.body).toEqual(health.body);
+    const cleanupHealthCalls = database.query.mock.calls.filter(([sql]) =>
+      String(sql).includes("trusted_device_cleanup_health"),
+    );
+    expect(cleanupHealthCalls.every(([, params]) =>
+      !params || !params.includes(OWNER_EMAIL),
+    )).toBe(true);
     expect(email.sendTrustedDeviceCleanupAlertEmail).toHaveBeenCalledTimes(1);
     expect(email.sendTrustedDeviceCleanupAlertEmail.mock.calls[0]).toEqual([]);
     expect(log.error).toHaveBeenCalledWith(expect.objectContaining({

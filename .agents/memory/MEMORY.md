@@ -1,1 +1,12 @@
 - [Render deployment](render-deploy.md) — deploys as ONE Render service (Express serves Vite build) + Postgres; frontend uses relative /api so single-origin is required.
+- [Owner activity access](owner-activity.md) — owner analytics uses Clerk email allowlist plus a first-device cookie persisted in Postgres; dev Clerk proxying stays off.
+- [Hero video masking](hero-video-masking.md) — grayscale mask luminance must become canvas alpha; avoid edge-connected flood fills that restore the background.
+- [Hero overlay sizing](hero-overlay-sizing.md) — keep positioning on the outer wrapper and relative positioning on an inner wrapper; utility order can make base `relative` override `absolute`.
+- [Black-background hero masks](hero-mask-encoding.md) — precompute masks for dark-on-dark footage and encode them as browser-compatible H.264; runtime brightness keying loses black clothing.
+- [Render Oracle gateway](oracle-render-fallback.md) — Render tries OpenAI first, then uses the live Replit Oracle gateway when the external AI proxy fails.
+- [Oracle facial animation](oracle-facial-animation.md) — use matched real portrait states, direct gaze, subtle teeth, and irregular mouth movement only while reply text appears.
+- [Oracle persona](oracle-persona.md) — Oracle should be an enthusiastic, warm lover of Ukraine without chauvinism, invented facts, or hatred toward other peoples.
+- [Oracle mobile keyboard](oracle-mobile-keyboard.md) — mobile chat must track the visual viewport so the input rises above the keyboard and history remains independently scrollable.
+- [Public bundle verification](public-bundle-verification.md) — Render can be live while the Replit-published custom domain still serves an older build; verify the public bundle before claiming release.
+- [Ashen Crossing game](ashen-crossing-game.md) — the platformer is a 32-level canvas game with Web Audio, browser gamepad input, and responsive touch/fullscreen controls.
+- [Additive database schema changes](database-schema-push.md) — inspect legacy tables before Drizzle push; interactive rename suggestions may be unsafe.

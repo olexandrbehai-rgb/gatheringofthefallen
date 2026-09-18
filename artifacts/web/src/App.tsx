@@ -15,6 +15,8 @@ import About from "@/pages/About";
 import Music from "@/pages/Music";
 import Merch from "@/pages/Merch";
 import Contacts from "@/pages/Contacts";
+import Game from "@/pages/Game";
+import AuthorsWorld from "@/pages/AuthorsWorld";
 import OwnerAnalytics from "@/pages/OwnerAnalytics";
 import NotFound from "@/pages/not-found";
 
@@ -92,6 +94,7 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
       {!authEnabled && <Route path="/sign-in/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/sign-up/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/owner-analytics"><Redirect to="/" /></Route>}
+      <Route path="/game" component={Game} />
       <Route>
         <Layout>
           <Switch>
@@ -100,6 +103,7 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
             <Route path="/music" component={Music} />
             <Route path="/merch" component={Merch} />
             <Route path="/contacts" component={Contacts} />
+            <Route path="/authors-world" component={AuthorsWorld} />
             <Route component={NotFound} />
           </Switch>
         </Layout>

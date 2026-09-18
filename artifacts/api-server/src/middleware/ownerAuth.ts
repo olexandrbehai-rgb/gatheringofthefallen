@@ -18,9 +18,10 @@ const OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS = 365;
 const OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD = 3;
 export const TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE =
   "Trusted-device security event cleanup is failing repeatedly. Check database connectivity and the owner-device security events table health.";
+const TRUSTED_DEVICE_CLEANUP_HEALTH_KEY = "owner_device_security_events";
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-let consecutiveCleanupFailures = 0;
+let cleanupHealthStateReady: Promise<void> | null = null;
 
 declare global {
   namespace Express {
@@ -80,6 +81,89 @@ function setDeviceCookie(res: Response, token: string): void {
   );
 }
 
+async function ensureCleanupHealthState(): Promise<void> {
+  if (!cleanupHealthStateReady) {
+    cleanupHealthStateReady = (async () => {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS trusted_device_cleanup_health (
+          health_key TEXT PRIMARY KEY,
+          consecutive_failures INTEGER NOT NULL DEFAULT 0,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      await pool.query(
+        `INSERT INTO trusted_device_cleanup_health (health_key)
+         VALUES ($1)
+         ON CONFLICT (health_key) DO NOTHING`,
+        [TRUSTED_DEVICE_CLEANUP_HEALTH_KEY],
+      );
+    })();
+  }
+
+  try {
+    await cleanupHealthStateReady;
+  } catch (error) {
+    cleanupHealthStateReady = null;
+    throw error;
+  }
+}
+
+async function recordCleanupFailure(): Promise<number | null> {
+  try {
+    await ensureCleanupHealthState();
+    const result = await pool.query(
+      `UPDATE trusted_device_cleanup_health
+       SET consecutive_failures = consecutive_failures + 1,
+           updated_at = NOW()
+       WHERE health_key = $1
+       RETURNING consecutive_failures`,
+      [TRUSTED_DEVICE_CLEANUP_HEALTH_KEY],
+    );
+    return Number(result.rows[0]?.consecutive_failures ?? 0);
+  } catch (error) {
+    logger.error({
+      msg: "Trusted device security event cleanup health state unavailable",
+      error,
+    });
+    return null;
+  }
+}
+
+async function recordCleanupSuccess(): Promise<void> {
+  try {
+    await ensureCleanupHealthState();
+    const result = await pool.query(
+      `WITH previous AS (
+         SELECT consecutive_failures AS previous_failure_count
+         FROM trusted_device_cleanup_health
+         WHERE health_key = $1
+         FOR UPDATE
+       )
+       UPDATE trusted_device_cleanup_health AS health
+       SET consecutive_failures = 0,
+           updated_at = NOW()
+       FROM previous
+       WHERE health.health_key = $1
+       RETURNING previous.previous_failure_count`,
+      [TRUSTED_DEVICE_CLEANUP_HEALTH_KEY],
+    );
+    const previousFailureCount = Number(
+      result.rows[0]?.previous_failure_count ?? 0,
+    );
+    if (previousFailureCount >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
+      logger.info({
+        msg: "Trusted device security event cleanup recovered",
+        previousFailureCount,
+      });
+    }
+  } catch (error) {
+    logger.error({
+      msg: "Trusted device security event cleanup health state unavailable",
+      error,
+    });
+  }
+}
+
 async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
   try {
     await pool.query(
@@ -88,25 +172,19 @@ async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
          AND created_at < NOW() - ($2 * INTERVAL '1 day')`,
       [email, OWNER_DEVICE_SECURITY_EVENT_RETENTION_DAYS],
     );
-    if (consecutiveCleanupFailures >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
-      logger.info({
-        msg: "Trusted device security event cleanup recovered",
-        previousFailureCount: consecutiveCleanupFailures,
-      });
-    }
-    consecutiveCleanupFailures = 0;
   } catch (error) {
-    consecutiveCleanupFailures += 1;
+    const failureCount = await recordCleanupFailure();
     logger.warn({
       msg: "Trusted device security event cleanup failed",
-      failureCount: consecutiveCleanupFailures,
+      failureCount: failureCount ?? "unknown",
       failureThreshold: OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD,
       error,
     });
-    if (consecutiveCleanupFailures === OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
+    if (failureCount === null) return;
+    if (failureCount === OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD) {
       logger.error({
         msg: "Trusted device security event cleanup repeatedly failing",
-        failureCount: consecutiveCleanupFailures,
+        failureCount,
         failureThreshold: OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD,
         action:
           "Check database connectivity and the owner-device security events table",
@@ -119,17 +197,37 @@ async function pruneOwnerDeviceSecurityEvents(email: string): Promise<void> {
         });
       });
     }
+    return;
   }
+  await recordCleanupSuccess();
 }
 
-export function getTrustedDeviceCleanupHealth(): {
+export async function getTrustedDeviceCleanupHealth(): Promise<{
   status: "ok" | "degraded";
   message?: string;
-} {
-  const degraded = consecutiveCleanupFailures >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD;
-  return degraded
-    ? { status: "degraded", message: TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE }
-    : { status: "ok" };
+}> {
+  try {
+    await ensureCleanupHealthState();
+    const result = await pool.query(
+      `SELECT consecutive_failures
+       FROM trusted_device_cleanup_health
+       WHERE health_key = $1`,
+      [TRUSTED_DEVICE_CLEANUP_HEALTH_KEY],
+    );
+    const failureCount = Number(result.rows[0]?.consecutive_failures ?? 0);
+    return failureCount >= OWNER_DEVICE_CLEANUP_FAILURE_THRESHOLD
+      ? { status: "degraded", message: TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE }
+      : { status: "ok" };
+  } catch (error) {
+    logger.error({
+      msg: "Trusted device security event cleanup health state unavailable",
+      error,
+    });
+    return {
+      status: "degraded",
+      message: TRUSTED_DEVICE_CLEANUP_DEGRADED_MESSAGE,
+    };
+  }
 }
 
 export async function getRecentOwnerDeviceReplacementCount(email: string): Promise<number> {

@@ -59,15 +59,200 @@ id = "vMdrMfSKo-EWAJIv2ZJwb"
 uri = "file://exports/gathering-of-the-fallen-source.tar.gz"
 type = "unspecified"
 title = "Gathering Of The Fallen — повний код сайту"
+logical_id = "6906ad39-b2c4-4926-81bf-47cdc9844315"
 
 [[outputs]]
 id = "KMVZJfpd4Xk787PE5mUip"
 uri = "file://exports/gathering-of-the-fallen-code.tar.gz"
 type = "unspecified"
 title = "Повний код сайту Gathering Of The Fallen"
+logical_id = "7a42c48a-f59d-48e0-899b-c899f37c8c92"
 
 [[outputs]]
 id = "aVfuTxvUdANGL6eU2PQC4"
 uri = "file://exports/gathering-of-the-fallen.zip"
 type = "unspecified"
 title = "Gathering Of The Fallen — оновлений архів для деплою"
+logical_id = "b5dd30bc-4606-47fd-a832-72d99d58b24d"
+
+[[outputs]]
+id = "MjUvupDu2PoWkQMZyArW_"
+uri = "file://video_outputs/hero-transparent.mov"
+type = "video"
+title = "Герой — прозорий фон"
+description = "Відео 720×1280, 10 секунд, ProRes 4444 із прозорим alpha-каналом та оригінальним звуком."
+logical_id = "d0b8477d-8dae-4279-9369-0ac650357c4e"
+content_hash = "sha256:bf9fc45944a658a6cd504095db36cb9fc54270bb9c7499799d9de0ad993d4e22"
+size = 99467196
+mtime_ms = 1789677592931
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/d0b8477d-8dae-4279-9369-0ac650357c4e/1c88e6a3-a178-461a-8720-42d827d36907"
+storage_version_token = "1789677615394859"
+content_type = "video/quicktime"
+
+[[outputs]]
+id = "M0fN0dWXEeAbZAFM2dLfk"
+uri = "file://video_outputs/hero-preview.mp4"
+type = "video"
+title = "Preview на фоні мостів"
+description = "Попередній перегляд вирізаного героя поверх фонової картинки сайту."
+logical_id = "61b5d98c-6faf-43d4-aaab-6859344203a9"
+content_hash = "sha256:bbd904d97be7a6dea15a19da6e96b29917e30ed35cd10ad99d5cc8f709834718"
+size = 3125636
+mtime_ms = 1789677602997
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/61b5d98c-6faf-43d4-aaab-6859344203a9/185bea39-5343-4cdc-b957-01f7fc6ea1a6"
+storage_version_token = "1789677616452517"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "uNMFCLUWTQ34J4gz40PsH"
+uri = "file://video_outputs/hero-preview-v2.mp4"
+type = "video"
+title = "Герой на мосту — покращений preview"
+description = "Версія 2: менш агресивне вирізання, збережені руки, ноги, плащ і зброя під час бігу."
+logical_id = "153bdab6-5956-4bbb-9531-2aec59999740"
+content_hash = "sha256:5ef24cd985d44f91df34f69fca184c52e6d70da5fd4c64431ed4608df7f5aa3e"
+size = 3825814
+mtime_ms = 1789678362259
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/153bdab6-5956-4bbb-9531-2aec59999740/99f1d36c-f85c-48f9-bb46-abde1eedd19b"
+storage_version_token = "1789678399948812"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "6zva4w-Cas1cYjR_4IJHO"
+uri = "file://video_outputs/hero-distance-preview.mp4"
+type = "video"
+title = "Preview — MP4"
+description = "Повне відео героя на фоні мостів із природним наближенням."
+logical_id = "a9c41fca-ab06-42ba-b38c-eb9cd452f620"
+content_hash = "sha256:3a42340156d53c25462010f87559af57fe9a41a70ee3625d00a91d68588f59b7"
+size = 6781658
+mtime_ms = 1789680564198
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/a9c41fca-ab06-42ba-b38c-eb9cd452f620/3a5db39d-e6b5-4849-a393-a9bd112af4b3"
+storage_version_token = "1789680682831096"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "ILb59TK3HkGyHaIN-MoOo"
+uri = "file://video_outputs/hero-distance-transparent.mov"
+type = "video"
+title = "Герой забігає здалеку — прозорий master"
+description = "720×1280, 10 секунд, ProRes 4444 із alpha-каналом та оригінальним звуком."
+logical_id = "460c4f62-7a52-45df-bd71-6c074e1b39c6"
+content_hash = "sha256:e36db628d65195a59ee9151b40d1fc7aea870aec50052b69380d4600f7fffe05"
+size = 81608470
+mtime_ms = 1789680580378
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/460c4f62-7a52-45df-bd71-6c074e1b39c6/9545c87e-bf27-4c9d-9628-9221bf3fbcac"
+storage_version_token = "1789680631686591"
+content_type = "video/quicktime"
+
+[[outputs]]
+id = "iGOJvh3pJhxvrSPv1CJlP"
+uri = "file://video_outputs/hero-distance-preview-contact.jpg"
+type = "image"
+title = "Preview — контрольні кадри"
+description = "Чотири кадри послідовності: герой далеко, наближається, підбігає та крупний план на фоні мостів."
+logical_id = "99f642b8-306b-4fca-90cd-fba4b63e244b"
+content_hash = "sha256:61d7f4ae3e4c4e0a9a8649810a036baca11cef2170c08d26712965474b8448f7"
+size = 39754
+mtime_ms = 1789680671139
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/99f642b8-306b-4fca-90cd-fba4b63e244b/157b17c9-d891-408a-adad-24b3b0f75a17"
+storage_version_token = "1789680680896966"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "JU7eDv66eZwurA3T3Vm9i"
+uri = "file://video_outputs/hero-distance-preview.gif"
+type = "image"
+title = "Preview — GIF"
+description = "Полегшений анімований preview для перегляду прямо в чаті."
+logical_id = "786c1519-9b11-4286-97bd-cd920a673022"
+content_hash = "sha256:9a2e6ae99a0c39194d284bd0587fe0e485e20f587f57b72b4c05f6bea5169e0b"
+size = 8216644
+mtime_ms = 1789680675411
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/786c1519-9b11-4286-97bd-cd920a673022/81bcba0f-38fe-4ee8-8d3e-d22345f4dd15"
+storage_version_token = "1789680681913212"
+content_type = "image/gif"
+
+[[outputs]]
+id = "SwfWMj0IQ2GsQ2-jwRcxQ"
+uri = "file://video_outputs/hero-distance-preserve-black-preview.mp4"
+type = "video"
+title = "Preview MP4 — чорні деталі збережені"
+description = "Повне preview відео з природним наближенням героя."
+logical_id = "25085334-f027-42ad-aa5f-ad50b68875b6"
+content_hash = "sha256:30c3d2b7c9dbc5e7df96567054087d470ea8fbd957690faa0f319340c27cf981"
+size = 5761435
+mtime_ms = 1789681153647
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/25085334-f027-42ad-aa5f-ad50b68875b6/45a731f7-5caa-46b4-b264-004347a0360d"
+storage_version_token = "1789681231020839"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "eo4TVpjSfPWlWCv1M9VSU"
+uri = "file://video_outputs/hero-distance-preserve-black-transparent.mov"
+type = "video"
+title = "Прозорий master — чорні деталі збережені"
+description = "720×1280, 10 секунд, ProRes 4444 із alpha-каналом та оригінальним звуком."
+logical_id = "8d6180bc-b7d4-45f1-9e48-18086a63f899"
+content_hash = "sha256:57f6977a7bfefb4f59b54cf7d54c5c965ee40710aa0b8f6eb1d39483a1016006"
+size = 47598130
+mtime_ms = 1789681139591
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/8d6180bc-b7d4-45f1-9e48-18086a63f899/aa8ff567-a078-46fa-bd74-afab681f7ca9"
+storage_version_token = "1789681186121683"
+content_type = "video/quicktime"
+
+[[outputs]]
+id = "hyJKzI-ZagyzfRBKefDWP"
+uri = "file://video_outputs/hero-distance-preserve-black-contact.jpg"
+type = "image"
+title = "Preview кадрами"
+description = "Ключові кадри від далекої позиції до крупного плану."
+logical_id = "ca35761d-b3ec-42b2-a8a8-45123cfe5f0d"
+content_hash = "sha256:0c0b7f140b781526cf5d4de567c8b85fa19ab07ebfbc836325ded25ed0af51e4"
+size = 41049
+mtime_ms = 1789681175705
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/ca35761d-b3ec-42b2-a8a8-45123cfe5f0d/15860f26-6ca8-45b5-a890-d9e22330bc83"
+storage_version_token = "1789681233273427"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "rORK4mNNdgGI1tMcnMH7b"
+uri = "file://video_outputs/hero-distance-preserve-black-preview.gif"
+type = "image"
+title = "Preview GIF — чорні деталі збережені"
+description = "Анімований preview героя, який забігає здалеку на фоні мостів."
+logical_id = "55c86c5b-d561-46c0-828a-c72d4a0d2c1a"
+content_hash = "sha256:35abbe4b194dcea09c5d5bad50d23948c002c3d56ee02c8e6333baa8536cfa1e"
+size = 7958067
+mtime_ms = 1789681223664
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/55c86c5b-d561-46c0-828a-c72d4a0d2c1a/48b06e7a-91ff-4fa8-b3c1-564462510ced"
+storage_version_token = "1789681228235052"
+content_type = "image/gif"
+
+[[outputs]]
+id = "_SNbAp1OpF3H3RpsXUjxF"
+uri = "file://screenshots/hero-integration-final.jpg"
+type = "image"
+title = "Інтеграція героя на головній сторінці"
+description = "Скріншот реального web-preview: герой стоїть далеко на центральному мосту без чорного фону."
+logical_id = "b5325785-0623-4d83-84cf-8f4d241b9f8b"
+content_hash = "sha256:f01d13ff3e87a1dcab9c7df10c22c3dfb874d700c3ce56cef34bbc0e79ec3bae"
+size = 624757
+mtime_ms = 1789681959523
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/b5325785-0623-4d83-84cf-8f4d241b9f8b/65d4cd7d-3c63-43ac-8132-9581787274b6"
+storage_version_token = "1789681972991630"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "B8dnKGGzdkxf28It6fS0m"
+uri = "file://screenshots/hero-alpha-zoom-check.jpg"
+type = "image"
+title = "Збільшена перевірка alpha героя"
+description = "У збільшенні навколо силуету прозорий фон; чорні елементи залишилися тільки всередині обладунків і зброї."
+logical_id = "612a7ae3-cf5f-436c-b6be-7e2eabe53587"
+content_hash = "sha256:1ea6fca8b4ee6a8f35009f46da5d5ee2c5b3de440d0b5f6b11077580571404ac"
+size = 139440
+mtime_ms = 1789682351199
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/612a7ae3-cf5f-436c-b6be-7e2eabe53587/9f57b1a6-2b97-4da9-b06d-a5128bfd58f5"
+storage_version_token = "1789682358275731"
+content_type = "image/jpeg"
