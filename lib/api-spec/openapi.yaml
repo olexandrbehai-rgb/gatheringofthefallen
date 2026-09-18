@@ -24,6 +24,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Trusted-device security event cleanup is degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
     HealthStatus:
@@ -31,6 +37,7 @@ components:
       properties:
         status:
           type: string
+        message:
+          type: string
       required:
         - status
-

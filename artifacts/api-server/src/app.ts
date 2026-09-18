@@ -70,23 +70,48 @@ app.use("/api/webhook/stripe", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+if (process.env.CLERK_SECRET_KEY && process.env.CLERK_PUBLISHABLE_KEY) {
+  app.use(
+    clerkMiddleware((req) => ({
+      publishableKey: publishableKeyFromHost(
+        getClerkProxyHost(req) ?? "",
+        process.env.CLERK_PUBLISHABLE_KEY,
+      ),
+    })),
+  );
+}
 
 app.use("/api", router);
 
 if (process.env.NODE_ENV === "production") {
   const clientDir = path.resolve(import.meta.dirname, "../../web/dist/public");
-  app.use(express.static(clientDir));
+  const noStore = "no-store, no-cache, must-revalidate, proxy-revalidate";
+  app.use(
+    express.static(clientDir, {
+      setHeaders(res, filePath) {
+        if (path.basename(filePath) === "index.html") {
+          res.setHeader("Cache-Control", noStore);
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+        } else if (
+          /[-.][a-z0-9_-]{8,}\.[a-z0-9]+$/i.test(path.basename(filePath))
+        ) {
+          res.setHeader(
+            "Cache-Control",
+            "public, max-age=31536000, immutable",
+          );
+        } else {
+          res.setHeader("Cache-Control", noStore);
+        }
+      },
+    }),
+  );
   app.use((req, res, next) => {
     if (req.method !== "GET" && req.method !== "HEAD") return next();
     if (req.path.startsWith("/api")) return next();
+    res.setHeader("Cache-Control", noStore);
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.join(clientDir, "index.html"));
   });
 }

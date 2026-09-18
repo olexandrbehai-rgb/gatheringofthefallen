@@ -12,6 +12,7 @@ vi.mock("nodemailer", () => ({
 }));
 
 import { sendTrustedDeviceReplacementEmail } from "./email";
+import { sendTrustedDeviceCleanupAlertEmail } from "./email";
 
 describe("trusted device replacement email", () => {
   beforeEach(() => {
@@ -57,5 +58,43 @@ describe("trusted device replacement email", () => {
         "WARNING: 3 trusted device replacements were recorded in the last 24 hours.",
       ),
     }));
+  });
+});
+
+describe("trusted device cleanup alert email", () => {
+  beforeEach(() => {
+    process.env.SMTP_EMAIL = "security@example.com";
+    process.env.SMTP_PASSWORD = "test-password";
+    mailer.sendMail.mockReset();
+    mailer.sendMail.mockResolvedValue(undefined);
+    mailer.createTransport.mockReturnValue({ sendMail: mailer.sendMail });
+  });
+
+  afterEach(() => {
+    delete process.env.SMTP_EMAIL;
+    delete process.env.SMTP_PASSWORD;
+  });
+
+  it("alerts the configured monitoring mailbox without owner data", async () => {
+    await sendTrustedDeviceCleanupAlertEmail();
+
+    expect(mailer.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "security@example.com",
+        subject: "ALERT: trusted-device security event cleanup degraded",
+        text: expect.stringContaining(
+          "Trusted-device security event cleanup is failing repeatedly",
+        ),
+        html: expect.stringContaining(
+          "database connectivity and the owner-device security events table health",
+        ),
+      }),
+    );
+    expect(mailer.sendMail.mock.calls[0][0].text).not.toContain(
+      "owner@example.com",
+    );
+    expect(mailer.sendMail.mock.calls[0][0].html).not.toContain(
+      "owner@example.com",
+    );
   });
 });

@@ -7,6 +7,7 @@ import { useT } from "@/i18n/LanguageContext";
 import { useCart } from "@/hooks/useCart";
 import { CartDrawer } from "./CartDrawer";
 import { ShoppingCart } from "lucide-react";
+import { HeroSequence } from "./HeroSequence";
 import logoImg from "@assets/logo_1776018973004.png";
 import bgHome from "@/assets/home-background.png";
 import bgAbout from "@assets/3f3d238a-b813-45ed-b7ef-48eed199098c_1781048063605.png";
@@ -55,6 +56,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             'radial-gradient(ellipse at 50% 38%, rgba(5,5,12,0.12) 0%, rgba(8,5,20,0.4) 70%, rgba(4,4,10,0.66) 100%)',
         }}
       />
+
+      {location === "/" && (
+        <HeroSequence className="pointer-events-none fixed inset-x-0 top-0 z-[1] h-svh" />
+      )}
 
       <FallingAsh />
       <SecretLevel />

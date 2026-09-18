@@ -3,7 +3,6 @@ import { Link } from "wouter";
 import { GlitchButton } from "@/components/GlitchButton";
 import { useT } from "@/i18n/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
-import logoVideo from "@/assets/oracle-logo-transparent.webm";
 import lineup1Img from "@assets/a33ec048-5ffc-400a-8499-f0246ed136d2_1779324411927.png";
 import lineup2Img from "@assets/photo_2026-06-07_20-29-09_1781050027752.jpg";
 import lineup3Img from "@assets/grok-image-3ba37ea6-9c2c-42f3-93a1-0da705b2bdc9_1779324411927.png";
@@ -14,6 +13,7 @@ import merchHoodie4 from "@assets/4backhoodie_1779322287601.png";
 import merchHoodie5 from "@assets/5backhoodie_1779322287601.png";
 
 import { OracleChat } from "@/components/OracleChat";
+import { GtfLogoLayer } from "@/components/GtfLogoLayer";
 
 const lineupImages = [lineup1Img, lineup2Img, lineup3Img];
 
@@ -29,29 +29,14 @@ export default function Home() {
       transition={{ duration: 0.6 }}
     >
       <OracleChat />
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-24">
-        <motion.video
-          src={logoVideo}
-          poster={lineup1Img}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          aria-label="Герб гурту Gathering Of The Fallen"
-          className="w-full max-w-3xl mx-auto mb-10 neon-glow-img-strong"
-          style={{
-            WebkitMaskImage:
-              "radial-gradient(circle at center, #000 22%, rgba(0,0,0,0.92) 34%, rgba(0,0,0,0.55) 46%, rgba(0,0,0,0.12) 57%, transparent 66%)",
-            maskImage:
-              "radial-gradient(circle at center, #000 22%, rgba(0,0,0,0.92) 34%, rgba(0,0,0,0.55) 46%, rgba(0,0,0,0.12) 57%, transparent 66%)",
-          }}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+      <section
+        aria-label="Hero viewing area"
+        className="relative min-h-svh w-full"
+      />
+      <section className="relative isolate min-h-screen overflow-hidden flex flex-col items-center justify-center px-4 py-24">
+        <GtfLogoLayer />
 
-        <div className="w-full max-w-6xl mb-12 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="relative z-10 w-full max-w-6xl mb-12 grid grid-cols-1 md:grid-cols-2 gap-5">
           <motion.div
             className="apoc-card bg-black/70 border border-primary/40 backdrop-blur-sm p-6 md:p-8 text-center"
             initial={{ opacity: 0, y: 20 }}
@@ -114,7 +99,7 @@ export default function Home() {
         </div>
 
         <motion.p
-          className="glitch-text font-creepster text-2xl md:text-4xl text-primary mb-6 uppercase tracking-widest text-center"
+          className="relative z-10 glitch-text font-creepster text-2xl md:text-4xl text-primary mb-6 uppercase tracking-widest text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -124,7 +109,7 @@ export default function Home() {
         </motion.p>
 
         <motion.p
-          className="font-mono text-sm md:text-base text-white/80 max-w-2xl text-center mb-10 leading-relaxed"
+          className="relative z-10 font-mono text-sm md:text-base text-white/80 max-w-2xl text-center mb-10 leading-relaxed"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
@@ -133,7 +118,7 @@ export default function Home() {
         </motion.p>
 
         <motion.div
-          className="flex flex-col sm:flex-row justify-center gap-6 mb-16"
+          className="relative z-10 flex flex-col sm:flex-row justify-center gap-6 mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
