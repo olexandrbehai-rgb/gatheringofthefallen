@@ -9,6 +9,8 @@ const MAX_REQUESTS_PER_WINDOW = 12;
 const FALLBACK_ORACLE_URL =
   process.env.ORACLE_GATEWAY_URL ??
   "https://gathering-of-the-fallen.replit.app/api/oracle/chat";
+const UKRAINIAN_CHAT_REMINDER =
+  "Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо.";
 
 type OracleMessage = {
   role: "user" | "assistant";
@@ -44,6 +46,8 @@ const ORACLE_PROMPT = `
 - Такі реакції мають бути доречними, доброзичливими й різноманітними: не повторюй дослівно кожного разу, не перетворюй кожну відповідь на жарт і не вигадуй культурних фактів.
 - Якщо людина зневажає українців, ображає співрозмовника або несе побутову ненависть, не відповідай агресією. М’яко нагадай про взаємну гідність у дусі: «Справжній українець брата не образить. Брата треба підтримувать, любити, не шукати ненависті, а шукати, як обійняти». Можеш перефразувати це природніше під контекст, зберігаючи тепло, підтримку й межі.
 - Не принижуй людину, не перевіряй її «справжність» і не виправдовуй насильство: твоя мета — зупинити образу, повернути розмову до людяності та запропонувати конструктивний шлях.
+- Якщо йдеться саме про російську агресію, окупацію, армію загарбників, Кремль або воєнні злочини, відповідай прямо, різко й однозначно на боці України. Називай окупантів окупантами, загарбників — загарбниками, а воєнні злочини — воєнними злочинами; не створюй хибної «нейтральності» між нападником і тим, хто захищається. Слово «орки» можна вживати як образний опис загарбницьких військ у воєнному контексті, але не як образу всіх росіян, російськомовних людей чи цивільних.
+- Якщо повідомлення написане російською і не стосується невідкладної безпеки, ввічливо попроси перейти на українську: «Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо». Не принижуй людину через мову й за потреби все одно дай коротку відповідь по суті.
 `.trim();
 
 function clientKey(req: Request): string {
@@ -86,6 +90,38 @@ function parseMessages(value: unknown): OracleMessage[] | null {
 
   if (messages.at(-1)?.role !== "user") return null;
   return messages;
+}
+
+function shouldRequestUkrainian(messages: OracleMessage[]): boolean {
+  const latest = messages.at(-1)?.content.toLowerCase() ?? "";
+  if (/[іїєґ]/u.test(latest)) return false;
+  if (
+    /(?:допоможіть|небезпек|поранен|пожеж|викличте|помогите|опасност|ранен|пожар|скорую|112|911)/u.test(
+      latest,
+    )
+  ) {
+    return false;
+  }
+
+  if (/[ыэъё]/u.test(latest)) return true;
+  const russianWordSignals =
+    latest.match(
+      /(?:^|[^а-яёіїєґ])(?:что|это|как|почему|расскажи|расскажите|ваш|ваша|ваше|вашей|ваши|мы|вы|привет|можно|хочу|где|когда|кто|для|из|немного|пожалуйста)(?=$|[^а-яёіїєґ])/gu,
+    )?.length ?? 0;
+  return russianWordSignals >= 2;
+}
+
+function applyLanguageReminder(
+  messages: OracleMessage[],
+  answer: string,
+): string {
+  if (
+    !shouldRequestUkrainian(messages) ||
+    /пишуть українською|перейти на українську/iu.test(answer)
+  ) {
+    return answer;
+  }
+  return `${UKRAINIAN_CHAT_REMINDER}\n\n${answer}`;
 }
 
 async function requestFallbackOracle(messages: OracleMessage[]): Promise<string> {
@@ -141,13 +177,13 @@ router.post("/oracle/chat", async (req: Request, res: Response) => {
     });
     const answer = completion.choices[0]?.message?.content?.trim();
     if (!answer) throw new Error("Oracle returned an empty response");
-    res.json({ answer });
+    res.json({ answer: applyLanguageReminder(messages, answer) });
   } catch (error) {
     logger.error({ msg: "Oracle response failed", error });
     try {
       const answer = await requestFallbackOracle(messages);
       logger.warn({ msg: "Oracle fallback gateway responded" });
-      res.json({ answer });
+      res.json({ answer: applyLanguageReminder(messages, answer) });
     } catch (fallbackError) {
       logger.error({ msg: "Oracle fallback gateway failed", error: fallbackError });
       res.status(502).json({ error: "Зв'язок з Оракулом перервався. Спробуйте ще раз." });

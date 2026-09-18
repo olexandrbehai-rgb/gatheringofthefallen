@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, X, Sparkles } from "lucide-react";
 import oracleAvatar from "@/assets/oracle-avatar.png";
+import oracleAvatarListening from "@/assets/oracle-avatar-listening.png";
+import oracleAvatarSpeaking from "@/assets/oracle-avatar-speaking-soft.png";
 import { cn } from "@/lib/utils";
 
 type MessageRole = "user" | "oracle";
@@ -13,11 +15,139 @@ interface Message {
 const STORAGE_KEY = "gotf_oracle_chat_history";
 const MAX_MESSAGES = 12;
 
+function TypewriterText({
+  content,
+  animate,
+  onComplete,
+  onProgress,
+}: {
+  content: string;
+  animate: boolean;
+  onComplete?: () => void;
+  onProgress?: () => void;
+}) {
+  const [visibleLength, setVisibleLength] = useState(
+    animate ? 0 : content.length,
+  );
+  const completeRef = useRef(onComplete);
+  const progressRef = useRef(onProgress);
+
+  useEffect(() => {
+    completeRef.current = onComplete;
+    progressRef.current = onProgress;
+  }, [onComplete, onProgress]);
+
+  useEffect(() => {
+    if (!animate) {
+      setVisibleLength(content.length);
+      return;
+    }
+
+    let nextLength = 0;
+    setVisibleLength(0);
+    const interval = window.setInterval(() => {
+      nextLength = Math.min(content.length, nextLength + 1);
+      setVisibleLength(nextLength);
+      if (nextLength % 8 === 0) {
+        progressRef.current?.();
+      }
+      if (nextLength >= content.length) {
+        window.clearInterval(interval);
+        completeRef.current?.();
+      }
+    }, 22);
+
+    return () => window.clearInterval(interval);
+  }, [animate, content]);
+
+  const isStillTyping = animate && visibleLength < content.length;
+  return (
+    <>
+      {content.slice(0, visibleLength)}
+      {isStillTyping && <span className="terminal-cursor" aria-hidden="true" />}
+    </>
+  );
+}
+
+function OraclePortrait({
+  isSpeaking,
+  isThinking,
+}: {
+  isSpeaking: boolean;
+  isThinking: boolean;
+}) {
+  const [mouthOpen, setMouthOpen] = useState(false);
+
+  useEffect(() => {
+    setMouthOpen(false);
+    if (
+      !isSpeaking ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    let open = false;
+    let timer = 0;
+    const moveMouth = () => {
+      open = !open;
+      setMouthOpen(open);
+      const delay = open
+        ? 55 + Math.random() * 65
+        : 45 + Math.random() * 145;
+      timer = window.setTimeout(moveMouth, delay);
+    };
+
+    timer = window.setTimeout(moveMouth, 70 + Math.random() * 90);
+    return () => window.clearTimeout(timer);
+  }, [isSpeaking]);
+
+  return (
+    <div className="relative h-40 shrink-0 overflow-hidden border-b border-primary/30 bg-[#09030d] sm:h-48">
+      <img
+        src={oracleAvatarListening}
+        alt="Оракул"
+        className="absolute inset-0 h-full w-full object-cover object-[50%_20%]"
+      />
+      <img
+        src={oracleAvatarSpeaking}
+        alt=""
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover object-[50%_20%] opacity-0 transition-opacity duration-75",
+          mouthOpen && "opacity-100",
+        )}
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,2,8,0.05)_0%,rgba(4,2,8,0.12)_34%,rgba(4,2,8,0.88)_100%)]" />
+      <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3">
+        <div>
+          <div className="font-creepster text-2xl tracking-[0.18em] text-primary drop-shadow-[0_0_8px_#00f0ff]">
+            ОРАКУЛ
+          </div>
+          <div className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-secondary">
+            {isSpeaking
+              ? "Диктує послання..."
+              : isThinking
+                ? "Шукає відповідь..."
+                : "Живий артефакт"}
+          </div>
+        </div>
+        <div className="rounded border border-black/60 bg-black/65 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-white/80 backdrop-blur-sm">
+          {isSpeaking ? "Говорить" : isThinking ? "Думає" : "На зв’язку"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function OracleChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isOracleSpeaking, setIsOracleSpeaking] = useState(false);
+  const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
+  const [typewriterTick, setTypewriterTick] = useState(0);
   const [error, setError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,7 +176,7 @@ export function OracleChat() {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isOpen, isTyping, error]);
+  }, [messages, isOpen, isTyping, isOracleSpeaking, typewriterTick, error]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -64,6 +194,8 @@ export function OracleChat() {
     setMessages(newMessages);
     setInputValue("");
     setIsTyping(true);
+    setIsOracleSpeaking(false);
+    setSpeakingMessageIndex(null);
     setError(null);
 
     try {
@@ -84,9 +216,12 @@ export function OracleChat() {
         throw new Error(data.error || "Mystic interference disrupted the connection.");
       }
       
-      setMessages(prev => [...prev, { role: "oracle", content: data.answer }]);
+      setSpeakingMessageIndex(newMessages.length);
+      setIsOracleSpeaking(true);
+      setMessages((prev) => [...prev, { role: "oracle", content: data.answer }]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Не вдалося зв'язатися з Оракулом.");
+      setIsOracleSpeaking(false);
     } finally {
       setIsTyping(false);
     }
@@ -141,21 +276,14 @@ export function OracleChat() {
             role="dialog"
             aria-label="Чат з Оракулом"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-secondary/30 bg-gradient-to-r from-secondary/20 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-primary/50 shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0 relative">
-                  <img src={oracleAvatar} alt="Оракул" className="w-full h-full object-cover object-[50%_12%]" />
-                  <div className="absolute inset-0 bg-primary/20 mix-blend-overlay"></div>
-                </div>
-                <div>
-                  <h3 className="font-creepster text-primary text-xl tracking-widest leading-none glitch-hover">Оракул</h3>
-                  <div className="text-[10px] uppercase text-secondary font-bold font-mono tracking-widest mt-1">Живий артефакт</div>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsOpen(false)} 
-                className="text-white/50 hover:text-primary transition-colors p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            <div className="relative shrink-0">
+              <OraclePortrait
+                isSpeaking={isOracleSpeaking}
+                isThinking={isTyping}
+              />
+              <button
+                onClick={() => setIsOpen(false)}
+                className="absolute right-3 top-3 rounded-md border border-white/20 bg-black/65 p-1.5 text-white/70 backdrop-blur-sm transition-colors hover:border-primary/70 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Закрити чат з Оракулом"
                 data-testid="button-close-oracle"
               >
@@ -164,7 +292,7 @@ export function OracleChat() {
             </div>
 
             {/* Chat History */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-5 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent">
+            <div className="flex-1 space-y-5 overflow-y-auto bg-[#04020a]/95 p-4 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(
@@ -176,7 +304,17 @@ export function OracleChat() {
                     {msg.role === "oracle" && (
                       <span className="absolute -left-1 -top-1 w-2 h-2 bg-primary rounded-full shadow-[0_0_5px_#00f0ff]" />
                     )}
-                    {msg.content}
+                    <TypewriterText
+                      content={msg.content}
+                      animate={msg.role === "oracle" && speakingMessageIndex === i}
+                      onProgress={() => setTypewriterTick((tick) => tick + 1)}
+                      onComplete={() => {
+                        if (speakingMessageIndex === i) {
+                          setSpeakingMessageIndex(null);
+                          setIsOracleSpeaking(false);
+                        }
+                      }}
+                    />
                   </div>
                   <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">
                     {msg.role === "user" ? "Шукач" : "Оракул"}
