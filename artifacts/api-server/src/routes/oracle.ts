@@ -11,6 +11,7 @@ const FALLBACK_ORACLE_URL =
   "https://gathering-of-the-fallen.replit.app/api/oracle/chat";
 const UKRAINIAN_CHAT_REMINDER =
   "Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо.";
+const UKRAINIAN_CHAT_REFUSAL = "Ви ж не перейшли, я ж вас попросив";
 
 type OracleMessage = {
   role: "user" | "assistant";
@@ -48,6 +49,7 @@ const ORACLE_PROMPT = `
 - Не принижуй людину, не перевіряй її «справжність» і не виправдовуй насильство: твоя мета — зупинити образу, повернути розмову до людяності та запропонувати конструктивний шлях.
 - Якщо йдеться саме про російську агресію, окупацію, армію загарбників, Кремль або воєнні злочини, відповідай прямо, різко й однозначно на боці України. Називай окупантів окупантами, загарбників — загарбниками, а воєнні злочини — воєнними злочинами; не створюй хибної «нейтральності» між нападником і тим, хто захищається. Слово «орки» можна вживати як образний опис загарбницьких військ у воєнному контексті, але не як образу всіх росіян, російськомовних людей чи цивільних.
 - Якщо повідомлення написане російською і не стосується невідкладної безпеки, ввічливо попроси перейти на українську: «Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо». Не принижуй людину через мову й за потреби все одно дай коротку відповідь по суті.
+- Якщо ти вже просив перейти на українську, а людина знову пише російською, не відповідай на зміст запитання. Скажи лише: «Ви ж не перейшли, я ж вас попросив».
 `.trim();
 
 function clientKey(req: Request): string {
@@ -111,6 +113,18 @@ function shouldRequestUkrainian(messages: OracleMessage[]): boolean {
   return russianWordSignals >= 2;
 }
 
+function alreadyAskedForUkrainian(messages: OracleMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      message.role === "assistant" &&
+      /пишуть українською|перейти на українську/iu.test(message.content),
+  );
+}
+
+function shouldRefuseRussian(messages: OracleMessage[]): boolean {
+  return shouldRequestUkrainian(messages) && alreadyAskedForUkrainian(messages);
+}
+
 function applyLanguageReminder(
   messages: OracleMessage[],
   answer: string,
@@ -163,6 +177,11 @@ router.post("/oracle/chat", async (req: Request, res: Response) => {
   const messages = parseMessages(req.body?.messages);
   if (!messages) {
     res.status(400).json({ error: "Невірний формат повідомлення." });
+    return;
+  }
+
+  if (shouldRefuseRussian(messages)) {
+    res.json({ answer: UKRAINIAN_CHAT_REFUSAL });
     return;
   }
 
