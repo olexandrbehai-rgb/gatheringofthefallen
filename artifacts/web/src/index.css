@@ -222,6 +222,28 @@
   100% { transform: skew(0deg); }
 }
 
+.author-node-locating {
+  animation: author-node-locate 1.35s ease-out;
+}
+
+@keyframes author-node-locate {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(0, 240, 255, 0));
+  }
+  18% {
+    filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.95));
+  }
+  32% {
+    filter: drop-shadow(0 0 3px rgba(255, 173, 127, 0.55));
+  }
+  48% {
+    filter: drop-shadow(0 0 22px rgba(138, 43, 226, 0.95));
+  }
+  66% {
+    filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.6));
+  }
+}
+
 .neon-pulse {
   animation: neon-pulse-anim 2s infinite alternate;
 }

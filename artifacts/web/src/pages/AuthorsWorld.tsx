@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "wouter";
 
 type AuthorLink = {
@@ -38,20 +38,30 @@ type AuthorDraft = {
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
 
-const WORLD_POSITIONS = [
-  { left: 11, top: 10 },
-  { left: 38, top: 18 },
-  { left: 68, top: 12 },
-  { left: 84, top: 30 },
-  { left: 19, top: 36 },
-  { left: 51, top: 39 },
-  { left: 73, top: 51 },
-  { left: 8, top: 62 },
-  { left: 35, top: 69 },
-  { left: 59, top: 76 },
-  { left: 86, top: 72 },
-  { left: 24, top: 88 },
-];
+const WORLD_COLUMNS = 4;
+const WORLD_CELL_WIDTH = 260;
+const WORLD_CELL_HEIGHT = 220;
+const WORLD_PADDING_X = 150;
+const WORLD_PADDING_Y = 150;
+
+function worldPositionFor(index: number) {
+  const column = index % WORLD_COLUMNS;
+  const row = Math.floor(index / WORLD_COLUMNS);
+
+  return {
+    left: WORLD_PADDING_X + column * WORLD_CELL_WIDTH,
+    top: WORLD_PADDING_Y + row * WORLD_CELL_HEIGHT,
+  };
+}
+
+function worldDimensions(authorCount: number) {
+  const rows = Math.max(1, Math.ceil(Math.max(authorCount, 1) / WORLD_COLUMNS));
+
+  return {
+    width: Math.max(1040, WORLD_PADDING_X * 2 + (WORLD_COLUMNS - 1) * WORLD_CELL_WIDTH),
+    height: Math.max(760, WORLD_PADDING_Y * 2 + (rows - 1) * WORLD_CELL_HEIGHT),
+  };
+}
 
 const SEED_AUTHORS: Author[] = [
   {
@@ -64,7 +74,7 @@ const SEED_AUTHORS: Author[] = [
       { label: "Spotify", url: "https://open.spotify.com" },
       { label: "YouTube", url: "https://youtube.com" },
     ],
-    position: WORLD_POSITIONS[0],
+    position: worldPositionFor(0),
   },
   {
     id: "seed-mira-nocturne",
@@ -73,7 +83,7 @@ const SEED_AUTHORS: Author[] = [
     initials: "MN",
     memory: "Мої історії починаються там, де закінчується світло.",
     links: [{ label: "Instagram", url: "https://instagram.com" }],
-    position: WORLD_POSITIONS[1],
+    position: worldPositionFor(1),
   },
   {
     id: "seed-rune-operator",
@@ -85,7 +95,7 @@ const SEED_AUTHORS: Author[] = [
       { label: "Bandcamp", url: "https://bandcamp.com" },
       { label: "SoundCloud", url: "https://soundcloud.com" },
     ],
-    position: WORLD_POSITIONS[2],
+    position: worldPositionFor(2),
   },
   {
     id: "seed-velvet-ruins",
@@ -94,7 +104,7 @@ const SEED_AUTHORS: Author[] = [
     initials: "VR",
     memory: "Кожна тінь має колір, якщо дивитися достатньо довго.",
     links: [{ label: "Portfolio", url: "https://behance.net" }],
-    position: WORLD_POSITIONS[3],
+    position: worldPositionFor(3),
   },
   {
     id: "seed-the-last-lantern",
@@ -103,7 +113,7 @@ const SEED_AUTHORS: Author[] = [
     initials: "LL",
     memory: "Тут пам’ятають не імена. Тут пам’ятають сліди.",
     links: [{ label: "Website", url: "https://example.com" }],
-    position: WORLD_POSITIONS[4],
+    position: worldPositionFor(4),
   },
   {
     id: "seed-echo-child",
@@ -112,7 +122,7 @@ const SEED_AUTHORS: Author[] = [
     initials: "EC",
     memory: "Мій голос живе між грозою і тишею.",
     links: [{ label: "Spotify", url: "https://open.spotify.com" }],
-    position: WORLD_POSITIONS[5],
+    position: worldPositionFor(5),
   },
 ];
 
@@ -161,30 +171,35 @@ function mapApiAuthor(
     memory: value.bio,
     links: Array.isArray(value.platformLinks) ? value.platformLinks : [],
     avatarUrl: value.avatarUrl,
-    position: WORLD_POSITIONS[index % WORLD_POSITIONS.length],
+    position: worldPositionFor(index),
   };
 }
 
 function AuthorNode({
   author,
   active,
+  locating,
+  nodeRef,
   onSelect,
 }: {
   author: Author;
   active: boolean;
+  locating: boolean;
+  nodeRef: (node: HTMLButtonElement | null) => void;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
+      ref={nodeRef}
       onClick={onSelect}
-      style={{ left: `${author.position.left}%`, top: `${author.position.top}%` }}
-      className={`group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 text-center transition-transform duration-300 hover:z-30 hover:scale-110 focus-visible:z-30 focus-visible:outline-none ${
-        active ? "z-30 scale-110" : ""
-      }`}
+      style={{ left: `${author.position.left}px`, top: `${author.position.top}px` }}
+      className={`group absolute z-[100] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[transform,filter] duration-300 hover:z-[220] hover:scale-[1.16] focus-visible:z-[220] focus-visible:outline-none ${
+        active ? "z-[210] scale-110" : ""
+      } ${locating ? "author-node-locating" : ""}`}
       aria-label={`Відкрити світ автора ${author.name}`}
     >
-      <span className={`relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-300 group-hover:border-white group-hover:text-white group-hover:shadow-[0_0_28px_rgba(0,240,255,0.8)] ${
+      <span className={`relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-300 group-hover:border-white group-hover:text-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] ${
         active ? "border-white text-white shadow-[0_0_28px_rgba(0,240,255,0.8)]" : "border-[#00f0ff]/70"
       }`}>
         <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50" />
@@ -198,9 +213,13 @@ function AuthorNode({
       <span className="max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:text-white">
         {author.name}
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 mb-4 hidden w-52 -translate-x-1/2 rounded border border-[#00f0ff]/60 bg-[#050b12]/95 p-2 text-left shadow-[0_0_25px_rgba(0,240,255,0.28)] group-hover:block group-focus:block">
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[240] mb-4 w-60 -translate-x-1/2 rounded border border-[#00f0ff]/70 bg-[#050b12]/[.98] p-3 text-left opacity-0 shadow-[0_0_30px_rgba(0,240,255,0.4)] transition-[opacity,transform] duration-200 group-hover:translate-y-[-4px] group-hover:opacity-100 group-focus-visible:translate-y-[-4px] group-focus-visible:opacity-100">
         <span className="mb-2 flex h-20 items-center justify-center border border-white/10 bg-[radial-gradient(circle_at_50%_30%,rgba(0,240,255,0.28),rgba(10,5,24,0.9)_65%)] font-mono text-[9px] uppercase tracking-[0.18em] text-[#8ceeff]">
-          Портрет автора
+          {author.avatarUrl ? (
+            <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            "ПОРТРЕТ АВТОРА"
+          )}
         </span>
         <span className="block font-creepster text-lg tracking-[0.12em] text-[#00f0ff]">{author.name}</span>
         <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-[#ffad7f]">{author.role}</span>
@@ -225,6 +244,8 @@ export default function AuthorsWorld() {
   const [chatLoading, setChatLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
+  const [locatingAuthorId, setLocatingAuthorId] = useState<string | null>(null);
+  const authorNodeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     let active = true;
@@ -340,6 +361,39 @@ export default function AuthorsWorld() {
   }, [authors, search]);
 
   const selectedAuthor = authors.find((author) => author.id === selectedAuthorId) ?? null;
+  const worldSize = useMemo(() => worldDimensions(authors.length), [authors.length]);
+
+  useEffect(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      setLocatingAuthorId(null);
+      return;
+    }
+
+    const match = authors.find((author) =>
+      `${author.name} ${author.role} ${author.memory}`.toLowerCase().includes(query),
+    );
+    if (!match) {
+      setLocatingAuthorId(null);
+      return;
+    }
+
+    setSelectedAuthorId(match.id);
+    setLocatingAuthorId(match.id);
+    const frame = window.requestAnimationFrame(() => {
+      authorNodeRefs.current[match.id]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    });
+    const timeout = window.setTimeout(() => setLocatingAuthorId(null), 1400);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [authors, search]);
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -486,20 +540,32 @@ export default function AuthorsWorld() {
               {authorsLoading ? "підключення до мережі авторів..." : `${visibleAuthors.length} відкритих порталів // наведи курсор, щоб побачити автора`}
             </p>
           </div>
-          <label className="flex min-h-10 items-center border border-white/15 bg-black/30 px-3 focus-within:border-[#00f0ff]/60 sm:w-72">
-            <span className="mr-2 font-mono text-[10px] uppercase tracking-widest text-white/40">Пошук</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="ім’я або роль"
-              className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25"
-              aria-label="Пошук авторів"
-            />
-          </label>
+          <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
+            <label className="flex min-h-10 items-center border border-white/15 bg-black/30 px-3 focus-within:border-[#00f0ff]/60 sm:w-80">
+              <span className="mr-2 font-mono text-[10px] uppercase tracking-widest text-white/40">Пошук</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="ім’я або роль"
+                className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25"
+                aria-label="Пошук авторів"
+              />
+            </label>
+            <p role="status" className="min-h-4 font-mono text-[9px] uppercase tracking-[0.14em] text-[#00f0ff]/60">
+              {search.trim()
+                ? visibleAuthors.length > 0
+                  ? `GPS // знайдено: ${visibleAuthors[0].name}`
+                  : "GPS // портал не знайдено"
+                : "Введи ім’я — світ знайде портал"}
+            </p>
+          </div>
         </div>
 
-        <section className="relative h-[min(70dvh,760px)] min-h-[560px] overflow-y-auto border border-[#00f0ff]/25 bg-[#020811]/70 shadow-[inset_0_0_80px_rgba(0,240,255,0.06),0_0_35px_rgba(0,0,0,0.35)] [scrollbar-color:#00f0ff33_#020811]">
-          <div className="relative min-h-[1200px] w-full min-w-[620px] overflow-hidden bg-[radial-gradient(circle_at_50%_36%,rgba(16,63,82,0.2),transparent_32%),linear-gradient(145deg,rgba(3,13,22,0.94),rgba(9,4,24,0.96))]">
+        <section className="relative h-[min(70dvh,760px)] min-h-[560px] overflow-auto border border-[#00f0ff]/25 bg-[#020811]/70 shadow-[inset_0_0_80px_rgba(0,240,255,0.06),0_0_35px_rgba(0,0,0,0.35)] [scrollbar-color:#00f0ff33_#020811]">
+          <div
+            className="relative overflow-visible bg-[radial-gradient(circle_at_50%_36%,rgba(16,63,82,0.2),transparent_32%),linear-gradient(145deg,rgba(3,13,22,0.94),rgba(9,4,24,0.96)]"
+            style={{ width: `${worldSize.width}px`, height: `${worldSize.height}px` }}
+          >
             <div aria-hidden="true" className="absolute left-[12%] top-[27%] h-px w-[74%] rotate-[9deg] bg-gradient-to-r from-transparent via-[#00f0ff]/35 to-transparent" />
             <div aria-hidden="true" className="absolute left-[6%] top-[64%] h-px w-[84%] -rotate-[13deg] bg-gradient-to-r from-transparent via-[#8a2be2]/35 to-transparent" />
             <div aria-hidden="true" className="absolute left-[48%] top-[8%] h-[82%] w-px rotate-[18deg] bg-gradient-to-b from-transparent via-[#00f0ff]/20 to-transparent" />
@@ -520,6 +586,10 @@ export default function AuthorsWorld() {
                   key={author.id}
                   author={author}
                   active={author.id === selectedAuthorId}
+                  locating={author.id === locatingAuthorId}
+                  nodeRef={(node) => {
+                    authorNodeRefs.current[author.id] = node;
+                  }}
                   onSelect={() => setSelectedAuthorId(author.id)}
                 />
               ))
