@@ -149,6 +149,8 @@ export function OracleChat() {
   const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
   const [typewriterTick, setTypewriterTick] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [mobileViewportHeight, setMobileViewportHeight] = useState<number | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -173,6 +175,57 @@ export function OracleChat() {
   }, [messages]);
 
   useEffect(() => {
+    if (!isOpen) {
+      setKeyboardInset(0);
+      setMobileViewportHeight(null);
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateViewport = () => {
+      if (window.innerWidth >= 768) {
+        setKeyboardInset(0);
+        setMobileViewportHeight(null);
+        return;
+      }
+
+      const rawKeyboardInset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+      setKeyboardInset(rawKeyboardInset > 80 ? rawKeyboardInset : 0);
+      setMobileViewportHeight(viewport.height);
+    };
+
+    updateViewport();
+    viewport.addEventListener("resize", updateViewport);
+    viewport.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+
+    return () => {
+      viewport.removeEventListener("resize", updateViewport);
+      viewport.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!keyboardInset) return;
+
+    const timer = window.setTimeout(() => {
+      textareaRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [keyboardInset]);
+
+  useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
@@ -184,6 +237,16 @@ export function OracleChat() {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   }, [inputValue]);
+
+  const handleInputFocus = () => {
+    window.setTimeout(() => {
+      textareaRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }, 250);
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -234,6 +297,15 @@ export function OracleChat() {
     }
   };
 
+  const keyboardAwareStyle =
+    keyboardInset > 0 && mobileViewportHeight
+      ? {
+          bottom: `${keyboardInset + 8}px`,
+          height: `${Math.max(mobileViewportHeight - 16, 220)}px`,
+          maxHeight: `${Math.max(mobileViewportHeight - 16, 220)}px`,
+        }
+      : undefined;
+
   return (
     <>
       <AnimatePresence>
@@ -272,6 +344,7 @@ export function OracleChat() {
             initial={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
+            style={keyboardAwareStyle}
             className="fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] flex-col overflow-hidden rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]"
             role="dialog"
             aria-label="Чат з Оракулом"
@@ -292,7 +365,7 @@ export function OracleChat() {
             </div>
 
             {/* Chat History */}
-            <div className="flex-1 space-y-5 overflow-y-auto bg-[#04020a]/95 p-4 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-[#04020a]/95 p-4 font-mono text-sm scrollbar-thin scrollbar-thumb-secondary/50 scrollbar-track-transparent">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(
@@ -348,6 +421,7 @@ export function OracleChat() {
                   ref={textareaRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
+                  onFocus={handleInputFocus}
                   onKeyDown={handleKeyDown}
                   enterKeyHint="send"
                   placeholder="Запитайте Оракула..."
