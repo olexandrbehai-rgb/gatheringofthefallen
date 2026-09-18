@@ -6,12 +6,11 @@ const router = Router();
 const rateLimit = new Map<string, { startedAt: number; count: number }>();
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 12;
-const FALLBACK_ORACLE_URL =
-  process.env.ORACLE_GATEWAY_URL ??
-  "https://gathering-of-the-fallen.replit.app/api/oracle/chat";
 const UKRAINIAN_CHAT_REMINDER =
   "Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо.";
 const UKRAINIAN_CHAT_REFUSAL = "Ви ж не перейшли, я ж вас попросив";
+const LOCAL_ORACLE_FALLBACK =
+  "Оракул на мить замовк. Основний канал відповіді недоступний — спробуйте ще раз за хвилину.";
 
 type OracleMessage = {
   role: "user" | "assistant";
@@ -142,33 +141,8 @@ function applyLanguageReminder(
 }
 
 async function requestFallbackOracle(messages: OracleMessage[]): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
-
-  try {
-    const response = await fetch(FALLBACK_ORACLE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages }),
-      signal: controller.signal,
-    });
-    const data: unknown = await response.json().catch(() => null);
-    const answer =
-      data &&
-      typeof data === "object" &&
-      "answer" in data &&
-      typeof data.answer === "string"
-        ? data.answer.trim()
-        : "";
-
-    if (!response.ok || !answer) {
-      throw new Error(`Oracle gateway returned HTTP ${response.status}`);
-    }
-
-    return answer;
-  } finally {
-    clearTimeout(timeout);
-  }
+  void messages;
+  return LOCAL_ORACLE_FALLBACK;
 }
 
 router.post("/oracle/chat", async (req: Request, res: Response) => {
@@ -204,7 +178,7 @@ router.post("/oracle/chat", async (req: Request, res: Response) => {
     logger.error({ msg: "Oracle response failed", error });
     try {
       const answer = await requestFallbackOracle(messages);
-      logger.warn({ msg: "Oracle fallback gateway responded" });
+      logger.warn({ msg: "Oracle local fallback responded" });
       res.json({ answer: applyLanguageReminder(messages, answer) });
     } catch (fallbackError) {
       logger.error({ msg: "Oracle fallback gateway failed", error: fallbackError });
