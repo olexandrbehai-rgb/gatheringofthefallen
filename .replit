@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "postgresql-16"]
+modules = ["nodejs-24", "postgresql-16", "python-base-3.13"]
 
 [deployment]
 router = "application"
@@ -17,7 +17,7 @@ expertMode = true
 
 [postMerge]
 path = "scripts/post-merge.sh"
-timeoutMs = 20000
+timeoutMs = 120000
 
 [[ports]]
 localPort = 8080
@@ -45,7 +45,9 @@ externalPort = 3002
 
 [nix]
 channel = "stable-25_05"
+packages = ["oneDNN", "re2"]
 
 [userenv]
 
 [userenv.shared]
+OWNER_EMAIL = "olexandrbehai@gmail.com"
