@@ -6,6 +6,9 @@ const router = Router();
 const rateLimit = new Map<string, { startedAt: number; count: number }>();
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 12;
+const FALLBACK_ORACLE_URL =
+  process.env.ORACLE_GATEWAY_URL ??
+  "https://gathering-of-the-fallen.replit.app/api/oracle/chat";
 
 type OracleMessage = {
   role: "user" | "assistant";
@@ -79,6 +82,36 @@ function parseMessages(value: unknown): OracleMessage[] | null {
   return messages;
 }
 
+async function requestFallbackOracle(messages: OracleMessage[]): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const response = await fetch(FALLBACK_ORACLE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages }),
+      signal: controller.signal,
+    });
+    const data: unknown = await response.json().catch(() => null);
+    const answer =
+      data &&
+      typeof data === "object" &&
+      "answer" in data &&
+      typeof data.answer === "string"
+        ? data.answer.trim()
+        : "";
+
+    if (!response.ok || !answer) {
+      throw new Error(`Oracle gateway returned HTTP ${response.status}`);
+    }
+
+    return answer;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 router.post("/oracle/chat", async (req: Request, res: Response) => {
   if (!requestAllowed(req)) {
     res.status(429).json({ error: "Оракул відпочиває. Спробуйте ще раз за хвилину." });
@@ -105,7 +138,14 @@ router.post("/oracle/chat", async (req: Request, res: Response) => {
     res.json({ answer });
   } catch (error) {
     logger.error({ msg: "Oracle response failed", error });
-    res.status(502).json({ error: "Зв'язок з Оракулом перервався. Спробуйте ще раз." });
+    try {
+      const answer = await requestFallbackOracle(messages);
+      logger.warn({ msg: "Oracle fallback gateway responded" });
+      res.json({ answer });
+    } catch (fallbackError) {
+      logger.error({ msg: "Oracle fallback gateway failed", error: fallbackError });
+      res.status(502).json({ error: "Зв'язок з Оракулом перервався. Спробуйте ще раз." });
+    }
   }
 });
 

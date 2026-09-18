@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { FallingAsh } from "./FallingAsh";
 import { SecretLevel } from "./SecretLevel";
@@ -23,11 +24,31 @@ const PAGE_BACKGROUNDS: Record<string, string> = {
   "/contacts": bgContacts,
 };
 
+function useDesktopHeroEnabled(): boolean {
+  const [enabled, setEnabled] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const update = () => setEnabled(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  return enabled;
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { t } = useT();
   const { count: cartCount, open: openCart } = useCart();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
+  const heroEnabled = useDesktopHeroEnabled();
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -57,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }}
       />
 
-      {location === "/" && (
+      {location === "/" && heroEnabled && (
         <HeroSequence className="pointer-events-none fixed inset-x-0 top-0 z-[1] h-svh" />
       )}
 
