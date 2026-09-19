@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Globe2, Link2, Plus, Trash2 } from "lucide-react";
 import type { IconType } from "react-icons";
 import { SiBandcamp, SiInstagram, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 type AuthorLink = {
   label: string;
@@ -19,6 +19,7 @@ type PlatformLinkDraft = {
 
 type Author = {
   id: string;
+  slug: string;
   name: string;
   role: string;
   initials: string;
@@ -46,6 +47,25 @@ type AuthorDraft = {
   memory: string;
   avatarUrl: string;
   links: PlatformLinkDraft[];
+};
+
+type AuthorCreation = {
+  id: number;
+  platform: string;
+  kind: string;
+  title: string;
+  description: string;
+  imageUrl?: string | null;
+  contentUrl?: string | null;
+};
+
+type CreationDraft = {
+  platform: PlatformKey;
+  kind: "card" | "banner" | "creation";
+  title: string;
+  description: string;
+  imageUrl: string;
+  contentUrl: string;
 };
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
@@ -105,6 +125,15 @@ const EMPTY_DRAFT: AuthorDraft = {
   memory: "",
   avatarUrl: "",
   links: [emptyPlatformLink()],
+};
+
+const EMPTY_CREATION_DRAFT: CreationDraft = {
+  platform: "youtube",
+  kind: "banner",
+  title: "",
+  description: "",
+  imageUrl: "",
+  contentUrl: "",
 };
 
 function initialsFor(name: string) {
@@ -176,18 +205,21 @@ function mapApiAuthor(
     bio: string;
     avatarUrl?: string | null;
     platformLinks?: AuthorLink[];
+    slug: string;
+    position?: { left: number; top: number };
   },
   index: number,
 ): Author {
   return {
     id: String(value.id),
+    slug: value.slug,
     name: value.displayName,
     role: value.role,
     initials: initialsFor(value.displayName),
     memory: value.bio,
     links: Array.isArray(value.platformLinks) ? value.platformLinks : [],
     avatarUrl: value.avatarUrl,
-    position: worldPositionFor(index),
+    position: value.position ?? worldPositionFor(index),
   };
 }
 
@@ -210,41 +242,45 @@ function AuthorNode({
       ref={nodeRef}
       onClick={onSelect}
       style={{ left: `${author.position.left}px`, top: `${author.position.top}px` }}
-      className={`group absolute z-[100] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[transform,filter] duration-300 hover:z-[220] hover:scale-[1.16] focus-visible:z-[220] focus-visible:outline-none ${
+      className={`group absolute isolate z-[1000] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[filter] duration-300 hover:z-[1000] focus-visible:z-[1000] focus-visible:outline-none ${
         active ? "z-[210] scale-110" : ""
       } ${locating ? "author-node-locating" : ""}`}
-      aria-label={`Відкрити світ автора ${author.name}`}
+      aria-label={`${author.name}, ${author.role}. Відкрити портал автора`}
     >
-      <span className={`relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-300 group-hover:border-white group-hover:text-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] ${
-        active ? "border-white text-white shadow-[0_0_28px_rgba(0,240,255,0.8)]" : "border-[#00f0ff]/70"
+      <span className={`relative flex h-16 w-16 items-center overflow-visible rounded-full border bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow,transform] duration-300 group-hover:h-32 group-hover:w-72 group-hover:scale-105 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl ${
+        active
+          ? "h-32 w-72 rounded-2xl border-white text-white shadow-[0_0_28px_rgba(0,240,255,0.8)]"
+          : "border-[#00f0ff]/70"
       }`}>
-        <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50" />
-        {author.avatarUrl ? (
-          <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="relative">{author.initials}</span>
-        )}
-        <span aria-hidden="true" className="absolute -inset-2 rounded-full border border-[#8a2be2]/20 opacity-0 transition-opacity group-hover:opacity-100" />
-      </span>
-      <span className="max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:text-white">
-        {author.name}
-      </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-[240] mb-4 w-60 -translate-x-1/2 rounded border border-[#00f0ff]/70 bg-[#050b12]/[.98] p-3 text-left opacity-0 shadow-[0_0_30px_rgba(0,240,255,0.4)] transition-[opacity,transform] duration-200 group-hover:translate-y-[-4px] group-hover:opacity-100 group-focus-visible:translate-y-[-4px] group-focus-visible:opacity-100">
-        <span className="mb-2 flex h-20 items-center justify-center border border-white/10 bg-[radial-gradient(circle_at_50%_30%,rgba(0,240,255,0.28),rgba(10,5,24,0.9)_65%)] font-mono text-[9px] uppercase tracking-[0.18em] text-[#8ceeff]">
+        <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-28 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-28 group-focus-visible:rounded-none group-focus-visible:border-0 ${
+          active ? "h-full w-28 rounded-none border-0" : ""
+        }`}>
+          <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
           {author.avatarUrl ? (
             <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            "ПОРТРЕТ АВТОРА"
+            <span className="relative">{author.initials}</span>
           )}
         </span>
-        <span className="block font-creepster text-lg tracking-[0.12em] text-[#00f0ff]">{author.name}</span>
-        <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-[#ffad7f]">{author.role}</span>
+        <span className={`relative z-20 min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100 ${
+          active ? "flex opacity-100" : "hidden"
+        }`}>
+          <span className="truncate font-creepster text-xl tracking-[0.08em] text-[#00f0ff]">{author.name}</span>
+          <span className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[#ffad7f]">{author.role}</span>
+          <span className="mt-2 line-clamp-2 font-mono text-[9px] leading-relaxed text-white/60">{author.memory}</span>
+        </span>
+      </span>
+      <span className={`max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white ${
+        active ? "hidden" : ""
+      }`}>
+        {author.name}
       </span>
     </button>
   );
 }
 
 export default function AuthorsWorld() {
+  const [location, setLocation] = useLocation();
   const [authors, setAuthors] = useState<Author[]>([]);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -260,6 +296,11 @@ export default function AuthorsWorld() {
   const [chatLoading, setChatLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
+  const [creations, setCreations] = useState<AuthorCreation[]>([]);
+  const [creationDraft, setCreationDraft] = useState<CreationDraft>(EMPTY_CREATION_DRAFT);
+  const [creationError, setCreationError] = useState<string | null>(null);
+  const [isSavingCreation, setIsSavingCreation] = useState(false);
+  const [editingCreationId, setEditingCreationId] = useState<number | null>(null);
   const [locatingAuthorId, setLocatingAuthorId] = useState<string | null>(null);
   const authorNodeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -298,6 +339,16 @@ export default function AuthorsWorld() {
             avatarUrl: ownAuthor.avatarUrl ?? "",
             links: ownAuthor.links.length > 0 ? ownAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
           });
+          const profileResponse = await fetch(
+            `${API_ROOT}/authors-world/author/${encodeURIComponent(ownAuthor.slug)}`,
+            { credentials: "include" },
+          );
+          const profilePayload = await profileResponse.json().catch(() => ({})) as {
+            creations?: AuthorCreation[];
+          };
+          if (active && profileResponse.ok) {
+            setCreations(Array.isArray(profilePayload.creations) ? profilePayload.creations : []);
+          }
         }
       } catch (error) {
         if (!active) return;
@@ -313,6 +364,12 @@ export default function AuthorsWorld() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (myAuthor && new URLSearchParams(location.split("?")[1] ?? "").get("edit") === "1") {
+      setIsRegistering(true);
+    }
+  }, [location, myAuthor]);
 
   useEffect(() => {
     if (authors.length === 0) {
@@ -488,6 +545,61 @@ export default function AuthorsWorld() {
     }
   };
 
+  const handleSaveCreation = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!creationDraft.title.trim() || isSavingCreation) return;
+    setCreationError(null);
+    setIsSavingCreation(true);
+    try {
+      const endpoint = editingCreationId
+        ? `${API_ROOT}/authors-world/me/creations/${editingCreationId}`
+        : `${API_ROOT}/authors-world/me/creations`;
+      const response = await fetch(endpoint, {
+        method: editingCreationId ? "PATCH" : "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(creationDraft),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        creation?: AuthorCreation;
+        error?: string;
+      };
+      if (!response.ok || !payload.creation) {
+        throw new Error(payload.error ?? "Не вдалося зберегти авторську роботу.");
+      }
+      setCreations((current) => editingCreationId
+        ? current.map((item) => item.id === editingCreationId ? payload.creation as AuthorCreation : item)
+        : [...current, payload.creation as AuthorCreation]);
+      setCreationDraft(EMPTY_CREATION_DRAFT);
+      setEditingCreationId(null);
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : "Не вдалося зберегти авторську роботу.");
+    } finally {
+      setIsSavingCreation(false);
+    }
+  };
+
+  const handleDeleteCreation = async (creationId: number) => {
+    setCreationError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/me/creations/${creationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(payload.error ?? "Не вдалося видалити авторську роботу.");
+      }
+      setCreations((current) => current.filter((item) => item.id !== creationId));
+      if (editingCreationId === creationId) {
+        setEditingCreationId(null);
+        setCreationDraft(EMPTY_CREATION_DRAFT);
+      }
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : "Не вдалося видалити авторську роботу.");
+    }
+  };
+
   const handleSendChat = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const body = chatDraft.trim();
@@ -570,7 +682,7 @@ export default function AuthorsWorld() {
           <div>
             <h2 className="font-creepster text-3xl tracking-[0.12em] text-[#ffcf9e]">Світ авторів</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/40">
-              {authorsLoading ? "підключення до мережі авторів..." : `${visibleAuthors.length} відкритих порталів // наведи курсор, щоб побачити автора`}
+              {authorsLoading ? "підключення до мережі авторів..." : `${visibleAuthors.length} відкритих порталів // наведи курсор, щоб збільшити портал`}
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
@@ -623,7 +735,10 @@ export default function AuthorsWorld() {
                   nodeRef={(node) => {
                     authorNodeRefs.current[author.id] = node;
                   }}
-                  onSelect={() => setSelectedAuthorId(author.id)}
+                  onSelect={() => {
+                    setSelectedAuthorId(author.id);
+                    setLocation(`/author/${author.slug}`);
+                  }}
                 />
               ))
             )}
@@ -680,6 +795,12 @@ export default function AuthorsWorld() {
                   ))}
                 </div>
               )}
+              <Link
+                href={`/author/${selectedAuthor.slug}`}
+                className="mt-5 inline-flex min-h-11 items-center border border-[#00f0ff]/65 bg-[#00f0ff]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff] transition-colors hover:bg-[#00f0ff]/20 hover:text-white"
+              >
+                Відкрити всі роботи автора
+              </Link>
             </section>
           ) : (
             <section className="flex items-center border border-white/10 bg-black/25 p-5">
@@ -799,14 +920,18 @@ export default function AuthorsWorld() {
                 ЗАКРИТИ
               </button>
             </div>
-            <p className="mt-3 font-mono text-xs leading-relaxed text-white/55">
-              Створи або онови свій портал. Профіль збережеться у внутрішній базі сайту, автоматично з’явиться у світі авторів і дасть доступ до загального чату.
+              <p className="mt-3 font-mono text-xs leading-relaxed text-white/55">
+               Створи або онови свій портал. Профіль збережеться у внутрішній базі сайту, автоматично з’явиться у світі авторів і дасть доступ до загального чату. Для публікації потрібен звичайний акаунт із email та паролем.
             </p>
             {formError && (
               <p className="mt-4 border border-[#ff7043]/40 bg-[#ff7043]/5 px-3 py-2 font-mono text-xs leading-relaxed text-[#ffb184]">
                 {formError}{" "}
                 {formError.toLowerCase().includes("sign in") || formError.toLowerCase().includes("увій") ? (
-                  <Link href="/sign-in" className="text-[#8ceeff] underline underline-offset-4 hover:text-white">Увійти</Link>
+                  <>
+                    <Link href="/sign-in" className="text-[#8ceeff] underline underline-offset-4 hover:text-white">Увійти</Link>
+                    <span className="text-white/35"> або </span>
+                    <Link href="/sign-up" className="text-[#ffcf9e] underline underline-offset-4 hover:text-white">створити акаунт</Link>
+                  </>
                 ) : null}
               </p>
             )}
@@ -964,6 +1089,85 @@ export default function AuthorsWorld() {
                 {isSavingProfile ? "ПІДКЛЮЧЕННЯ ДО МЕРЕЖІ..." : myAuthor ? "ЗБЕРЕГТИ МІЙ ПОРТАЛ" : "ВІДКРИТИ МІЙ ПОРТАЛ"}
               </button>
             </form>
+            {myAuthor && (
+              <section className="mt-8 border-t border-[#00f0ff]/20 pt-6">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffad7f]">Публічні роботи</p>
+                    <h3 className="mt-1 font-creepster text-3xl tracking-[0.1em] text-[#d7b6ff]">Банери та картки</h3>
+                  </div>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">{creations.length} збережено</span>
+                </div>
+                <p className="mt-2 font-mono text-[10px] leading-relaxed text-white/45">
+                  Додай посилання на окрему роботу. Відвідувачі побачать її у вкладці відповідного майданчика, зокрема у вкладці YouTube.
+                </p>
+                {creationError && <p className="mt-3 border border-[#ff7043]/35 bg-[#ff7043]/5 px-3 py-2 font-mono text-xs text-[#ffb184]">{creationError}</p>}
+                {creations.length > 0 && (
+                  <div className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-1 [scrollbar-color:#00f0ff55_#06111a]">
+                    {creations.map((creation) => (
+                      <div key={creation.id} className="flex items-center justify-between gap-3 border border-white/10 bg-black/20 p-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-mono text-xs text-white">{creation.title}</p>
+                          <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-[#8ceeff]">{creation.platform} // {creation.kind}</p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <button type="button" onClick={() => {
+                            setEditingCreationId(creation.id);
+                            setCreationDraft({
+                              platform: (creation.platform as PlatformKey) || "other",
+                              kind: (creation.kind as CreationDraft["kind"]) || "card",
+                              title: creation.title,
+                              description: creation.description,
+                              imageUrl: creation.imageUrl ?? "",
+                              contentUrl: creation.contentUrl ?? "",
+                            });
+                          }} className="border border-white/15 px-2 py-2 font-mono text-[9px] uppercase text-white/60 hover:border-[#00f0ff] hover:text-white">Змінити</button>
+                          <button type="button" onClick={() => void handleDeleteCreation(creation.id)} className="border border-[#ff7043]/35 px-2 py-2 font-mono text-[9px] uppercase text-[#ffb184] hover:border-[#ff7043]">Видалити</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <form onSubmit={handleSaveCreation} className="mt-4 grid gap-3 border border-white/10 bg-black/20 p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Майданчик</span>
+                      <select value={creationDraft.platform} onChange={(event) => setCreationDraft((current) => ({ ...current, platform: event.target.value as PlatformKey }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70">
+                        {PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value} className="bg-[#06111a]">{option.label}</option>)}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Формат</span>
+                      <select value={creationDraft.kind} onChange={(event) => setCreationDraft((current) => ({ ...current, kind: event.target.value as CreationDraft["kind"] }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70">
+                        <option value="banner" className="bg-[#06111a]">Банер</option>
+                        <option value="card" className="bg-[#06111a]">Картка</option>
+                        <option value="creation" className="bg-[#06111a]">Творіння</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label className="block">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Назва роботи *</span>
+                    <input required value={creationDraft.title} onChange={(event) => setCreationDraft((current) => ({ ...current, title: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="Назва пісні, відео або проєкту" />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Опис</span>
+                    <textarea value={creationDraft.description} onChange={(event) => setCreationDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-[#06111a] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="Коротко про цю роботу" />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Посилання на роботу *</span>
+                    <input required type="url" value={creationDraft.contentUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="https://youtube.com/watch?v=..." />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Обкладинка (необов’язково)</span>
+                    <input type="url" value={creationDraft.imageUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, imageUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="https://.../cover.jpg" />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="submit" disabled={isSavingCreation} className="min-h-10 border border-[#8a2be2]/70 bg-[#8a2be2]/15 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] hover:border-[#00f0ff] hover:text-white disabled:opacity-50">{isSavingCreation ? "ЗБЕРЕЖЕННЯ..." : editingCreationId ? "ЗБЕРЕГТИ ЗМІНИ" : "ДОДАТИ РОБОТУ"}</button>
+                    {editingCreationId && <button type="button" onClick={() => { setEditingCreationId(null); setCreationDraft(EMPTY_CREATION_DRAFT); }} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white">Скасувати</button>}
+                  </div>
+                </form>
+              </section>
+            )}
           </div>
         </div>
       )}
