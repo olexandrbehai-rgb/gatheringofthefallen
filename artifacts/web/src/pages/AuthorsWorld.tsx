@@ -44,6 +44,7 @@ type AuthorDraft = {
   name: string;
   role: string;
   memory: string;
+  avatarUrl: string;
   links: PlatformLinkDraft[];
 };
 
@@ -102,6 +103,7 @@ const EMPTY_DRAFT: AuthorDraft = {
   name: "",
   role: "",
   memory: "",
+  avatarUrl: "",
   links: [emptyPlatformLink()],
 };
 
@@ -293,6 +295,7 @@ export default function AuthorsWorld() {
             name: ownAuthor.name,
             role: ownAuthor.role,
             memory: ownAuthor.memory,
+            avatarUrl: ownAuthor.avatarUrl ?? "",
             links: ownAuthor.links.length > 0 ? ownAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
           });
         }
@@ -420,6 +423,7 @@ export default function AuthorsWorld() {
     const name = fieldValue("displayName", draft.name);
     const role = fieldValue("role", draft.role);
     const memory = fieldValue("bio", draft.memory);
+    const avatarUrl = fieldValue("avatarUrl", draft.avatarUrl);
     const missingField = !name ? "displayName" : !role ? "role" : !memory ? "bio" : null;
     if (missingField) {
       setFormError("Заповни, будь ласка, ім’я, роль і коротке послання.");
@@ -445,6 +449,7 @@ export default function AuthorsWorld() {
           displayName: name,
           role,
           bio: memory,
+          avatarUrl: avatarUrl || null,
           platformLinks: links,
         }),
       });
@@ -472,6 +477,7 @@ export default function AuthorsWorld() {
         name: savedAuthor.name,
         role: savedAuthor.role,
         memory: savedAuthor.memory,
+        avatarUrl: savedAuthor.avatarUrl ?? "",
         links: savedAuthor.links.length > 0 ? savedAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
       });
       setIsRegistering(false);
@@ -817,6 +823,32 @@ export default function AuthorsWorld() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Що ти залишаєш у пам’яті? *</span>
                 <textarea name="bio" autoComplete="off" required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
               </label>
+              <label className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Фото профілю</span>
+                <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
+                  Додай пряме посилання на зображення. Поле можна змінити або очистити будь-коли.
+                </span>
+                <input
+                  name="avatarUrl"
+                  type="url"
+                  value={draft.avatarUrl}
+                  onChange={(event) => setDraft((current) => ({ ...current, avatarUrl: event.target.value }))}
+                  className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
+                  placeholder="https://.../photo.jpg"
+                />
+                {draft.avatarUrl.trim() && (
+                  <span className="mt-3 flex items-center gap-3 border border-white/10 bg-black/20 p-3">
+                    <img
+                      src={draft.avatarUrl}
+                      alt="Попередній перегляд фото профілю"
+                      className="h-16 w-16 rounded-full border border-[#00f0ff]/45 object-cover"
+                    />
+                    <span className="font-mono text-[10px] leading-relaxed text-white/45">
+                      Попередній перегляд. Після збереження фото з’явиться у світі авторів і чаті.
+                    </span>
+                  </span>
+                )}
+              </label>
               <fieldset className="border border-white/10 bg-black/20 p-3 sm:p-4">
                 <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</legend>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -906,7 +938,6 @@ export default function AuthorsWorld() {
                                 }))}
                                 className="min-h-10 w-full border border-white/15 bg-[#06111a]/90 px-3 font-mono text-xs text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
                                 placeholder="Наприклад, Telegram або Patreon"
-                                maxLength={40}
                               />
                             </label>
                           )}

@@ -7,14 +7,54 @@ const router = Router();
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const chatSubscribers = new Set<Response>();
 
-const MAX_NAME_LENGTH = 80;
-const MAX_ROLE_LENGTH = 80;
-const MAX_BIO_LENGTH = 500;
-const MAX_AVATAR_URL_LENGTH = 500;
 const MAX_CHAT_MESSAGE_LENGTH = 1000;
-const MAX_PLATFORM_LINKS = 12;
 
 type PlatformLink = { label: string; url: string };
+let schemaReady: Promise<void> | null = null;
+
+function ensureAuthorsWorldSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = pool.query(`
+      CREATE TABLE IF NOT EXISTS authors (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        bio TEXT NOT NULL,
+        avatar_url TEXT,
+        platform_links JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS platform_links JSONB NOT NULL DEFAULT '[]'::jsonb;
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+      CREATE UNIQUE INDEX IF NOT EXISTS authors_user_id_unique_idx ON authors (user_id);
+      CREATE INDEX IF NOT EXISTS authors_display_name_idx ON authors (display_name);
+      CREATE INDEX IF NOT EXISTS authors_created_at_idx ON authors (created_at);
+
+      CREATE TABLE IF NOT EXISTS authors_world_chat_messages (
+        id SERIAL PRIMARY KEY,
+        author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS authors_world_chat_created_at_idx
+        ON authors_world_chat_messages (created_at);
+      CREATE INDEX IF NOT EXISTS authors_world_chat_author_id_idx
+        ON authors_world_chat_messages (author_id);
+    `).then(() => undefined).catch((error) => {
+      schemaReady = null;
+      throw error;
+    });
+  }
+
+  return schemaReady;
+}
 
 function currentUserId(req: Request): string | null {
   try {
@@ -24,22 +64,22 @@ function currentUserId(req: Request): string | null {
   }
 }
 
-function textField(value: unknown, maxLength: number): string | null {
+function textField(value: unknown, maxLength?: number): string | null {
   if (typeof value !== "string") return null;
   const result = value.trim();
-  return result && result.length <= maxLength ? result : null;
+  if (!result) return null;
+  return maxLength === undefined || result.length <= maxLength ? result : null;
 }
 
 function normalizeLinks(value: unknown): PlatformLink[] {
   if (!Array.isArray(value)) return [];
 
   return value
-    .slice(0, MAX_PLATFORM_LINKS)
     .map((link) => {
       if (!link || typeof link !== "object") return null;
       const candidate = link as { label?: unknown; url?: unknown };
-      const label = textField(candidate.label, 40);
-      const url = textField(candidate.url, MAX_AVATAR_URL_LENGTH);
+      const label = textField(candidate.label);
+      const url = textField(candidate.url);
       if (!label || !url || !/^https?:\/\//i.test(url)) return null;
       return { label, url };
     })
@@ -71,6 +111,7 @@ function broadcastChatMessage(message: unknown) {
 
 router.get("/authors-world/authors", async (_req, res) => {
   try {
+    await ensureAuthorsWorldSchema();
     const result = await pool.query(`
       SELECT id, display_name, role, bio, avatar_url, platform_links, created_at
       FROM authors
@@ -91,6 +132,7 @@ router.get("/authors-world/me", async (req, res) => {
   }
 
   try {
+    await ensureAuthorsWorldSchema();
     const result = await pool.query(
       `SELECT id, display_name, role, bio, avatar_url, platform_links, created_at
        FROM authors
@@ -112,11 +154,11 @@ router.post("/authors-world/me", async (req, res) => {
     return;
   }
 
-  const displayName = textField(req.body?.displayName, MAX_NAME_LENGTH);
-  const role = textField(req.body?.role, MAX_ROLE_LENGTH);
-  const bio = textField(req.body?.bio, MAX_BIO_LENGTH);
+  const displayName = textField(req.body?.displayName);
+  const role = textField(req.body?.role);
+  const bio = textField(req.body?.bio);
   const avatarUrl = req.body?.avatarUrl
-    ? textField(req.body.avatarUrl, MAX_AVATAR_URL_LENGTH)
+    ? textField(req.body.avatarUrl)
     : null;
   const platformLinks = normalizeLinks(req.body?.platformLinks);
 
@@ -130,6 +172,7 @@ router.post("/authors-world/me", async (req, res) => {
   }
 
   try {
+    await ensureAuthorsWorldSchema();
     const result = await pool.query(
       `INSERT INTO authors (user_id, display_name, role, bio, avatar_url, platform_links)
        VALUES ($1, $2, $3, $4, $5, $6::jsonb)
@@ -158,6 +201,7 @@ router.get("/authors-world/chat", async (req, res) => {
     : 60;
 
   try {
+    await ensureAuthorsWorldSchema();
     const result = await pool.query(
       `SELECT
          messages.id,
@@ -224,6 +268,7 @@ router.post("/authors-world/chat", async (req, res) => {
   }
 
   try {
+    await ensureAuthorsWorldSchema();
     const result = await pool.query(
       `INSERT INTO authors_world_chat_messages (author_id, body)
        SELECT id, $2
