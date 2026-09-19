@@ -350,21 +350,21 @@ function AuthorNode({
        style={{ left: `${nodePosition.left}px`, top: `${nodePosition.top}px`, transformOrigin: "left center" }}
       aria-label={`${author.name}, ${author.role}. Відкрити портал автора`}
     >
-       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-32 group-hover:w-72 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl">
-        <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-28 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-28 group-focus-visible:rounded-none group-focus-visible:border-0 ${
+       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
+         <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-36 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-36 group-focus-visible:rounded-none group-focus-visible:border-0 ${
           ""
         }`}>
           <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
           {author.avatarUrl ? (
-            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-cover transition-[object-fit] duration-300 group-hover:object-contain group-focus-visible:object-contain" />
+            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-contain" />
           ) : (
             <Plus className="relative h-7 w-7 text-[#00f0ff]/80" aria-hidden="true" />
           )}
         </span>
         <span className="relative z-20 hidden min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
-          <span className="truncate font-creepster text-xl tracking-[0.08em] text-[#00f0ff]">{author.name}</span>
-          <span className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[#ffad7f]">{author.role}</span>
-          <span className="mt-2 line-clamp-2 font-mono text-[9px] leading-relaxed text-white/60">{author.memory}</span>
+           <span className="truncate font-creepster text-2xl tracking-[0.08em] text-[#00f0ff] antialiased">{author.name}</span>
+           <span className="mt-1 truncate font-mono text-[11px] uppercase tracking-[0.14em] text-[#ffad7f] antialiased">{author.role}</span>
+           <span className="mt-3 line-clamp-3 font-mono text-[11px] leading-relaxed text-white/70 antialiased">{author.memory}</span>
         </span>
       </span>
       <span className="max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white">
