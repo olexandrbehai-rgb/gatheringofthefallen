@@ -412,10 +412,20 @@ export default function AuthorsWorld() {
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
-    const name = draft.name.trim();
-    const role = draft.role.trim();
-    const memory = draft.memory.trim();
-    if (!name || !role || !memory) return;
+    const formData = new FormData(event.currentTarget);
+    const fieldValue = (key: string, fallback: string) => {
+      const value = formData.get(key);
+      return typeof value === "string" ? value.trim() : fallback.trim();
+    };
+    const name = fieldValue("displayName", draft.name);
+    const role = fieldValue("role", draft.role);
+    const memory = fieldValue("bio", draft.memory);
+    const missingField = !name ? "displayName" : !role ? "role" : !memory ? "bio" : null;
+    if (missingField) {
+      setFormError("Заповни, будь ласка, ім’я, роль і коротке послання.");
+      (event.currentTarget.elements.namedItem(missingField) as HTMLInputElement | HTMLTextAreaElement | null)?.focus();
+      return;
+    }
 
     let links: AuthorLink[];
     try {
@@ -797,15 +807,15 @@ export default function AuthorsWorld() {
             <form onSubmit={handleRegister} className="mt-6 space-y-4">
               <label className="block">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Ім’я або псевдонім *</span>
-                <input required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Твоє ім’я або назва проєкту" />
+                <input name="displayName" autoComplete="nickname" required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Твоє ім’я або назва проєкту" />
               </label>
               <label className="block">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Хто ти у цьому світі *</span>
-                <input required value={draft.role} onChange={(event) => setDraft((current) => ({ ...current, role: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Музикант, авторка, художник..." />
+                <input name="role" autoComplete="organization-title" required value={draft.role} onChange={(event) => setDraft((current) => ({ ...current, role: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Музикант, авторка, художник..." />
               </label>
               <label className="block">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Що ти залишаєш у пам’яті? *</span>
-                <textarea required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
+                <textarea name="bio" autoComplete="off" required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
               </label>
               <fieldset className="border border-white/10 bg-black/20 p-3 sm:p-4">
                 <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</legend>

@@ -27,6 +27,7 @@ export type GameHud = {
 type GameCanvasProps = {
   inputRef: MutableRefObject<GameInput>;
   paused: boolean;
+  restartSignal: number;
   audioEnabled: boolean;
   onHudChange: (hud: GameHud) => void;
   onGamepadChange: (connected: boolean) => void;
@@ -363,6 +364,7 @@ function startAudio(): AudioRuntime | null {
 export function GameCanvas({
   inputRef,
   paused,
+  restartSignal,
   audioEnabled,
   onHudChange,
   onGamepadChange,
@@ -839,7 +841,7 @@ export function GameCanvas({
         void audioRef.current.context.close();
       }
     };
-  }, [inputRef, onGamepadChange, onHudChange, onRequestPause]);
+  }, [inputRef, onGamepadChange, onHudChange, onRequestPause, restartSignal]);
 
   return <canvas ref={canvasRef} data-game-canvas aria-label="The Ashen Crossing platform game" className="absolute inset-0 h-full w-full touch-none select-none" />;
 }
