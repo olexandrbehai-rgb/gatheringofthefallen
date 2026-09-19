@@ -71,6 +71,7 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         role TEXT NOT NULL,
         bio TEXT NOT NULL,
         avatar_url TEXT,
+        background_url TEXT,
         platform_links JSONB NOT NULL DEFAULT '[]'::jsonb,
         slug TEXT,
         world_left INTEGER,
@@ -80,6 +81,7 @@ function ensureAuthorsWorldSchema(): Promise<void> {
       );
 
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS background_url TEXT;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS platform_links JSONB NOT NULL DEFAULT '[]'::jsonb;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS slug TEXT;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS world_left INTEGER;
@@ -198,6 +200,12 @@ function textField(value: unknown, maxLength?: number): string | null {
   return maxLength === undefined || result.length <= maxLength ? result : null;
 }
 
+function isValidAvatarValue(value: string) {
+  if (/^https?:\/\//i.test(value)) return true;
+  if (value.length > 1_500_000) return false;
+  return /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
+}
+
 function normalizeLinks(value: unknown): PlatformLink[] {
   if (!Array.isArray(value)) return [];
 
@@ -222,6 +230,7 @@ function serializeAuthor(row: Record<string, unknown>) {
     role: row.role,
     bio: row.bio,
     avatarUrl: row.avatar_url,
+    backgroundUrl: row.background_url,
     platformLinks: Array.isArray(row.platform_links) ? row.platform_links : [],
     slug: typeof row.slug === "string" && row.slug ? row.slug : `author-${Number(row.id)}`,
     position: {
@@ -306,7 +315,7 @@ router.get("/authors-world/authors", async (_req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(`
-      SELECT id, display_name, role, bio, avatar_url, platform_links, slug, world_left, world_top, created_at
+      SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at
       FROM authors
       ORDER BY created_at ASC, id ASC
     `);
@@ -327,7 +336,7 @@ router.get("/authors-world/me", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-      `SELECT id, display_name, role, bio, avatar_url, platform_links, slug, world_left, world_top, created_at
+      `SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at
        FROM authors
        WHERE user_id = $1
        LIMIT 1`,
@@ -353,14 +362,21 @@ router.post("/authors-world/me", async (req, res) => {
   const avatarUrl = req.body?.avatarUrl
     ? textField(req.body.avatarUrl)
     : null;
+  const backgroundUrl = req.body?.backgroundUrl
+    ? textField(req.body.backgroundUrl)
+    : null;
   const platformLinks = normalizeLinks(req.body?.platformLinks);
 
   if (!displayName || !role || !bio) {
     res.status(400).json({ error: "Name, role, and bio are required" });
     return;
   }
-  if (avatarUrl && !/^https?:\/\//i.test(avatarUrl)) {
-    res.status(400).json({ error: "Avatar URL must use http or https" });
+  if (avatarUrl && !isValidAvatarValue(avatarUrl)) {
+    res.status(400).json({ error: "Avatar must be an http(s) image URL or a compressed PNG, JPEG, or WebP image" });
+    return;
+  }
+  if (backgroundUrl && !isValidAvatarValue(backgroundUrl)) {
+    res.status(400).json({ error: "Profile background must be an http(s) image URL or a compressed PNG, JPEG, or WebP image" });
     return;
   }
 
@@ -381,10 +397,10 @@ router.post("/authors-world/me", async (req, res) => {
         authorId = Number(existing.rows[0].id);
         await client.query(
           `UPDATE authors
-           SET display_name = $1, role = $2, bio = $3, avatar_url = $4,
-               platform_links = $5::jsonb, updated_at = NOW()
-           WHERE id = $6`,
-          [displayName, role, bio, avatarUrl, JSON.stringify(platformLinks), authorId],
+            SET display_name = $1, role = $2, bio = $3, avatar_url = $4, background_url = $5,
+                platform_links = $6::jsonb, updated_at = NOW()
+            WHERE id = $7`,
+          [displayName, role, bio, avatarUrl, backgroundUrl, JSON.stringify(platformLinks), authorId],
         );
       } else {
         const countResult = await client.query(`SELECT COUNT(*)::int AS count FROM authors`);
@@ -398,15 +414,15 @@ router.post("/authors-world/me", async (req, res) => {
         }
         const inserted = await client.query(
           `INSERT INTO authors
-             (user_id, display_name, role, bio, avatar_url, platform_links, slug, world_left, world_top)
-           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
+             (user_id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top)
+            VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)
            RETURNING id`,
-          [userId, displayName, role, bio, avatarUrl, JSON.stringify(platformLinks), slug, position.left, position.top],
+          [userId, displayName, role, bio, avatarUrl, backgroundUrl, JSON.stringify(platformLinks), slug, position.left, position.top],
         );
         authorId = Number(inserted.rows[0].id);
       }
       const result = await client.query(
-        `SELECT id, display_name, role, bio, avatar_url, platform_links, slug, world_left, world_top, created_at
+        `SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at
          FROM authors
          WHERE id = $1`,
         [authorId],
@@ -429,7 +445,7 @@ router.get("/authors-world/author/:slug", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-      `SELECT id, user_id, display_name, role, bio, avatar_url, platform_links,
+      `SELECT id, user_id, display_name, role, bio, avatar_url, background_url, platform_links,
               slug, world_left, world_top, created_at
        FROM authors
        WHERE slug = $1

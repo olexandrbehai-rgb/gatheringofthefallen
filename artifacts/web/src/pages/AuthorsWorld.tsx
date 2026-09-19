@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Globe2, Link2, Plus, Trash2 } from "lucide-react";
+import { Globe2, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 import type { IconType } from "react-icons";
 import { SiBandcamp, SiInstagram, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link, useLocation } from "wouter";
@@ -26,6 +27,7 @@ type Author = {
   memory: string;
   links: AuthorLink[];
   avatarUrl?: string | null;
+  backgroundUrl?: string | null;
   position: { left: number; top: number };
 };
 
@@ -46,6 +48,7 @@ type AuthorDraft = {
   role: string;
   memory: string;
   avatarUrl: string;
+  backgroundUrl: string;
   links: PlatformLinkDraft[];
 };
 
@@ -124,6 +127,7 @@ const EMPTY_DRAFT: AuthorDraft = {
   role: "",
   memory: "",
   avatarUrl: "",
+  backgroundUrl: "",
   links: [emptyPlatformLink()],
 };
 
@@ -197,6 +201,54 @@ function platformLinksForDraft(drafts: PlatformLinkDraft[]) {
   return links;
 }
 
+function compressedImageFromFile(file: File, maxSide: number, quality: number, label: string) {
+  return new Promise<string>((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("Обери файл зображення."));
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      reject(new Error(`${label} має бути не більшою за 8 МБ.`));
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        reject(new Error("Не вдалося підготувати іконку."));
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const compressed = canvas.toDataURL("image/webp", quality);
+      if (compressed.length > 1_500_000) {
+        reject(new Error(`Після стиснення ${label.toLowerCase()} все ще завелика. Обери інше зображення.`));
+        return;
+      }
+      resolve(compressed);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Не вдалося прочитати файл іконки."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function compressedAvatarFromFile(file: File) {
+  return compressedImageFromFile(file, 640, 0.82, "Іконка");
+}
+
+function compressedBackgroundFromFile(file: File) {
+  return compressedImageFromFile(file, 1600, 0.78, "Фон профілю");
+}
+
 function mapApiAuthor(
   value: {
     id: number;
@@ -204,6 +256,7 @@ function mapApiAuthor(
     role: string;
     bio: string;
     avatarUrl?: string | null;
+    backgroundUrl?: string | null;
     platformLinks?: AuthorLink[];
     slug: string;
     position?: { left: number; top: number };
@@ -219,6 +272,7 @@ function mapApiAuthor(
     memory: value.bio,
     links: Array.isArray(value.platformLinks) ? value.platformLinks : [],
     avatarUrl: value.avatarUrl,
+    backgroundUrl: value.backgroundUrl,
     position: value.position ?? worldPositionFor(index),
   };
 }
@@ -237,45 +291,40 @@ function AuthorNode({
   onSelect: () => void;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       ref={nodeRef}
       onClick={onSelect}
-      style={{ left: `${author.position.left}px`, top: `${author.position.top}px` }}
+      whileHover={{ scale: 1.75 }}
+      whileFocus={{ scale: 1.75 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className={`group absolute isolate z-[1000] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[filter] duration-300 hover:z-[1000] focus-visible:z-[1000] focus-visible:outline-none ${
-        active ? "z-[210] scale-110" : ""
+        active ? "z-[210]" : ""
       } ${locating ? "author-node-locating" : ""}`}
+      style={{ left: `${author.position.left}px`, top: `${author.position.top}px`, transformOrigin: "left center" }}
       aria-label={`${author.name}, ${author.role}. Відкрити портал автора`}
     >
-      <span className={`relative flex h-16 w-16 items-center overflow-visible rounded-full border bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow,transform] duration-300 group-hover:h-32 group-hover:w-72 group-hover:scale-105 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl ${
-        active
-          ? "h-32 w-72 rounded-2xl border-white text-white shadow-[0_0_28px_rgba(0,240,255,0.8)]"
-          : "border-[#00f0ff]/70"
-      }`}>
+      <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow,transform] duration-300 group-hover:h-32 group-hover:w-72 group-hover:scale-105 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl">
         <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-28 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-28 group-focus-visible:rounded-none group-focus-visible:border-0 ${
-          active ? "h-full w-28 rounded-none border-0" : ""
+          ""
         }`}>
           <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
           {author.avatarUrl ? (
-            <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-contain" />
           ) : (
             <span className="relative">{author.initials}</span>
           )}
         </span>
-        <span className={`relative z-20 min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100 ${
-          active ? "flex opacity-100" : "hidden"
-        }`}>
+        <span className="relative z-20 hidden min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
           <span className="truncate font-creepster text-xl tracking-[0.08em] text-[#00f0ff]">{author.name}</span>
           <span className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[#ffad7f]">{author.role}</span>
           <span className="mt-2 line-clamp-2 font-mono text-[9px] leading-relaxed text-white/60">{author.memory}</span>
         </span>
       </span>
-      <span className={`max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white ${
-        active ? "hidden" : ""
-      }`}>
+      <span className="max-w-28 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white">
         {author.name}
       </span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -290,6 +339,10 @@ export default function AuthorsWorld() {
   const [authorsLoading, setAuthorsLoading] = useState(true);
   const [authorsError, setAuthorsError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isProcessingAvatar, setIsProcessingAvatar] = useState(false);
+  const [backgroundError, setBackgroundError] = useState<string | null>(null);
+  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatDraft, setChatDraft] = useState("");
@@ -303,6 +356,34 @@ export default function AuthorsWorld() {
   const [editingCreationId, setEditingCreationId] = useState<number | null>(null);
   const [locatingAuthorId, setLocatingAuthorId] = useState<string | null>(null);
   const authorNodeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const handleAvatarFile = async (file: File | undefined) => {
+    if (!file) return;
+    setAvatarError(null);
+    setIsProcessingAvatar(true);
+    try {
+      const avatarUrl = await compressedAvatarFromFile(file);
+      setDraft((current) => ({ ...current, avatarUrl }));
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : "Не вдалося підготувати іконку.");
+    } finally {
+      setIsProcessingAvatar(false);
+    }
+  };
+
+  const handleBackgroundFile = async (file: File | undefined) => {
+    if (!file) return;
+    setBackgroundError(null);
+    setIsProcessingBackground(true);
+    try {
+      const backgroundUrl = await compressedBackgroundFromFile(file);
+      setDraft((current) => ({ ...current, backgroundUrl }));
+    } catch (error) {
+      setBackgroundError(error instanceof Error ? error.message : "Не вдалося підготувати фон профілю.");
+    } finally {
+      setIsProcessingBackground(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -337,6 +418,7 @@ export default function AuthorsWorld() {
             role: ownAuthor.role,
             memory: ownAuthor.memory,
             avatarUrl: ownAuthor.avatarUrl ?? "",
+            backgroundUrl: ownAuthor.backgroundUrl ?? "",
             links: ownAuthor.links.length > 0 ? ownAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
           });
           const profileResponse = await fetch(
@@ -481,6 +563,7 @@ export default function AuthorsWorld() {
     const role = fieldValue("role", draft.role);
     const memory = fieldValue("bio", draft.memory);
     const avatarUrl = fieldValue("avatarUrl", draft.avatarUrl);
+    const backgroundUrl = fieldValue("backgroundUrl", draft.backgroundUrl);
     const missingField = !name ? "displayName" : !role ? "role" : !memory ? "bio" : null;
     if (missingField) {
       setFormError("Заповни, будь ласка, ім’я, роль і коротке послання.");
@@ -507,6 +590,7 @@ export default function AuthorsWorld() {
           role,
           bio: memory,
           avatarUrl: avatarUrl || null,
+          backgroundUrl: backgroundUrl || null,
           platformLinks: links,
         }),
       });
@@ -535,6 +619,7 @@ export default function AuthorsWorld() {
         role: savedAuthor.role,
         memory: savedAuthor.memory,
         avatarUrl: savedAuthor.avatarUrl ?? "",
+        backgroundUrl: savedAuthor.backgroundUrl ?? "",
         links: savedAuthor.links.length > 0 ? savedAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
       });
       setIsRegistering(false);
@@ -769,7 +854,7 @@ export default function AuthorsWorld() {
               <div className="mt-3 flex items-start gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-[#00f0ff]/50 bg-[radial-gradient(circle,rgba(0,240,255,0.24),rgba(10,5,24,0.95)_68%)] font-mono text-sm font-bold tracking-[0.14em] text-[#b9f7ff]">
                   {selectedAuthor.avatarUrl ? (
-                    <img src={selectedAuthor.avatarUrl} alt={`Портрет ${selectedAuthor.name}`} className="h-full w-full object-cover" />
+                    <img src={selectedAuthor.avatarUrl} alt={`Портрет ${selectedAuthor.name}`} className="h-full w-full bg-black/20 object-contain" />
                   ) : (
                     selectedAuthor.initials
                   )}
@@ -948,19 +1033,38 @@ export default function AuthorsWorld() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Що ти залишаєш у пам’яті? *</span>
                 <textarea name="bio" autoComplete="off" required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
               </label>
-              <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Фото профілю</span>
+              <div className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Іконка профілю</span>
                 <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
-                  Додай пряме посилання на зображення. Поле можна змінити або очистити будь-коли.
+                  Додай свій малюнок. У світі він буде маленьким, а при наведенні повністю розгорнеться разом з інформацією автора.
                 </span>
+                <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-center gap-3 border border-dashed border-[#00f0ff]/55 bg-[#00f0ff]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:border-[#00f0ff] hover:bg-[#00f0ff]/12">
+                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                  {isProcessingAvatar ? "ПІДГОТОВКА ІКОНКИ..." : "ДОДАТИ ІКОНКУ ПРОФІЛЮ"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="sr-only"
+                    disabled={isProcessingAvatar}
+                    onChange={(event) => {
+                      void handleAvatarFile(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                {avatarError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{avatarError}</p>}
+                <label className="mt-3 block">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Або пряме посилання</span>
                 <input
                   name="avatarUrl"
-                  type="url"
+                  type="text"
+                  inputMode="url"
                   value={draft.avatarUrl}
                   onChange={(event) => setDraft((current) => ({ ...current, avatarUrl: event.target.value }))}
                   className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
                   placeholder="https://.../photo.jpg"
                 />
+                </label>
                 {draft.avatarUrl.trim() && (
                   <span className="mt-3 flex items-center gap-3 border border-white/10 bg-black/20 p-3">
                     <img
@@ -973,7 +1077,48 @@ export default function AuthorsWorld() {
                     </span>
                   </span>
                 )}
-              </label>
+              </div>
+              <div className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Фон профілю</span>
+                <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
+                  Завантаж широке зображення — воно стане атмосферним тлом твоєї сторінки автора.
+                </span>
+                <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-center gap-3 border border-dashed border-[#8a2be2]/65 bg-[#8a2be2]/8 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#e1c8ff] transition-colors hover:border-[#b98cff] hover:bg-[#8a2be2]/15">
+                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                  {isProcessingBackground ? "ПІДГОТОВКА ФОНУ..." : "ДОДАТИ ФОН ПРОФІЛЮ"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="sr-only"
+                    disabled={isProcessingBackground}
+                    onChange={(event) => {
+                      void handleBackgroundFile(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                {backgroundError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{backgroundError}</p>}
+                <label className="mt-3 block">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Або пряме посилання</span>
+                  <input
+                    name="backgroundUrl"
+                    type="text"
+                    inputMode="url"
+                    value={draft.backgroundUrl}
+                    onChange={(event) => setDraft((current) => ({ ...current, backgroundUrl: event.target.value }))}
+                    className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#8a2be2]/70"
+                    placeholder="https://.../wide-background.jpg"
+                  />
+                </label>
+                {draft.backgroundUrl.trim() && (
+                  <div className="relative mt-3 h-32 overflow-hidden border border-[#8a2be2]/40 bg-[#07131b]" role="img" aria-label="Попередній перегляд фону профілю">
+                    <img src={draft.backgroundUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+                    <div className="relative flex h-full items-end bg-[linear-gradient(180deg,rgba(2,4,10,0.18),rgba(2,4,10,0.7))] p-3 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                      Попередній перегляд широкого фону
+                    </div>
+                  </div>
+                )}
+              </div>
               <fieldset className="border border-white/10 bg-black/20 p-3 sm:p-4">
                 <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</legend>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

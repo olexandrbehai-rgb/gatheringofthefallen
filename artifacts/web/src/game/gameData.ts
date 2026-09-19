@@ -37,6 +37,17 @@ export type GameLevel = {
   checkpoint: string;
 };
 
+export const GAME_PHYSICS = {
+  playerSpeed: 235,
+  sprintMultiplier: 1.35,
+  gravity: 1050,
+  jumpSpeed: 640,
+  playerWidth: 24,
+  playerHeight: 40,
+  coyoteTime: 0.12,
+  jumpBufferTime: 0.14,
+} as const;
+
 const floor = (width: number): GameRect => ({ x: 0, y: 476, w: width, h: 64 });
 
 const palettes = [
@@ -304,35 +315,183 @@ const BASE_LEVELS: GameLevel[] = [
   },
 ];
 
-const REMIX_NAMES = [
+const EXPEDITION_NAMES = [
   "Ash Trial", "Iron Trial", "Blackwater Trial", "Cinder Trial", "Theatre Trial",
   "Bone Trial", "Thunder Trial", "Glass Trial", "Meridian Trial", "Archive Trial",
   "Bridge Trial", "Ember Trial", "Nightfall Trial", "Ruin Trial", "Wolf Trial",
   "Crown Trial", "Storm Trial", "Memory Trial", "Fire Trial", "Last Trial",
 ];
 
+function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
+const PLATFORM_PATTERNS = [
+  [-55, -70, 35, -85, 60, -45, -65, 80],
+  [-90, 45, -60, -55, 85, -70, 35, -80],
+  [-40, -95, 65, -45, -75, 45, -55, 70],
+  [-75, 25, -85, 55, -45, -70, 65, -50],
+] as const;
+
+function createExpeditionLevel(index: number): GameLevel {
+  const random = seededRandom(0x7f4a7c15 + index * 7919);
+  const width = 3200 + index * 75;
+  const platformCount = 11 + (index % 5);
+  const pattern = PLATFORM_PATTERNS[index % PLATFORM_PATTERNS.length];
+  const platforms: GameRect[] = [floor(width)];
+  const hazards: GameRect[] = [];
+  const enemies: EnemySeed[] = [];
+  const relics: RelicSeed[] = [];
+  let cursorX = 150 + Math.round(random() * 45);
+  let platformY = 390 - (index % 3) * 12;
+
+  for (let platformIndex = 0; platformIndex < platformCount; platformIndex += 1) {
+    const widthVariation = Math.round(random() * 70);
+    const platformWidth = 135 + widthVariation + ((platformIndex + index) % 3) * 18;
+    const deltaY = pattern[platformIndex % pattern.length] + Math.round((random() - 0.5) * 24);
+    platformY = Math.max(155, Math.min(405, platformY + deltaY));
+    const platform = { x: cursorX, y: platformY, w: platformWidth, h: 18 };
+    platforms.push(platform);
+
+    relics.push({
+      x: Math.round(platform.x + platform.w * (0.35 + random() * 0.3)),
+      y: platform.y - 38 - (platformIndex % 3) * 5,
+    });
+
+    if ((platformIndex + index) % 3 === 1) {
+      const hazardX = Math.min(width - 100, platform.x + platform.w + 28);
+      hazards.push({ x: hazardX, y: 450, w: 54 + (platformIndex % 3) * 14, h: 28 });
+    }
+
+    if ((platformIndex + index) % 2 === 0) {
+      const patrolStart = Math.max(100, platform.x - 55);
+      const patrolEnd = Math.min(width - 50, platform.x + platform.w + 80);
+      enemies.push({
+        x: patrolStart + 25,
+        y: 438,
+        minX: patrolStart,
+        maxX: patrolEnd,
+        speed: 50 + index * 2.2 + (platformIndex % 4) * 5,
+      });
+    }
+
+    const horizontalStep = 205 + Math.round(random() * 85) + (platformIndex % 2) * 22;
+    cursorX += horizontalStep;
+  }
+
+  const finalPlatform = platforms[platforms.length - 1];
+  const goalX = Math.min(width - 110, Math.max(finalPlatform.x + finalPlatform.w + 90, width - 180));
+
+  return {
+    name: `${String(index + 13).padStart(2, "0")} — ${EXPEDITION_NAMES[index]}`,
+    subtitle: [
+      "Новий маршрут крізь уламки старого світу",
+      "Платформи змінюють ритм, але шлях залишається чесним",
+      "Кожен стрибок має опору, кожна висота має підхід",
+      "Темрява перебудувала дорогу, а не скопіювала її",
+    ][index % 4],
+    width,
+    palette: palettes[(index + 1) % palettes.length],
+    platforms,
+    hazards,
+    enemies,
+    relics,
+    goalX,
+    checkpoint: `Експедиція ${String(index + 1).padStart(2, "0")}`,
+  };
+}
+
+function landingTime(sourceY: number, targetY: number): number | null {
+  const verticalDisplacement = targetY - sourceY;
+  const discriminant =
+    GAME_PHYSICS.jumpSpeed ** 2 +
+    2 * GAME_PHYSICS.gravity * verticalDisplacement;
+  if (discriminant < 0) return null;
+  return (
+    GAME_PHYSICS.jumpSpeed + Math.sqrt(discriminant)
+  ) / GAME_PHYSICS.gravity;
+}
+
+function horizontalGap(source: GameRect, target: GameRect): number {
+  if (target.x > source.x + source.w) return target.x - (source.x + source.w);
+  if (source.x > target.x + target.w) return source.x - (target.x + target.w);
+  return 0;
+}
+
+function canReachPlatform(source: GameRect, target: GameRect): boolean {
+  const time = landingTime(source.y, target.y);
+  if (time === null) return false;
+  const maximumTravel =
+    GAME_PHYSICS.playerSpeed *
+      GAME_PHYSICS.sprintMultiplier *
+      time +
+    GAME_PHYSICS.playerWidth;
+  return horizontalGap(source, target) <= maximumTravel;
+}
+
+export type LevelReachabilityReport = {
+  reachable: boolean;
+  unreachablePlatformIndexes: number[];
+  unreachableRelicIndexes: number[];
+  goalReachable: boolean;
+};
+
+export function validateLevelReachability(level: GameLevel): LevelReachabilityReport {
+  const reachablePlatforms = new Set<number>([0]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    level.platforms.forEach((target, targetIndex) => {
+      if (reachablePlatforms.has(targetIndex)) return;
+      const canReach = [...reachablePlatforms].some((sourceIndex) =>
+        canReachPlatform(level.platforms[sourceIndex], target),
+      );
+      if (canReach) {
+        reachablePlatforms.add(targetIndex);
+        changed = true;
+      }
+    });
+  }
+
+  const unreachablePlatformIndexes = level.platforms
+    .map((_, index) => index)
+    .filter((index) => !reachablePlatforms.has(index));
+
+  const reachableSurfaces = level.platforms.filter((_, index) =>
+    reachablePlatforms.has(index),
+  );
+  const unreachableRelicIndexes = level.relics
+    .map((relic, index) => ({ relic, index }))
+    .filter(({ relic }) =>
+      !reachableSurfaces.some((surface) => {
+        const target = { x: relic.x - 12, y: relic.y + 12, w: 24, h: 1 };
+        return canReachPlatform(surface, target);
+      }),
+    )
+    .map(({ index }) => index);
+
+  const goalTarget = { x: level.goalX - 28, y: 476, w: 56, h: 1 };
+  const goalReachable = reachableSurfaces.some((surface) =>
+    canReachPlatform(surface, goalTarget),
+  );
+
+  return {
+    reachable:
+      unreachablePlatformIndexes.length === 0 &&
+      unreachableRelicIndexes.length === 0 &&
+      goalReachable,
+    unreachablePlatformIndexes,
+    unreachableRelicIndexes,
+    goalReachable,
+  };
+}
+
 export const GAME_LEVELS: GameLevel[] = [
   ...BASE_LEVELS,
-  ...Array.from({ length: 20 }, (_, index) => {
-    const source = BASE_LEVELS[(index + 1) % BASE_LEVELS.length];
-    const speedMultiplier = 1.12 + (index % 5) * 0.045;
-    const relicShift = 7 + (index % 4) * 3;
-    return {
-      ...source,
-      name: `${String(index + 13).padStart(2, "0")} — ${REMIX_NAMES[index]}`,
-      subtitle: "Той самий шлях, але темрява вже навчилася",
-      palette: BASE_LEVELS[(index + 2) % BASE_LEVELS.length].palette,
-      enemies: source.enemies.map((enemy, enemyIndex) => ({
-        ...enemy,
-        speed: enemy.speed * speedMultiplier,
-        minX: Math.max(70, enemy.minX - (enemyIndex % 2) * 12),
-        maxX: Math.min(source.width - 40, enemy.maxX + (enemyIndex % 3) * 18),
-      })),
-      relics: source.relics.map((relic, relicIndex) => ({
-        x: Math.min(source.width - 60, relic.x + ((relicIndex + index) % 3 === 0 ? relicShift : 0)),
-        y: relic.y,
-      })),
-      checkpoint: `Ремікс ${String(index + 1).padStart(2, "0")}`,
-    };
-  }),
+  ...Array.from({ length: 20 }, (_, index) => createExpeditionLevel(index)),
 ];

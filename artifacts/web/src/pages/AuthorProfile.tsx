@@ -11,6 +11,7 @@ type Author = {
   role: string;
   bio: string;
   avatarUrl?: string | null;
+  backgroundUrl?: string | null;
   platformLinks: PlatformLink[];
   slug: string;
 };
@@ -144,7 +145,16 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
 
   return (
     <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-[#03060b] px-4 py-10 text-white sm:px-6 lg:px-10">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,240,255,0.16),transparent_38%),linear-gradient(180deg,rgba(4,13,23,0.9),rgba(8,4,20,0.98))]" />
+      {author.backgroundUrl && (
+        <img
+          src={author.backgroundUrl}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+        />
+      )}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,4,10,0.58)_0%,rgba(2,4,10,0.48)_34%,rgba(2,4,10,0.86)_100%),radial-gradient(circle_at_50%_0%,rgba(0,240,255,0.18),transparent_38%),radial-gradient(circle_at_82%_58%,rgba(138,43,226,0.2),transparent_42%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(rgba(0,240,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.06)_1px,transparent_1px)] [background-size:42px_42px]" />
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/authors-world" className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 hover:text-[#00f0ff]">← Світ авторів</Link>
@@ -156,7 +166,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         </div>
         <header className="mt-10 grid gap-6 border-b border-[#00f0ff]/25 pb-8 md:grid-cols-[auto_1fr] md:items-center">
           <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] shadow-[0_0_34px_rgba(0,240,255,0.25)]">
-            {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsFor(author.displayName)}
+            {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#ffad7f]">Авторський портал // {author.slug}</p>

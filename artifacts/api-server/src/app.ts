@@ -67,7 +67,7 @@ app.use(
 app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 app.use("/api/webhook/stripe", express.raw({ type: "application/json" }));
 
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 if (process.env.CLERK_SECRET_KEY && process.env.CLERK_PUBLISHABLE_KEY) {

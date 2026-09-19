@@ -9,4 +9,7 @@
 - [Oracle mobile keyboard](oracle-mobile-keyboard.md) — mobile chat must track the visual viewport so the input rises above the keyboard and history remains independently scrollable.
 - [Public bundle verification](public-bundle-verification.md) — Render can be live while the Replit-published custom domain still serves an older build; verify the public bundle before claiming release.
 - [Ashen Crossing game](ashen-crossing-game.md) — the platformer is a 32-level canvas game with Web Audio, browser gamepad input, and responsive touch/fullscreen controls.
+- [Author portals](author-portals.md) — Clerk owns passwords; public profiles are read-only to visitors and platform work cards are owner-managed.
+- [Author image persistence](profile-avatar-persistence.md) — icons and wide profile backgrounds use bounded compressed data URLs on both Replit and Render.
 - [Additive database schema changes](database-schema-push.md) — inspect legacy tables before Drizzle push; interactive rename suggestions may be unsafe.
+- [GitHub to Render sync](github-render-sync.md) — Render tracks GitHub main; shell push may lack auth, and oversized preview exports should stay out of deploy commits.

@@ -1,6 +1,9 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { GAME_LEVELS, type GameLevel, type GameRect } from "./gameData";
-import openingBackground from "@/assets/game-opening-background.png";
+import { GAME_LEVELS, GAME_PHYSICS, type GameLevel, type GameRect } from "./gameData";
+import levelTwoBackground from "@/assets/game-level-02-background.png";
+import levelThreeBackground from "@/assets/game-level-03-background.png";
+import levelFourBackground from "@/assets/game-level-04-background.png";
+import levelFiveBackground from "@/assets/game-level-05-background.png";
 
 export type GameInput = {
   left: boolean;
@@ -70,6 +73,8 @@ type Runtime = {
   invulnerableFor: number;
   strikeFor: number;
   transitionFor: number;
+  coyoteFor: number;
+  jumpBufferFor: number;
   won: boolean;
   gameOver: boolean;
 };
@@ -83,11 +88,11 @@ type AudioRuntime = {
 
 const WORLD_WIDTH = 960;
 const WORLD_HEIGHT = 540;
-const PLAYER_SPEED = 235;
-const SPRINT_MULTIPLIER = 1.55;
-const GRAVITY = 1180;
-const JUMP_SPEED = 470;
-const PLAYER_SIZE = { w: 24, h: 40 };
+const PLAYER_SPEED = GAME_PHYSICS.playerSpeed;
+const SPRINT_MULTIPLIER = GAME_PHYSICS.sprintMultiplier;
+const GRAVITY = GAME_PHYSICS.gravity;
+const JUMP_SPEED = GAME_PHYSICS.jumpSpeed;
+const PLAYER_SIZE = { w: GAME_PHYSICS.playerWidth, h: GAME_PHYSICS.playerHeight };
 
 function overlaps(a: GameRect, b: GameRect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -127,6 +132,8 @@ function createRuntime(levelIndex: number, lives = 4, relics = 0): Runtime {
     invulnerableFor: 0,
     strikeFor: 0,
     transitionFor: 0,
+    coyoteFor: 0,
+    jumpBufferFor: 0,
     won: false,
     gameOver: false,
   };
@@ -398,9 +405,18 @@ export function GameCanvas({
     let jumpWasDown = false;
     let connectedBefore = false;
     let animationFrame = 0;
-    const openingImage = new Image();
-    openingImage.decoding = "async";
-    openingImage.src = openingBackground;
+    const backgroundSources = [
+      levelTwoBackground,
+      levelThreeBackground,
+      levelFourBackground,
+      levelFiveBackground,
+    ];
+    const backgroundImages = backgroundSources.map((source) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = source;
+      return image;
+    });
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -573,7 +589,11 @@ export function GameCanvas({
       context.fillStyle = gradient;
       context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-      const backgroundImage = openingImage;
+      const backgroundGroup = Math.floor(runtime.levelIndex / 6) - 1;
+      const backgroundImage =
+        backgroundGroup >= 0
+          ? backgroundImages[backgroundGroup % backgroundImages.length]
+          : null;
       const hasBackgroundImage = Boolean(backgroundImage?.complete && backgroundImage.naturalWidth > 0);
       if (hasBackgroundImage && backgroundImage) {
         context.save();
@@ -731,9 +751,18 @@ export function GameCanvas({
           }
 
           const jumpDown = activeInput.jump;
-          if (jumpDown && !jumpWasDown && runtime.player.onGround) {
+          if (jumpDown && !jumpWasDown) {
+            runtime.jumpBufferFor = GAME_PHYSICS.jumpBufferTime;
+          }
+          runtime.jumpBufferFor = Math.max(0, runtime.jumpBufferFor - delta);
+          runtime.coyoteFor = runtime.player.onGround
+            ? GAME_PHYSICS.coyoteTime
+            : Math.max(0, runtime.coyoteFor - delta);
+          if (runtime.jumpBufferFor > 0 && runtime.coyoteFor > 0) {
             runtime.player.vy = -JUMP_SPEED;
             runtime.player.onGround = false;
+            runtime.jumpBufferFor = 0;
+            runtime.coyoteFor = 0;
           }
           jumpWasDown = jumpDown;
 

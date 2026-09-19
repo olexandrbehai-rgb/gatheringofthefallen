@@ -23,6 +23,7 @@ export const authorsTable = pgTable(
     role: text("role").notNull(),
     bio: text("bio").notNull(),
     avatarUrl: text("avatar_url"),
+    backgroundUrl: text("background_url"),
     slug: text("slug").notNull().unique(),
     worldLeft: integer("world_left").notNull(),
     worldTop: integer("world_top").notNull(),
