@@ -553,7 +553,7 @@ export default function AuthorsWorld() {
 
   const handleWorldWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault();
-    changeWorldZoom(worldZoom + (event.deltaY < 0 ? WORLD_ZOOM_STEP : -WORLD_ZOOM_STEP));
+    event.stopPropagation();
   };
 
   const handleAvatarFile = async (file: File | undefined) => {
@@ -1093,8 +1093,8 @@ export default function AuthorsWorld() {
           onPointerMove={handleWorldPointerMove}
           onPointerUp={finishWorldPointerDrag}
           onPointerCancel={finishWorldPointerDrag}
-          onWheel={handleWorldWheel}
-          className={`relative h-[min(48dvh,420px)] min-h-[300px] overflow-hidden border border-[#00f0ff]/25 bg-[#020811]/70 shadow-[inset_0_0_80px_rgba(0,240,255,0.06),0_0_35px_rgba(0,0,0,0.35)] touch-none select-none sm:h-[min(70dvh,760px)] sm:min-h-[560px] ${
+          onWheelCapture={handleWorldWheel}
+          className={`relative h-[min(48dvh,420px)] min-h-[300px] overflow-hidden overscroll-none border border-[#00f0ff]/25 bg-[#020811]/70 shadow-[inset_0_0_80px_rgba(0,240,255,0.06),0_0_35px_rgba(0,0,0,0.35)] touch-none select-none sm:h-[min(70dvh,760px)] sm:min-h-[560px] ${
             isWorldDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
           aria-label="Поле навігації світу авторів"
