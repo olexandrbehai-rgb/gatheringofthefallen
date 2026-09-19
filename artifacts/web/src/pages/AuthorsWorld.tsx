@@ -343,8 +343,6 @@ function AuthorNode({
       onMouseLeave={() => onHoverChange(false)}
       onFocus={() => onHoverChange(true)}
       onBlur={() => onHoverChange(false)}
-      whileHover={{ scale: 1.75 }}
-      whileFocus={{ scale: 1.75 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className={`group absolute isolate flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[filter] duration-300 focus-visible:outline-none ${
         expanded ? "z-[1200]" : active ? "z-[210]" : "z-[100]"
@@ -352,7 +350,7 @@ function AuthorNode({
        style={{ left: `${nodePosition.left}px`, top: `${nodePosition.top}px`, transformOrigin: "left center" }}
       aria-label={`${author.name}, ${author.role}. Відкрити портал автора`}
     >
-      <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow,transform] duration-300 group-hover:h-32 group-hover:w-72 group-hover:scale-105 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl">
+       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-32 group-hover:w-72 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-32 group-focus-visible:w-72 group-focus-visible:rounded-2xl">
         <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-28 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-28 group-focus-visible:rounded-none group-focus-visible:border-0 ${
           ""
         }`}>
@@ -1136,7 +1134,7 @@ export default function AuthorsWorld() {
                         type="button"
                         aria-label="Закрити активний портал автора"
                         onClick={() => setHoveredAuthorId(null)}
-                        className="absolute inset-0 z-[500] cursor-default bg-[#02040a]/65 backdrop-blur-[2px] transition-opacity duration-200"
+                         className="absolute inset-0 z-[500] cursor-default bg-transparent transition-opacity duration-200"
                       />
                     )}
                     {visibleAuthors.map((author) => {
