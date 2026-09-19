@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Globe2, Link2, Plus, Trash2 } from "lucide-react";
+import type { IconType } from "react-icons";
+import { SiBandcamp, SiInstagram, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link } from "wouter";
 
 type AuthorLink = {
   label: string;
   url: string;
+};
+
+type PlatformKey = "website" | "spotify" | "youtube-music" | "youtube" | "instagram" | "tiktok" | "bandcamp" | "soundcloud" | "other";
+
+type PlatformLinkDraft = {
+  platform: PlatformKey;
+  url: string;
+  customLabel: string;
 };
 
 type Author = {
@@ -33,7 +44,7 @@ type AuthorDraft = {
   name: string;
   role: string;
   memory: string;
-  links: string;
+  links: PlatformLinkDraft[];
 };
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
@@ -126,11 +137,35 @@ const SEED_AUTHORS: Author[] = [
   },
 ];
 
+type PlatformOption = {
+  value: PlatformKey;
+  label: string;
+  placeholder: string;
+  icon: IconType;
+  color: string;
+};
+
+const PLATFORM_OPTIONS: PlatformOption[] = [
+  { value: "website", label: "Сайт / портфоліо", placeholder: "https://твій-сайт.com", icon: Globe2, color: "#b9f7ff" },
+  { value: "spotify", label: "Spotify", placeholder: "https://open.spotify.com/artist/...", icon: SiSpotify, color: "#1ed760" },
+  { value: "youtube-music", label: "YouTube Music", placeholder: "https://music.youtube.com/channel/...", icon: SiYoutubemusic, color: "#ff0033" },
+  { value: "youtube", label: "YouTube", placeholder: "https://youtube.com/@твій-канал", icon: SiYoutube, color: "#ff0033" },
+  { value: "instagram", label: "Instagram", placeholder: "https://instagram.com/твій-профіль", icon: SiInstagram, color: "#e4405f" },
+  { value: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@твій-профіль", icon: SiTiktok, color: "#69c9d0" },
+  { value: "bandcamp", label: "Bandcamp", placeholder: "https://твій-лейбл.bandcamp.com", icon: SiBandcamp, color: "#629aa9" },
+  { value: "soundcloud", label: "SoundCloud", placeholder: "https://soundcloud.com/твій-профіль", icon: SiSoundcloud, color: "#ff5500" },
+  { value: "other", label: "Інший майданчик", placeholder: "https://посилання-на-профіль.com", icon: Link2, color: "#d7b6ff" },
+];
+
+function emptyPlatformLink(): PlatformLinkDraft {
+  return { platform: "website", url: "", customLabel: "" };
+}
+
 const EMPTY_DRAFT: AuthorDraft = {
   name: "",
   role: "",
   memory: "",
-  links: "",
+  links: [emptyPlatformLink()],
 };
 
 function initialsFor(name: string) {
@@ -143,13 +178,55 @@ function initialsFor(name: string) {
     .join("") || "??";
 }
 
-function platformLabel(url: string, index: number) {
-  try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "");
-    return hostname.split(".")[0] || `Платформа ${index + 1}`;
-  } catch {
-    return `Платформа ${index + 1}`;
+function platformOptionFor(value: PlatformKey) {
+  return PLATFORM_OPTIONS.find((option) => option.value === value) ?? PLATFORM_OPTIONS[0];
+}
+
+function platformKeyForLink(link: AuthorLink): PlatformKey {
+  const haystack = `${link.label} ${link.url}`.toLowerCase();
+  if (haystack.includes("spotify")) return "spotify";
+  if (haystack.includes("youtube music") || haystack.includes("music.youtube")) return "youtube-music";
+  if (haystack.includes("youtube")) return "youtube";
+  if (haystack.includes("instagram")) return "instagram";
+  if (haystack.includes("tiktok")) return "tiktok";
+  if (haystack.includes("bandcamp")) return "bandcamp";
+  if (haystack.includes("soundcloud")) return "soundcloud";
+  if (haystack.includes("site") || haystack.includes("website") || haystack.includes("portfolio") || haystack.includes("портф")) return "website";
+  return "other";
+}
+
+function draftLinkFor(link: AuthorLink): PlatformLinkDraft {
+  const platform = platformKeyForLink(link);
+  return {
+    platform,
+    url: link.url,
+    customLabel: platform === "other" ? link.label : "",
+  };
+}
+
+function platformLinksForDraft(drafts: PlatformLinkDraft[]) {
+  const links: AuthorLink[] = [];
+
+  for (const draft of drafts) {
+    const url = draft.url.trim();
+    if (!url) continue;
+
+    const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    try {
+      const parsedUrl = new URL(normalizedUrl);
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        throw new Error("invalid protocol");
+      }
+    } catch {
+      throw new Error(`Перевір адресу: ${url}`);
+    }
+
+    const option = platformOptionFor(draft.platform);
+    const label = draft.platform === "other" ? draft.customLabel.trim() || option.label : option.label;
+    links.push({ label, url: normalizedUrl });
   }
+
+  return links;
 }
 
 function mapApiAuthor(
@@ -279,7 +356,7 @@ export default function AuthorsWorld() {
             name: ownAuthor.name,
             role: ownAuthor.role,
             memory: ownAuthor.memory,
-            links: ownAuthor.links.map((link) => link.url).join("\n"),
+            links: ownAuthor.links.length > 0 ? ownAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
           });
         }
       } catch (error) {
@@ -403,14 +480,13 @@ export default function AuthorsWorld() {
     const memory = draft.memory.trim();
     if (!name || !role || !memory) return;
 
-    const links = draft.links
-      .split(/[\n,]+/)
-      .map((url) => url.trim())
-      .filter(Boolean)
-      .map((url, linkIndex) => ({
-        label: platformLabel(url, linkIndex),
-        url: url.startsWith("http") ? url : `https://${url}`,
-      }));
+    let links: AuthorLink[];
+    try {
+      links = platformLinksForDraft(draft.links);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Перевір адреси майданчиків.");
+      return;
+    }
 
     setIsSavingProfile(true);
     try {
@@ -449,7 +525,7 @@ export default function AuthorsWorld() {
         name: savedAuthor.name,
         role: savedAuthor.role,
         memory: savedAuthor.memory,
-        links: savedAuthor.links.map((link) => link.url).join("\n"),
+        links: savedAuthor.links.length > 0 ? savedAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
       });
       setIsRegistering(false);
     } catch (error) {
@@ -783,10 +859,118 @@ export default function AuthorsWorld() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Що ти залишаєш у пам’яті? *</span>
                 <textarea required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
               </label>
-              <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</span>
-                <textarea value={draft.links} onChange={(event) => setDraft((current) => ({ ...current, links: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Spotify, YouTube, Instagram — по одному посиланню в рядку" />
-              </label>
+              <fieldset className="border border-white/10 bg-black/20 p-3 sm:p-4">
+                <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</legend>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <p className="font-mono text-[10px] leading-relaxed text-white/45">
+                    Додай окрему адресу для кожного профілю. Порожні рядки не збережуться.
+                  </p>
+                  <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-[#00f0ff]/55">
+                    {draft.links.length} {draft.links.length === 1 ? "рядок" : "рядки"}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {draft.links.length > 0 ? (
+                    draft.links.map((link, linkIndex) => {
+                      const option = platformOptionFor(link.platform);
+                      const PlatformIcon = option.icon;
+
+                      return (
+                        <div key={`${link.platform}-${linkIndex}`} className="border border-white/10 bg-black/25 p-3">
+                          <div className="grid gap-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_auto] sm:items-end">
+                            <label className="block min-w-0">
+                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Майданчик {linkIndex + 1}</span>
+                              <span className="flex min-h-11 items-center border border-white/15 bg-[#06111a]/90 px-2.5 transition-colors focus-within:border-[#00f0ff]/70">
+                                <PlatformIcon aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" style={{ color: option.color }} />
+                                <select
+                                  value={link.platform}
+                                  onChange={(event) => {
+                                    const platform = event.target.value as PlatformKey;
+                                    setDraft((current) => ({
+                                      ...current,
+                                      links: current.links.map((item, index) =>
+                                        index === linkIndex
+                                          ? { ...item, platform, customLabel: platform === "other" ? item.customLabel : "" }
+                                          : item,
+                                      ),
+                                    }));
+                                  }}
+                                  className="min-w-0 flex-1 appearance-none bg-transparent font-mono text-xs text-white outline-none"
+                                  aria-label={`Вибрати майданчик ${linkIndex + 1}`}
+                                >
+                                  {PLATFORM_OPTIONS.map((platform) => (
+                                    <option key={platform.value} value={platform.value} className="bg-[#06111a] text-white">
+                                      {platform.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </span>
+                            </label>
+
+                            <label className="block min-w-0">
+                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Адреса профілю</span>
+                              <input
+                                type="url"
+                                value={link.url}
+                                onChange={(event) => setDraft((current) => ({
+                                  ...current,
+                                  links: current.links.map((item, index) => index === linkIndex ? { ...item, url: event.target.value } : item),
+                                }))}
+                                className="min-h-11 w-full border border-white/15 bg-[#06111a]/90 px-3 font-mono text-xs text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
+                                placeholder={option.placeholder}
+                                aria-label={`Адреса профілю ${linkIndex + 1}`}
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => setDraft((current) => ({
+                                ...current,
+                                links: current.links.filter((_, index) => index !== linkIndex),
+                              }))}
+                              className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#ff7043]/35 px-3 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184] transition-colors hover:border-[#ff7043] hover:bg-[#ff7043]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] sm:w-11 sm:px-0"
+                              aria-label={`Видалити майданчик ${linkIndex + 1}`}
+                            >
+                              <Trash2 aria-hidden="true" className="h-4 w-4" />
+                              <span className="sm:hidden">Видалити</span>
+                            </button>
+                          </div>
+
+                          {link.platform === "other" && (
+                            <label className="mt-3 block">
+                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Назва майданчика</span>
+                              <input
+                                value={link.customLabel}
+                                onChange={(event) => setDraft((current) => ({
+                                  ...current,
+                                  links: current.links.map((item, index) => index === linkIndex ? { ...item, customLabel: event.target.value } : item),
+                                }))}
+                                className="min-h-10 w-full border border-white/15 bg-[#06111a]/90 px-3 font-mono text-xs text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
+                                placeholder="Наприклад, Telegram або Patreon"
+                                maxLength={40}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="border border-dashed border-white/15 px-3 py-4 font-mono text-xs text-white/40">
+                      Поки що немає адрес. Додай перший майданчик нижче.
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDraft((current) => ({ ...current, links: [...current.links, emptyPlatformLink()] }))}
+                  className="mt-3 inline-flex min-h-10 items-center gap-2 border border-[#8a2be2]/60 bg-[#8a2be2]/10 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] transition-all hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
+                >
+                  <Plus aria-hidden="true" className="h-4 w-4" />
+                  Додати майданчик
+                </button>
+              </fieldset>
               <button type="submit" disabled={isSavingProfile} className="min-h-12 w-full border border-[#00f0ff]/70 bg-[#00f0ff]/10 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white hover:shadow-[0_0_24px_rgba(0,240,255,0.35)] disabled:cursor-wait disabled:opacity-50">
                 {isSavingProfile ? "ПІДКЛЮЧЕННЯ ДО МЕРЕЖІ..." : myAuthor ? "ЗБЕРЕГТИ МІЙ ПОРТАЛ" : "ВІДКРИТИ МІЙ ПОРТАЛ"}
               </button>
