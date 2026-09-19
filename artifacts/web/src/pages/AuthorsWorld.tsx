@@ -456,7 +456,7 @@ export default function AuthorsWorld() {
     panAnimationRef.current = window.requestAnimationFrame(tick);
   }, [updateWorldPan]);
 
-  const changeWorldZoom = useCallback((nextZoom: number) => {
+  const changeWorldZoom = useCallback((nextZoom: number, focusPoint?: { x: number; y: number }) => {
     const viewport = worldViewportRef.current;
     const clampedZoom = Math.min(MAX_WORLD_ZOOM, Math.max(MIN_WORLD_ZOOM, nextZoom));
     if (!viewport || clampedZoom === worldZoom) {
@@ -464,8 +464,8 @@ export default function AuthorsWorld() {
       return;
     }
 
-    const centerX = viewport.clientWidth / 2;
-    const centerY = viewport.clientHeight / 2;
+    const centerX = focusPoint?.x ?? viewport.clientWidth / 2;
+    const centerY = focusPoint?.y ?? viewport.clientHeight / 2;
     const currentPan = worldPanRef.current;
     const focusX = (centerX - currentPan.x) / worldZoom;
     const focusY = (centerY - currentPan.y) / worldZoom;
@@ -554,6 +554,14 @@ export default function AuthorsWorld() {
   const handleWorldWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    changeWorldZoom(
+      worldZoom + (event.deltaY < 0 ? WORLD_ZOOM_STEP : -WORLD_ZOOM_STEP),
+      {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      },
+    );
   };
 
   const handleAvatarFile = async (file: File | undefined) => {
