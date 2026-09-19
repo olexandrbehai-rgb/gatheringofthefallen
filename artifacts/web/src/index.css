@@ -226,6 +226,31 @@
   animation: author-node-locate 1.35s ease-out;
 }
 
+.authors-world-readable {
+  text-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.96),
+    0 0 8px rgba(0, 0, 0, 0.88);
+}
+
+.authors-world-readable h1,
+.authors-world-readable h2,
+.authors-world-readable h3 {
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.98),
+    0 0 7px rgba(0, 240, 255, 0.72),
+    0 0 18px rgba(138, 43, 226, 0.5);
+}
+
+.authors-world-readable a,
+.authors-world-readable button,
+.authors-world-readable input,
+.authors-world-readable textarea,
+.authors-world-readable select {
+  text-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.95),
+    0 0 7px rgba(0, 240, 255, 0.42);
+}
+
 @keyframes author-node-locate {
   0%, 100% {
     filter: drop-shadow(0 0 0 rgba(0, 240, 255, 0));

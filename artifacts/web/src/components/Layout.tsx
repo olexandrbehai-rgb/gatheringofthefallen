@@ -18,12 +18,15 @@ import bgMerch from "@assets/75ea4f64-8652-4cd1-bcfc-95bee264e9d5_1781048063606.
 import bgContacts from "@assets/772beca9-400c-4f53-8e13-47c71cdcb65a_1781048063606.png";
 import gameIcon from "@/assets/game-icon.png";
 
+const bgAuthorsWorld = `${import.meta.env.BASE_URL}authors-world-background.png`;
+
 const PAGE_BACKGROUNDS: Record<string, string> = {
   "/": bgHome,
   "/about": bgAbout,
   "/music": bgMusic,
   "/merch": bgMerch,
   "/contacts": bgContacts,
+  "/authors-world": bgAuthorsWorld,
 };
 
 const authorsWorldButtonBackground = `${import.meta.env.BASE_URL}authors-world-button-background.png`;

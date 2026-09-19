@@ -570,11 +570,15 @@ export default function AuthorsWorld() {
   };
 
   return (
-    <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-[#03060c] px-4 py-10 text-white sm:px-6 lg:px-10">
+    <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-transparent px-4 py-10 text-white sm:px-6 lg:px-10">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,4,10,0.58)_0%,rgba(2,4,10,0.3)_34%,rgba(2,4,10,0.7)_100%),radial-gradient(circle_at_50%_14%,rgba(0,240,255,0.16),transparent_38%),radial-gradient(circle_at_82%_58%,rgba(138,43,226,0.18),transparent_42%)]"
+      />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-80 [background-image:linear-gradient(rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.07)_1px,transparent_1px),radial-gradient(circle_at_50%_20%,rgba(0,240,255,0.2),transparent_42%),radial-gradient(circle_at_80%_75%,rgba(138,43,226,0.2),transparent_38%)] [background-size:42px_42px,42px_42px,100%_100%,100%_100%]" />
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full border border-[#00f0ff]/20 shadow-[0_0_80px_rgba(0,240,255,0.12)]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl">
+      <div className="authors-world-readable relative z-10 mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-6 border-b border-[#00f0ff]/20 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link href="/" className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/45 transition-colors hover:text-[#00f0ff]">
