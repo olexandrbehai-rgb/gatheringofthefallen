@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ClerkProvider, SignIn, SignUp } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from "wouter";
+import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
@@ -52,26 +52,32 @@ const clerkAppearance = {
 
 function SignInPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-[#050208] px-4 py-10">
-      <SignIn
-        routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-        appearance={clerkAppearance}
-      />
+    <div className="auth-shell flex min-h-[100dvh] flex-col items-center justify-center bg-[#050208] px-4 py-10">
+      <div className="mb-5 flex w-full max-w-md justify-between gap-3">
+        <Link href="/" className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">
+          ← Повернутися на сайт
+        </Link>
+        <Link href="/sign-up" className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#ffcf9e]">
+          Реєстрація
+        </Link>
+      </div>
+      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} appearance={clerkAppearance} />
     </div>
   );
 }
 
 function SignUpPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-[#050208] px-4 py-10">
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-        appearance={clerkAppearance}
-      />
+    <div className="auth-shell flex min-h-[100dvh] flex-col items-center justify-center bg-[#050208] px-4 py-10">
+      <div className="mb-5 flex w-full max-w-md justify-between gap-3">
+        <Link href="/" className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">
+          ← Повернутися на сайт
+        </Link>
+        <Link href="/sign-in" className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#ffcf9e]">
+          Уже маю акаунт
+        </Link>
+      </div>
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} appearance={clerkAppearance} />
     </div>
   );
 }
@@ -95,9 +101,16 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
       {!authEnabled && <Route path="/sign-in/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/sign-up/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/owner-analytics"><Redirect to="/" /></Route>}
-      <Route path="/game" component={Game} />
+      <Route
+        path="/game"
+        component={() => (
+          <Layout authEnabled={authEnabled}>
+            <Game />
+          </Layout>
+        )}
+      />
       <Route>
-        <Layout>
+          <Layout authEnabled={authEnabled}>
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/about" component={About} />

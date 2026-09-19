@@ -87,9 +87,9 @@ export function SocialLinks() {
                 location: "social_links",
               })
             }
-            className="flex items-center gap-2 px-3 py-2 rounded border border-white/15 text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 hover:bg-[#00f0ff]/5 transition-all text-sm font-mono"
+             className="relative z-0 inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/15 px-3 py-2 text-sm font-mono text-white/70 transition-all hover:z-10 hover:border-[#00f0ff]/60 hover:bg-[#00f0ff]/5 hover:text-[#00f0ff]"
           >
-            {s.icon}
+             <span className="shrink-0">{s.icon}</span>
             <span className="hidden sm:inline">{s.name}</span>
           </a>
         ))}
@@ -108,9 +108,9 @@ export function SocialLinks() {
                 location: "social_links",
               })
             }
-            className="flex items-center gap-2 px-3 py-2 rounded border border-secondary/20 text-secondary/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/40 hover:bg-[#00f0ff]/5 transition-all text-sm font-mono"
+             className="relative z-0 inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-secondary/20 px-3 py-2 text-sm font-mono text-secondary/70 transition-all hover:z-10 hover:border-[#00f0ff]/40 hover:bg-[#00f0ff]/5 hover:text-[#00f0ff]"
           >
-            {s.icon}
+             <span className="shrink-0">{s.icon}</span>
             <span className="hidden sm:inline">{s.name}</span>
           </a>
         ))}

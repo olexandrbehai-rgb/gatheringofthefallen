@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ExternalLink, Pencil, Play } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { Mp3Player } from "@/components/Mp3Player";
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
 
@@ -23,6 +24,10 @@ type Creation = {
   description: string;
   imageUrl?: string | null;
   contentUrl?: string | null;
+  audioUrl?: string | null;
+  audioObjectPath?: string | null;
+  audioSizeBytes?: number | null;
+  audioDurationSeconds?: number | null;
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -34,6 +39,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   bandcamp: "Bandcamp",
   soundcloud: "SoundCloud",
+  audio: "MP3 / авторська музика",
   other: "Інше",
 };
 
@@ -144,7 +150,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   }
 
   return (
-    <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-[#03060b] px-4 py-10 text-white sm:px-6 lg:px-10">
+    <main className="author-portal-readable relative min-h-[calc(100dvh-82px)] overflow-hidden bg-[#03060b] px-4 py-10 text-white sm:px-6 lg:px-10">
       {author.backgroundUrl && (
         <img
           src={author.backgroundUrl}
@@ -164,7 +170,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
             </button>
           )}
         </div>
-        <header className="mt-10 grid gap-6 border-b border-[#00f0ff]/25 pb-8 md:grid-cols-[auto_1fr] md:items-center">
+        <header className="mt-10 grid gap-6 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-5 shadow-[inset_0_0_30px_rgba(0,240,255,0.07),0_8px_28px_rgba(0,0,0,0.6)] backdrop-blur-md md:grid-cols-[auto_1fr] md:items-center">
           <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] shadow-[0_0_34px_rgba(0,240,255,0.25)]">
             {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
           </div>
@@ -176,7 +182,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         </header>
 
-        <div className="mt-8 flex flex-wrap gap-2">
+        <div className="mt-8 flex flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.52)] backdrop-blur-md">
           <button type="button" onClick={() => setActivePlatform("all")} className={`border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>Усі роботи</button>
           {tabs.map(([platform, label]) => (
             <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] ${activePlatform === platform ? "border-[#8a2be2] bg-[#8a2be2]/20 text-white" : "border-white/15 text-white/55 hover:border-[#8a2be2]/60"}`}>
@@ -186,16 +192,17 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         </div>
 
         {author.platformLinks.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+           <div className="mt-4 flex max-w-full flex-wrap gap-2">
             {author.platformLinks.map((link) => (
-              <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-white/10 bg-black/20 px-3 py-2 font-mono text-[10px] text-white/60 hover:border-[#00f0ff]/50 hover:text-white">
-                {link.label} <ExternalLink className="h-3 w-3" />
+               <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="relative z-0 inline-flex max-w-full shrink-0 items-center gap-2 whitespace-nowrap border border-white/10 bg-black/20 px-3 py-2 font-mono text-[10px] text-white/60 hover:z-10 hover:border-[#00f0ff]/50 hover:text-white">
+                 <span className="min-w-0 truncate">{link.label}</span>
+                 <ExternalLink className="h-3 w-3 shrink-0" />
               </a>
             ))}
           </div>
         )}
 
-        <section className="mt-10">
+        <section className="mt-10 rounded border border-white/15 bg-[#020811]/78 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.52)] backdrop-blur-md">
           <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>
@@ -216,8 +223,8 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
               {pagedCreations.map((creation) => {
                 const videoId = creation.contentUrl ? youtubeId(creation.contentUrl) : null;
                 const preview = creation.imageUrl ?? (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null);
-                return (
-                  <a key={creation.id} href={creation.contentUrl ?? "#"} target={creation.contentUrl ? "_blank" : undefined} rel="noopener noreferrer" className="group overflow-hidden border border-[#00f0ff]/20 bg-[#07131b]/80 transition-transform hover:-translate-y-1 hover:border-[#00f0ff]/70">
+                const cardContent = (
+                  <>
                     <div className="relative aspect-[16/9] overflow-hidden bg-[linear-gradient(135deg,rgba(0,240,255,0.14),rgba(138,43,226,0.22))]">
                       {preview && <img src={preview} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105" />}
                       {videoId && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff3d35]/90 text-white shadow-[0_0_22px_rgba(255,61,53,0.65)]"><Play className="ml-1 h-5 w-5 fill-current" /></span></span>}
@@ -228,6 +235,24 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                       {creation.description && <p className="mt-2 line-clamp-3 font-mono text-xs leading-relaxed text-white/55">{creation.description}</p>}
                       {creation.contentUrl && <span className="mt-4 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">Відкрити роботу <ArrowUpRight className="h-3.5 w-3.5" /></span>}
                     </div>
+                  </>
+                );
+                if (creation.audioUrl) {
+                  return (
+                    <article key={creation.id} className="overflow-hidden border border-[#00f0ff]/35 bg-[#07131b]/90 shadow-[0_0_18px_rgba(0,240,255,0.08)]">
+                      <div className="p-3">
+                        <Mp3Player src={creation.audioUrl} title={creation.title} durationSeconds={creation.audioDurationSeconds} />
+                      </div>
+                      <div className="px-4 pb-4">
+                        {creation.description && <p className="font-mono text-xs leading-relaxed text-white/65">{creation.description}</p>}
+                        {creation.contentUrl && <a href={creation.contentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">Відкрити додаткове посилання <ArrowUpRight className="h-3.5 w-3.5" /></a>}
+                      </div>
+                    </article>
+                  );
+                }
+                return (
+                  <a key={creation.id} href={creation.contentUrl ?? "#"} target={creation.contentUrl ? "_blank" : undefined} rel="noopener noreferrer" className="group overflow-hidden border border-[#00f0ff]/20 bg-[#07131b]/80 transition-transform hover:-translate-y-1 hover:border-[#00f0ff]/70">
+                    {cardContent}
                   </a>
                 );
               })}

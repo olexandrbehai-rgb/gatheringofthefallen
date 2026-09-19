@@ -2,12 +2,24 @@ import { Router, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
 import { Pool } from "pg";
 import { logger } from "../lib/logger";
+import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
 
 const router = Router();
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const chatSubscribers = new Set<Response>();
 
 const MAX_CHAT_MESSAGE_LENGTH = 1000;
+const MAX_MP3_BYTES = 20 * 1024 * 1024;
+const MAX_MP3_TRACKS_PER_AUTHOR = 5;
+const MAX_MP3_BYTES_PER_AUTHOR = 100 * 1024 * 1024;
+const objectStorage = new ObjectStorageService();
+
+class AudioStorageError extends Error {
+  constructor(message: string, public readonly statusCode = 400) {
+    super(message);
+    this.name = "AudioStorageError";
+  }
+}
 
 type PlatformLink = { label: string; url: string };
 type AuthorCreation = {
@@ -19,6 +31,10 @@ type AuthorCreation = {
   description: string;
   imageUrl: string | null;
   contentUrl: string | null;
+  audioUrl: string | null;
+  audioObjectPath: string | null;
+  audioSizeBytes: number | null;
+  audioDurationSeconds: number | null;
   createdAt: unknown;
   updatedAt: unknown;
 };
@@ -120,8 +136,22 @@ function ensureAuthorsWorldSchema(): Promise<void> {
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS content_url TEXT;
+      ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS audio_object_path TEXT;
+      ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS audio_size_bytes INTEGER;
+      ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS audio_duration_seconds REAL;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+      CREATE TABLE IF NOT EXISTS author_audio_uploads (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        object_path TEXT NOT NULL UNIQUE,
+        original_name TEXT NOT NULL,
+        size_bytes INTEGER NOT NULL,
+        content_type TEXT NOT NULL,
+        consumed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
 
       CREATE INDEX IF NOT EXISTS authors_world_chat_created_at_idx
         ON authors_world_chat_messages (created_at);
@@ -131,6 +161,11 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         ON author_creations (author_id);
       CREATE INDEX IF NOT EXISTS author_creations_created_at_idx
         ON author_creations (created_at);
+      CREATE INDEX IF NOT EXISTS author_audio_uploads_user_id_idx
+        ON author_audio_uploads (user_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS author_creations_audio_object_path_unique_idx
+        ON author_creations (audio_object_path)
+        WHERE audio_object_path IS NOT NULL;
     `).then(async () => {
       const existingAuthors = await pool.query(
         `SELECT id, display_name, slug, world_left, world_top
@@ -251,6 +286,12 @@ function serializeCreation(row: Record<string, unknown>): AuthorCreation {
     description: typeof row.description === "string" ? row.description : "",
     imageUrl: typeof row.image_url === "string" ? row.image_url : null,
     contentUrl: typeof row.content_url === "string" ? row.content_url : null,
+    audioUrl: typeof row.audio_object_path === "string"
+      ? `/api/authors-world/creations/${Number(row.id)}/audio`
+      : null,
+    audioObjectPath: typeof row.audio_object_path === "string" ? row.audio_object_path : null,
+    audioSizeBytes: Number.isFinite(Number(row.audio_size_bytes)) ? Number(row.audio_size_bytes) : null,
+    audioDurationSeconds: Number.isFinite(Number(row.audio_duration_seconds)) ? Number(row.audio_duration_seconds) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -258,7 +299,8 @@ function serializeCreation(row: Record<string, unknown>): AuthorCreation {
 
 async function creationsForAuthor(authorId: number) {
   const result = await pool.query(
-    `SELECT id, sort_order, platform, kind, title, description, image_url, content_url, created_at, updated_at
+    `SELECT id, sort_order, platform, kind, title, description, image_url, content_url,
+            audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at
      FROM author_creations
      WHERE author_id = $1
      ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC`,
@@ -284,9 +326,22 @@ function normalizedCreationBody(body: unknown) {
   const kind = textField(candidate.kind) ?? "card";
   const imageUrl = normalizedOptionalUrl(candidate.imageUrl);
   const contentUrl = normalizedOptionalUrl(candidate.contentUrl);
+  const audioObjectPath = textField(candidate.audioObjectPath);
+  const audioDurationSeconds = typeof candidate.audioDurationSeconds === "number"
+    && Number.isFinite(candidate.audioDurationSeconds)
+    && candidate.audioDurationSeconds >= 0
+    && candidate.audioDurationSeconds <= 60 * 60 * 4
+    ? candidate.audioDurationSeconds
+    : null;
   if (!title) return { error: "Title is required" as const };
   if (imageUrl === "invalid" || contentUrl === "invalid") {
     return { error: "Image and content links must use http or https" as const };
+  }
+  if (audioObjectPath && !/^\/objects\/uploads\/[a-z0-9-]+$/i.test(audioObjectPath)) {
+    return { error: "Audio upload path is invalid" as const };
+  }
+  if (!audioObjectPath && !contentUrl) {
+    return { error: "Add an MP3 file or a content link" as const };
   }
   return {
     value: {
@@ -296,8 +351,90 @@ function normalizedCreationBody(body: unknown) {
       kind: ["card", "banner", "creation"].includes(kind) ? kind : "card",
       imageUrl,
       contentUrl,
+      audioObjectPath,
+      audioDurationSeconds,
     },
   };
+}
+
+async function resolveAudioForSave(
+  userId: string,
+  audioObjectPath: string | null,
+  existingAudioObjectPath: string | null = null,
+) {
+  if (!audioObjectPath) {
+    return { objectPath: null, sizeBytes: null };
+  }
+  if (audioObjectPath === existingAudioObjectPath) {
+    try {
+      const { metadata } = await audioFileAndMetadata(audioObjectPath);
+      return { objectPath: audioObjectPath, sizeBytes: Number(metadata.size ?? 0) };
+    } catch {
+      throw new AudioStorageError("The existing MP3 file is no longer available", 404);
+    }
+  }
+
+  const pending = await pool.query(
+    `SELECT object_path, size_bytes, content_type
+     FROM author_audio_uploads
+     WHERE object_path = $1 AND user_id = $2 AND consumed_at IS NULL
+     LIMIT 1`,
+    [audioObjectPath, userId],
+  );
+  if (!pending.rows[0]) {
+    throw new AudioStorageError("Upload this MP3 from the current author portal before saving");
+  }
+
+  try {
+    const { file, metadata } = await audioFileAndMetadata(audioObjectPath);
+    const sizeBytes = Number(metadata.size ?? pending.rows[0].size_bytes);
+    const contentType = String(metadata.contentType ?? pending.rows[0].content_type);
+    if (!Number.isFinite(sizeBytes) || sizeBytes <= 0 || sizeBytes > MAX_MP3_BYTES) {
+      throw new AudioStorageError("MP3 must be smaller than 20 MB", 413);
+    }
+    if (!["audio/mpeg", "audio/mp3", "application/octet-stream"].includes(contentType)) {
+      throw new AudioStorageError("Only MP3 audio files are allowed");
+    }
+    if (!(await hasMp3Header(file))) {
+      throw new AudioStorageError("The uploaded file is not a valid MP3");
+    }
+    await objectStorage.trySetObjectEntityAclPolicy(audioObjectPath, {
+      owner: userId,
+      visibility: "public",
+    });
+    return { objectPath: audioObjectPath, sizeBytes, file };
+  } catch (error) {
+    if (error instanceof AudioStorageError) throw error;
+    if (error instanceof ObjectNotFoundError) {
+      throw new AudioStorageError("Uploaded MP3 was not found", 404);
+    }
+    throw error;
+  }
+}
+
+async function hasMp3Header(file: Awaited<ReturnType<typeof objectStorage.getObjectEntityFile>>) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of file.createReadStream({ start: 0, end: 3 })) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const header = Buffer.concat(chunks);
+  if (header.length >= 3 && header.toString("ascii", 0, 3) === "ID3") return true;
+  return header.length >= 2 && header[0] === 0xff && (header[1] & 0xe0) === 0xe0;
+}
+
+async function audioFileAndMetadata(objectPath: string) {
+  const file = await objectStorage.getObjectEntityFile(objectPath);
+  const [metadata] = await file.getMetadata();
+  return { file, metadata };
+}
+
+async function deleteAudioObject(objectPath: string) {
+  try {
+    const file = await objectStorage.getObjectEntityFile(objectPath);
+    await file.delete();
+  } catch (error) {
+    if (!(error instanceof ObjectNotFoundError)) throw error;
+  }
 }
 
 function broadcastChatMessage(message: unknown) {
@@ -468,6 +605,158 @@ router.get("/authors-world/author/:slug", async (req, res) => {
   }
 });
 
+router.post("/authors-world/me/audio/upload-url", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to upload an MP3" });
+    return;
+  }
+
+  const name = textField(req.body?.name);
+  const size = Number(req.body?.size);
+  const contentType = typeof req.body?.contentType === "string"
+    ? req.body.contentType.toLowerCase()
+    : "";
+  const creationId = Number.isInteger(Number(req.body?.creationId))
+    ? Number(req.body.creationId)
+    : null;
+
+  if (!name || !/\.mp3$/i.test(name) || !Number.isInteger(size) || size <= 0 || size > MAX_MP3_BYTES) {
+    res.status(413).json({ error: "Choose an MP3 file smaller than 20 MB" });
+    return;
+  }
+  if (contentType && !["audio/mpeg", "audio/mp3", "application/octet-stream"].includes(contentType)) {
+    res.status(415).json({ error: "Only MP3 audio files are allowed" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const authorResult = await pool.query(
+      `SELECT authors.id
+       FROM authors
+       WHERE authors.user_id = $1
+       LIMIT 1`,
+      [userId],
+    );
+    if (!authorResult.rows[0]) {
+      res.status(403).json({ error: "Create your author portal before uploading music" });
+      return;
+    }
+
+    if (creationId !== null) {
+      const ownedCreation = await pool.query(
+        `SELECT creations.id
+         FROM author_creations creations
+         JOIN authors ON authors.id = creations.author_id
+         WHERE creations.id = $1 AND authors.user_id = $2
+         LIMIT 1`,
+        [creationId, userId],
+      );
+      if (!ownedCreation.rows[0]) {
+        res.status(404).json({ error: "Creation not found or not owned by you" });
+        return;
+      }
+    }
+
+    const usage = await pool.query(
+      `SELECT
+         COUNT(*)::int AS track_count,
+         COALESCE(SUM(audio_size_bytes), 0)::bigint AS total_bytes
+       FROM author_creations
+       WHERE author_id = $1
+         AND audio_object_path IS NOT NULL
+         AND ($2::int IS NULL OR id <> $2)`,
+      [Number(authorResult.rows[0].id), creationId],
+    );
+    const trackCount = Number(usage.rows[0]?.track_count ?? 0);
+    const totalBytes = Number(usage.rows[0]?.total_bytes ?? 0);
+    if (trackCount >= MAX_MP3_TRACKS_PER_AUTHOR) {
+      res.status(413).json({ error: "You can publish up to 5 MP3 tracks in one author portal" });
+      return;
+    }
+    if (totalBytes + size > MAX_MP3_BYTES_PER_AUTHOR) {
+      res.status(413).json({ error: "Your author portal has reached its 100 MB MP3 storage limit" });
+      return;
+    }
+
+    const uploadURL = await objectStorage.getObjectEntityUploadURL();
+    const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+    await pool.query(
+      `INSERT INTO author_audio_uploads
+         (user_id, object_path, original_name, size_bytes, content_type)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, objectPath, name, size, contentType || "audio/mpeg"],
+    );
+    res.json({ uploadURL, objectPath, maxBytes: MAX_MP3_BYTES });
+  } catch (error) {
+    logger.error({ msg: "MP3 upload URL request failed", error });
+    res.status(500).json({ error: "Unable to prepare MP3 upload" });
+  }
+});
+
+router.get("/authors-world/creations/:id/audio", async (req, res) => {
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `SELECT audio_object_path
+       FROM author_creations
+       WHERE id = $1 AND audio_object_path IS NOT NULL
+       LIMIT 1`,
+      [Number(req.params.id)],
+    );
+    const objectPath = result.rows[0]?.audio_object_path;
+    if (typeof objectPath !== "string") {
+      res.status(404).json({ error: "MP3 not found" });
+      return;
+    }
+
+    const { file, metadata } = await audioFileAndMetadata(objectPath);
+    const size = Number(metadata.size ?? 0);
+    const rangeHeader = req.headers.range;
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Content-Disposition", "inline");
+
+    if (!rangeHeader) {
+      res.setHeader("Content-Length", size);
+      file.createReadStream().on("error", (error) => {
+        logger.error({ msg: "MP3 stream failed", error });
+        if (!res.headersSent) res.status(500).end();
+      }).pipe(res);
+      return;
+    }
+
+    const match = /^bytes=(\d*)-(\d*)$/i.exec(rangeHeader);
+    if (!match) {
+      res.status(416).setHeader("Content-Range", `bytes */${size}`).end();
+      return;
+    }
+    const start = match[1] ? Number(match[1]) : Math.max(size - Number(match[2] || 0), 0);
+    const requestedEnd = match[2] ? Number(match[2]) : size - 1;
+    const end = Math.min(requestedEnd, size - 1);
+    if (!Number.isFinite(start) || start < 0 || start > end || start >= size) {
+      res.status(416).setHeader("Content-Range", `bytes */${size}`).end();
+      return;
+    }
+    res.status(206);
+    res.setHeader("Content-Range", `bytes ${start}-${end}/${size}`);
+    res.setHeader("Content-Length", end - start + 1);
+    file.createReadStream({ start, end }).on("error", (error) => {
+      logger.error({ msg: "MP3 range stream failed", error });
+      if (!res.headersSent) res.status(500).end();
+    }).pipe(res);
+  } catch (error) {
+    if (error instanceof ObjectNotFoundError) {
+      res.status(404).json({ error: "MP3 not found" });
+      return;
+    }
+    logger.error({ msg: "Public MP3 stream failed", error });
+    res.status(500).json({ error: "Unable to stream this MP3" });
+  }
+});
+
 router.post("/authors-world/me/creations", async (req, res) => {
   const userId = currentUserId(req);
   if (!userId) {
@@ -481,16 +770,28 @@ router.post("/authors-world/me/creations", async (req, res) => {
   }
   try {
     await ensureAuthorsWorldSchema();
+    const author = await pool.query(
+      `SELECT id FROM authors WHERE user_id = $1 LIMIT 1`,
+      [userId],
+    );
+    if (!author.rows[0]) {
+      res.status(403).json({ error: "Create your author portal before publishing work" });
+      return;
+    }
+    const audio = await resolveAudioForSave(userId, normalized.value.audioObjectPath);
     const result = await pool.query(
-      `INSERT INTO author_creations (author_id, sort_order, platform, kind, title, description, image_url, content_url)
+      `INSERT INTO author_creations
+         (author_id, sort_order, platform, kind, title, description, image_url, content_url,
+          audio_object_path, audio_size_bytes, audio_duration_seconds)
        SELECT authors.id,
               (SELECT COALESCE(MAX(existing.sort_order) + 1, 0)
                FROM author_creations existing
                WHERE existing.author_id = authors.id),
-              $2, $3, $4, $5, $6, $7
+               $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
        FROM authors
        WHERE user_id = $1
-       RETURNING id, sort_order, platform, kind, title, description, image_url, content_url, created_at, updated_at`,
+       RETURNING id, sort_order, platform, kind, title, description, image_url, content_url,
+                 audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at`,
       [
         userId,
         normalized.value.platform,
@@ -499,14 +800,29 @@ router.post("/authors-world/me/creations", async (req, res) => {
         normalized.value.description,
         normalized.value.imageUrl,
         normalized.value.contentUrl,
+        audio.objectPath,
+        audio.sizeBytes,
+        normalized.value.audioDurationSeconds,
       ],
     );
     if (!result.rows[0]) {
       res.status(403).json({ error: "Create your author portal before publishing work" });
       return;
     }
+    if (normalized.value.audioObjectPath) {
+      await pool.query(
+        `UPDATE author_audio_uploads
+         SET consumed_at = NOW()
+         WHERE object_path = $1 AND user_id = $2`,
+        [normalized.value.audioObjectPath, userId],
+      );
+    }
     res.status(201).json({ creation: serializeCreation(result.rows[0]) });
   } catch (error) {
+    if (error instanceof AudioStorageError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
     logger.error({ msg: "Author creation publish failed", error });
     res.status(500).json({ error: "Unable to publish this creation" });
   }
@@ -525,14 +841,36 @@ router.patch("/authors-world/me/creations/:id", async (req, res) => {
   }
   try {
     await ensureAuthorsWorldSchema();
+    const existing = await pool.query(
+      `SELECT creations.audio_object_path
+       FROM author_creations creations
+       JOIN authors ON authors.id = creations.author_id
+       WHERE creations.id = $1 AND authors.user_id = $2
+       LIMIT 1`,
+      [Number(req.params.id), userId],
+    );
+    if (!existing.rows[0]) {
+      res.status(404).json({ error: "Creation not found or not owned by you" });
+      return;
+    }
+    const existingAudioObjectPath = typeof existing.rows[0].audio_object_path === "string"
+      ? existing.rows[0].audio_object_path
+      : null;
+    const audio = await resolveAudioForSave(
+      userId,
+      normalized.value.audioObjectPath,
+      existingAudioObjectPath,
+    );
     const result = await pool.query(
-                 `UPDATE author_creations AS creations
+      `UPDATE author_creations AS creations
        SET platform = $1, kind = $2, title = $3, description = $4,
-           image_url = $5, content_url = $6, updated_at = NOW()
+           image_url = $5, content_url = $6, audio_object_path = $7,
+           audio_size_bytes = $8, audio_duration_seconds = $9, updated_at = NOW()
        FROM authors
-       WHERE creations.id = $7 AND creations.author_id = authors.id AND authors.user_id = $8
+       WHERE creations.id = $10 AND creations.author_id = authors.id AND authors.user_id = $11
        RETURNING creations.id, creations.platform, creations.kind, creations.title,
                  creations.sort_order, creations.description, creations.image_url, creations.content_url,
+                  creations.audio_object_path, creations.audio_size_bytes, creations.audio_duration_seconds,
                  creations.created_at, creations.updated_at`,
       [
         normalized.value.platform,
@@ -541,6 +879,9 @@ router.patch("/authors-world/me/creations/:id", async (req, res) => {
         normalized.value.description,
         normalized.value.imageUrl,
         normalized.value.contentUrl,
+        audio.objectPath,
+        audio.sizeBytes,
+        normalized.value.audioDurationSeconds,
         Number(req.params.id),
         userId,
       ],
@@ -549,8 +890,23 @@ router.patch("/authors-world/me/creations/:id", async (req, res) => {
       res.status(404).json({ error: "Creation not found or not owned by you" });
       return;
     }
+    if (normalized.value.audioObjectPath && normalized.value.audioObjectPath !== existingAudioObjectPath) {
+      await pool.query(
+        `UPDATE author_audio_uploads
+         SET consumed_at = NOW()
+         WHERE object_path = $1 AND user_id = $2`,
+        [normalized.value.audioObjectPath, userId],
+      );
+    }
+    if (existingAudioObjectPath && existingAudioObjectPath !== audio.objectPath) {
+      await deleteAudioObject(existingAudioObjectPath);
+    }
     res.json({ creation: serializeCreation(result.rows[0]) });
   } catch (error) {
+    if (error instanceof AudioStorageError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
     logger.error({ msg: "Author creation update failed", error });
     res.status(500).json({ error: "Unable to update this creation" });
   }
@@ -564,6 +920,21 @@ router.delete("/authors-world/me/creations/:id", async (req, res) => {
   }
   try {
     await ensureAuthorsWorldSchema();
+    const existing = await pool.query(
+      `SELECT creations.audio_object_path
+       FROM author_creations creations
+       JOIN authors ON authors.id = creations.author_id
+       WHERE creations.id = $1 AND authors.user_id = $2
+       LIMIT 1`,
+      [Number(req.params.id), userId],
+    );
+    if (!existing.rows[0]) {
+      res.status(404).json({ error: "Creation not found or not owned by you" });
+      return;
+    }
+    const audioObjectPath = typeof existing.rows[0].audio_object_path === "string"
+      ? existing.rows[0].audio_object_path
+      : null;
     const result = await pool.query(
       `DELETE FROM author_creations AS creations
        USING authors
@@ -573,6 +944,9 @@ router.delete("/authors-world/me/creations/:id", async (req, res) => {
     if (!result.rowCount) {
       res.status(404).json({ error: "Creation not found or not owned by you" });
       return;
+    }
+    if (audioObjectPath) {
+      await deleteAudioObject(audioObjectPath);
     }
     res.status(204).send();
   } catch (error) {

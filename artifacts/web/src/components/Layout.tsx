@@ -8,8 +8,9 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useT } from "@/i18n/LanguageContext";
 import { useCart } from "@/hooks/useCart";
 import { CartDrawer } from "./CartDrawer";
-import { ShoppingCart } from "lucide-react";
+import { ArrowLeft, LogIn, LogOut, ShoppingCart, UserRound } from "lucide-react";
 import { HeroSequence } from "./HeroSequence";
+import { useClerk, useUser } from "@clerk/react";
 import logoImg from "@assets/logo_1776018973004.png";
 import bgHome from "@/assets/home-background.png";
 import bgAbout from "@assets/3f3d238a-b813-45ed-b7ef-48eed199098c_1781048063605.png";
@@ -50,8 +51,36 @@ function useDesktopHeroEnabled(): boolean {
   return enabled;
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+function AuthControls() {
+  const { signOut } = useClerk();
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  if (!isLoaded) {
+    return <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#8ceeff]/60">Перевірка доступу...</span>;
+  }
+
+  if (!isSignedIn) {
+    return (
+      <Link href="/sign-in" className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#b9f7ff]">
+        <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Увійти
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link href="/authors-world?edit=1" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? "Мій портал"}>
+        <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Мій портал
+      </Link>
+      <button type="button" onClick={() => void signOut({ redirectUrl: "/" })} className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184]">
+        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Вийти
+      </button>
+    </div>
+  );
+}
+
+export function Layout({ children, authEnabled = true }: { children: React.ReactNode; authEnabled?: boolean }) {
+  const [location, setLocation] = useLocation();
   const { t } = useT();
   const { count: cartCount, open: openCart } = useCart();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
@@ -95,12 +124,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         href="/authors-world"
         aria-label="Інший світ — світ авторів"
         title="Інший світ — світ авторів"
-        className="fixed right-[6.5rem] top-48 z-50 block h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[8.5rem] md:top-24 md:h-32 md:w-24"
+         className={`fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-24 md:h-32 md:w-24 ${location === "/game" ? "hidden" : location === "/authors-world" ? "hidden md:block" : "block"}`}
       >
         <motion.span
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 5 }}
+           whileHover={{ scale: 1.08 }}
           transition={{ type: "spring", stiffness: 260, damping: 24 }}
           style={{ transformOrigin: "top right" }}
           className={`group relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[18px] border-2 px-1 text-center transition-colors duration-500 ${
@@ -132,12 +161,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         href="/game"
         aria-label={t("nav.game")}
         title={t("nav.game")}
-        className="fixed right-4 top-48 z-50 block h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-24 md:h-32 md:w-24"
+        className={`fixed right-4 top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-24 md:h-32 md:w-24 ${location === "/game" ? "hidden" : location === "/authors-world" ? "hidden md:block" : "block"}`}
       >
         <motion.span
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 5 }}
+           whileHover={{ scale: 1.08 }}
           transition={{ type: "spring", stiffness: 260, damping: 24 }}
           style={{ transformOrigin: "top right" }}
           className={`group relative block h-full w-full overflow-hidden rounded-[18px] border-2 transition-colors duration-500 ${
@@ -169,11 +198,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
         <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20" style={{ boxShadow: "0 0 20px rgba(139,0,0,0.3), 0 0 40px rgba(255,69,0,0.1)" }}>
-          <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-            <Link href="/" className="glitch-text font-creepster text-xl md:text-2xl text-primary hover:text-white transition-colors tracking-widest">
+          <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 md:flex-row md:gap-4">
+            <Link href="/" className="glitch-text font-creepster text-lg tracking-[0.18em] text-primary transition-colors hover:text-white sm:text-xl md:text-2xl md:tracking-widest">
               GATHERING OF THE FALLEN
             </Link>
-            <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-mono uppercase tracking-widest">
+            <nav className="order-3 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-mono uppercase tracking-[0.16em] sm:gap-4 sm:text-sm sm:tracking-widest md:order-none md:w-auto">
               {links.map((link) => {
                 const isMerch = link.href === "/merch";
                 return (
@@ -193,10 +222,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <div className="flex items-center gap-3">
+            <div className="flex w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:w-auto">
+              {location !== "/" && (
+                <button
+                  type="button"
+                  onClick={() => setLocation(location.startsWith("/author/") ? "/authors-world" : "/")}
+                  className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/80"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Назад
+                </button>
+              )}
+              {authEnabled && <AuthControls />}
               <Link
                 href="/owner-analytics"
-                className="apoc-card inline-flex items-center px-3 py-2 font-mono text-xs uppercase tracking-[0.16em] text-[#ffb49a] transition-colors hover:border-[#ff9b71] hover:bg-[#ff6b35]/15 hover:text-white"
+                className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffb49a]"
                 style={{ borderRadius: "12px" }}
               >
                 {t("home.ownerStats")}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Expand, Heart, Maximize2, Pause, Play, Shield, Volume2, VolumeX, Gamepad2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Crosshair, Expand, FastForward, Heart, Maximize2, Pause, Play, Shield, Volume2, VolumeX, Gamepad2, X } from "lucide-react";
 import { Link } from "wouter";
 import { GameCanvas, type GameHud, type GameInput } from "@/game/GameCanvas";
 import { GAME_LEVELS } from "@/game/gameData";
@@ -106,7 +106,7 @@ export default function Game() {
     const onFullscreenChange = () => {
       const active = document.fullscreenElement === stageRef.current;
       setIsFullscreen(active);
-      if (active && window.matchMedia("(max-width: 767px)").matches) {
+      if (active && (window.matchMedia("(max-width: 767px)").matches || window.matchMedia("(max-height: 767px)").matches)) {
         const orientation = screen.orientation as ScreenOrientation & { lock?: (mode: string) => Promise<void> };
         if (orientation.lock) {
           void orientation.lock("landscape").catch(() => undefined);
@@ -123,7 +123,7 @@ export default function Game() {
       if (document.fullscreenElement) {
         await document.exitFullscreen();
       } else {
-        await stageRef.current.requestFullscreen();
+        await stageRef.current.requestFullscreen({ navigationUI: "hide" });
       }
     } catch {
       // Fullscreen can be denied by browser policy; the inline stage remains playable.
@@ -138,14 +138,16 @@ export default function Game() {
     <main className="min-h-[100dvh] bg-[#080709] px-3 py-5 text-[#e8ddcf] sm:px-6 sm:py-8 lg:px-10">
       <style>{`
         .game-stage-shell:fullscreen {
+          box-sizing: border-box;
           display: flex;
           width: 100vw;
           height: 100dvh;
+          min-height: 100dvh;
           align-items: center;
           justify-content: center;
           overflow: hidden;
           background: #080709;
-          padding: 0;
+          padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         .game-stage-shell:fullscreen .game-stage {
           width: 100%;
@@ -154,10 +156,14 @@ export default function Game() {
           aspect-ratio: auto;
           border-width: 0;
         }
-         .game-portrait-warning { display: none; }
+        .game-portrait-warning { display: none; }
+        .game-touch-controls { display: none; }
+        @media (max-width: 767px), (orientation: landscape) and (max-height: 767px) {
+          .game-touch-controls { display: flex; }
+        }
         @media (orientation: portrait) and (max-width: 767px) {
           .game-stage-shell:fullscreen .game-portrait-warning { display: flex; }
-           .game-stage-shell:not(:fullscreen) .game-portrait-warning { display: flex; }
+          .game-stage-shell:not(:fullscreen) .game-portrait-warning { display: flex; }
         }
         @media (prefers-reduced-motion: reduce) {
           .game-ambient-motion { animation: none !important; }
@@ -304,23 +310,28 @@ export default function Game() {
               </div>
             )}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-between p-2 sm:p-4 md:hidden">
+            <div className="game-touch-controls pointer-events-none absolute inset-x-0 bottom-0 z-20 items-end justify-between p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-4 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="pointer-events-auto flex items-end gap-1.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                <TouchButton label="Рух ліворуч" active={inputRef.current.left} onPressStart={() => setInput("left", true)} onPressEnd={() => setInput("left", false)}>
-                  <ArrowLeft size={18} />
-                </TouchButton>
-                <TouchButton label="Рух праворуч" active={inputRef.current.right} onPressStart={() => setInput("right", true)} onPressEnd={() => setInput("right", false)}>
-                  <ArrowRight size={18} />
-                </TouchButton>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <TouchButton label="Рух ліворуч" active={inputRef.current.left} onPressStart={() => setInput("left", true)} onPressEnd={() => setInput("left", false)}>
+                    <ArrowLeft size={18} />
+                  </TouchButton>
+                  <TouchButton label="Рух праворуч / вперед" active={inputRef.current.right} onPressStart={() => setInput("right", true)} onPressEnd={() => setInput("right", false)}>
+                    <ArrowRight size={18} />
+                  </TouchButton>
+                  <TouchButton label="Прискорення" active={inputRef.current.sprint} onPressStart={() => setInput("sprint", true)} onPressEnd={() => setInput("sprint", false)}>
+                    <FastForward size={18} />
+                  </TouchButton>
                 </div>
-                <TouchButton label="Стрибок" active={inputRef.current.jump} onPressStart={() => setInput("jump", true)} onPressEnd={() => setInput("jump", false)}>
-                  <ArrowUp size={18} />
+              </div>
+              <div className="pointer-events-auto flex items-end gap-1.5">
+                <TouchButton label="Стрибок" active={inputRef.current.jump} onPressStart={() => setInput("jump", true)} onPressEnd={() => setInput("jump", false)} className="h-14 w-14 rounded-full border-[#d98c4d]/70 bg-[#6d3b32]/90 text-[#ffd39a]">
+                  <ArrowUp size={21} />
+                </TouchButton>
+                <TouchButton label="Удар" active={inputRef.current.strike} onPressStart={() => setInput("strike", true)} onPressEnd={() => setInput("strike", false)} className="h-14 w-14 rounded-full border-[#c67b50]/65 bg-[#3a2023]/90 text-[#df9d63]">
+                  <Crosshair size={20} />
                 </TouchButton>
               </div>
-              <TouchButton label="Удар" active={inputRef.current.strike} onPressStart={() => setInput("strike", true)} onPressEnd={() => setInput("strike", false)} className="pointer-events-auto h-14 w-14 rounded-full border-[#c67b50]/65 bg-[#3a2023]/90 text-[#df9d63]">
-                <Crosshair size={20} />
-              </TouchButton>
             </div>
           </section>
         </div>
