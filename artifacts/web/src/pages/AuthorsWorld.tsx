@@ -74,69 +74,6 @@ function worldDimensions(authorCount: number) {
   };
 }
 
-const SEED_AUTHORS: Author[] = [
-  {
-    id: "seed-ashen-voice",
-    name: "Ashen Voice",
-    role: "Музикант",
-    initials: "AV",
-    memory: "Залишаю тут пісню для тих, хто ще йде крізь попіл.",
-    links: [
-      { label: "Spotify", url: "https://open.spotify.com" },
-      { label: "YouTube", url: "https://youtube.com" },
-    ],
-    position: worldPositionFor(0),
-  },
-  {
-    id: "seed-mira-nocturne",
-    name: "Mira Nocturne",
-    role: "Авторка",
-    initials: "MN",
-    memory: "Мої історії починаються там, де закінчується світло.",
-    links: [{ label: "Instagram", url: "https://instagram.com" }],
-    position: worldPositionFor(1),
-  },
-  {
-    id: "seed-rune-operator",
-    name: "Rune Operator",
-    role: "Продюсер",
-    initials: "RO",
-    memory: "Звук — це портал. Я залишив тут координати.",
-    links: [
-      { label: "Bandcamp", url: "https://bandcamp.com" },
-      { label: "SoundCloud", url: "https://soundcloud.com" },
-    ],
-    position: worldPositionFor(2),
-  },
-  {
-    id: "seed-velvet-ruins",
-    name: "Velvet Ruins",
-    role: "Візуальна авторка",
-    initials: "VR",
-    memory: "Кожна тінь має колір, якщо дивитися достатньо довго.",
-    links: [{ label: "Portfolio", url: "https://behance.net" }],
-    position: worldPositionFor(3),
-  },
-  {
-    id: "seed-the-last-lantern",
-    name: "The Last Lantern",
-    role: "Письменник",
-    initials: "LL",
-    memory: "Тут пам’ятають не імена. Тут пам’ятають сліди.",
-    links: [{ label: "Website", url: "https://example.com" }],
-    position: worldPositionFor(4),
-  },
-  {
-    id: "seed-echo-child",
-    name: "Echo Child",
-    role: "Музикантка",
-    initials: "EC",
-    memory: "Мій голос живе між грозою і тишею.",
-    links: [{ label: "Spotify", url: "https://open.spotify.com" }],
-    position: worldPositionFor(5),
-  },
-];
-
 type PlatformOption = {
   value: PlatformKey;
   label: string;
@@ -361,7 +298,7 @@ export default function AuthorsWorld() {
         }
       } catch (error) {
         if (!active) return;
-        setAuthors(SEED_AUTHORS);
+        setAuthors([]);
         setAuthorsError(error instanceof Error ? error.message : "Не вдалося завантажити авторів.");
       } finally {
         if (active) setAuthorsLoading(false);
@@ -712,9 +649,9 @@ export default function AuthorsWorld() {
                 </div>
               </div>
               <p className="mt-5 font-mono text-sm leading-relaxed text-white/70">“{selectedAuthor.memory}”</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {selectedAuthor.links.length > 0 ? (
-                  selectedAuthor.links.map((link) => (
+              {selectedAuthor.links.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {selectedAuthor.links.map((link) => (
                     <a
                       key={`${selectedAuthor.id}-${link.url}`}
                       href={link.url}
@@ -724,11 +661,9 @@ export default function AuthorsWorld() {
                     >
                       {link.label}
                     </a>
-                  ))
-                ) : (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">Майданчики ще не додані</span>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           ) : (
             <section className="flex items-center border border-white/10 bg-black/25 p-5">
@@ -862,7 +797,7 @@ export default function AuthorsWorld() {
             <form onSubmit={handleRegister} className="mt-6 space-y-4">
               <label className="block">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Ім’я або псевдонім *</span>
-                <input required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Наприклад, Ashen Voice" />
+                <input required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Твоє ім’я або назва проєкту" />
               </label>
               <label className="block">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Хто ти у цьому світі *</span>
