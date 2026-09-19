@@ -9,8 +9,9 @@ const MAX_REQUESTS_PER_WINDOW = 12;
 const UKRAINIAN_CHAT_REMINDER =
   "Будь ласка, у нашому чаті пишуть українською, якщо можна. Дуже вас просимо.";
 const UKRAINIAN_CHAT_REFUSAL = "Ви ж не перейшли, я ж вас попросив";
-const LOCAL_ORACLE_FALLBACK =
-  "Оракул на мить замовк. Основний канал відповіді недоступний — спробуйте ще раз за хвилину.";
+const ORACLE_FALLBACK_URL =
+  process.env.ORACLE_FALLBACK_URL?.trim() ||
+  "https://gathering-of-the-fallen.replit.app/api/oracle/chat";
 
 type OracleMessage = {
   role: "user" | "assistant";
@@ -141,8 +142,29 @@ function applyLanguageReminder(
 }
 
 async function requestFallbackOracle(messages: OracleMessage[]): Promise<string> {
-  void messages;
-  return LOCAL_ORACLE_FALLBACK;
+  const response = await fetch(ORACLE_FALLBACK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  const body = (await response.json().catch(() => null)) as
+    | { answer?: unknown; error?: unknown }
+    | null;
+  if (!response.ok) {
+    throw new Error(
+      `Oracle fallback returned ${response.status}: ${
+        typeof body?.error === "string" ? body.error : "unknown error"
+      }`,
+    );
+  }
+
+  const answer = typeof body?.answer === "string" ? body.answer.trim() : "";
+  if (!answer) throw new Error("Oracle fallback returned an empty response");
+  return answer;
 }
 
 router.post("/oracle/chat", async (req: Request, res: Response) => {
@@ -178,7 +200,7 @@ router.post("/oracle/chat", async (req: Request, res: Response) => {
     logger.error({ msg: "Oracle response failed", error });
     try {
       const answer = await requestFallbackOracle(messages);
-      logger.warn({ msg: "Oracle local fallback responded" });
+      logger.warn({ msg: "Oracle gateway fallback responded" });
       res.json({ answer: applyLanguageReminder(messages, answer) });
     } catch (fallbackError) {
       logger.error({ msg: "Oracle fallback gateway failed", error: fallbackError });

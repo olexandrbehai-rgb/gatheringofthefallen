@@ -36,3 +36,5 @@ services:
         sync: false
       - key: AI_INTEGRATIONS_OPENAI_API_KEY
         sync: false
+      - key: ORACLE_FALLBACK_URL
+        value: https://gathering-of-the-fallen.replit.app/api/oracle/chat
