@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Globe2, ImagePlus, Link2, LocateFixed, Minus, Move, Music2, Plus, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
+import { Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Plus, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUser } from "@clerk/react";
+import { useClerk, useUser } from "@clerk/react";
 import type { IconType } from "react-icons";
 import { SiBandcamp, SiInstagram, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link, useLocation } from "wouter";
@@ -376,7 +376,8 @@ function AuthorNode({
 
 export default function AuthorsWorld() {
   const [location, setLocation] = useLocation();
-  const { isLoaded: authLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
+  const { isLoaded: authLoaded, isSignedIn, user } = useUser();
   const [authors, setAuthors] = useState<Author[]>([]);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [hoveredAuthorId, setHoveredAuthorId] = useState<string | null>(null);
@@ -425,6 +426,21 @@ export default function AuthorsWorld() {
   const worldViewInitializedRef = useRef(false);
   const panAnimationRef = useRef<number | null>(null);
   const worldSize = useMemo(() => worldDimensions(authors.length, isCompactViewport), [authors.length, isCompactViewport]);
+  const accountEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? "";
+
+  const openAuthorPortal = () => {
+    setFormError(null);
+    setProfileSavedNotice(null);
+    if (!authLoaded || !isSignedIn) {
+      setLocation("/sign-in");
+      return;
+    }
+    setIsRegistering(true);
+  };
+
+  const handleAuthorSignOut = async () => {
+    await signOut({ redirectUrl: "/authors-world" });
+  };
 
   const updateWorldPan = useCallback((nextPan: { x: number; y: number }) => {
     worldPanRef.current = nextPan;
@@ -1051,20 +1067,63 @@ export default function AuthorsWorld() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setFormError(null);
-                setProfileSavedNotice(null);
-                if (!authLoaded || !isSignedIn) {
-                  setLocation("/sign-in");
-                  return;
-                }
-                setIsRegistering(true);
-              }}
+               onClick={openAuthorPortal}
               className="inline-flex min-h-11 w-full items-center justify-center border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_18px_rgba(0,240,255,0.18)] transition-all hover:border-white hover:bg-[#00f0ff]/20 hover:text-white hover:shadow-[0_0_28px_rgba(0,240,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
               {!authLoaded ? "ПЕРЕВІРКА ДОСТУПУ..." : !isSignedIn ? "УВІЙТИ ДЛЯ ПОРТАЛУ" : myAuthor ? "РЕДАГУВАТИ МІЙ ПОРТАЛ" : "ЗАЛИШИТИСЯ У СПОГАДІ"}
             </button>
           </div>
+           <div className="mt-3 flex flex-col gap-3 border border-[#00f0ff]/20 bg-black/25 p-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
+             <div className="min-w-0">
+               <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-[#ffad7f]">
+                 <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Авторський акаунт
+               </p>
+               <p className="mt-1 truncate font-mono text-[10px] text-white/55">
+                 {!authLoaded
+                   ? "Перевіряємо email-сесію..."
+                   : isSignedIn
+                     ? accountEmail || "Email підтверджено"
+                     : "Кожен портал прив’язаний до власного email-акаунта."}
+               </p>
+             </div>
+             <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+               {!authLoaded ? (
+                 <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Завантаження...</span>
+               ) : isSignedIn ? (
+                 <>
+                   <button
+                     type="button"
+                     onClick={openAuthorPortal}
+                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#00f0ff]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:border-white hover:bg-[#00f0ff]/10 sm:flex-none"
+                   >
+                     <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Мій портал
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => void handleAuthorSignOut()}
+                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#ff7043]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffb184] transition-colors hover:border-white hover:bg-[#ff7043]/10 sm:flex-none"
+                   >
+                     <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Вийти
+                   </button>
+                 </>
+               ) : (
+                 <>
+                   <Link
+                     href="/sign-in"
+                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#00f0ff]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:border-white hover:bg-[#00f0ff]/10 sm:flex-none"
+                   >
+                     <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Увійти email
+                   </Link>
+                   <Link
+                     href="/sign-up"
+                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#ffad7f]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffcf9e] transition-colors hover:border-white hover:bg-[#ffad7f]/10 sm:flex-none"
+                   >
+                     <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Реєстрація email
+                   </Link>
+                 </>
+               )}
+             </div>
+           </div>
         </div>
 
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
