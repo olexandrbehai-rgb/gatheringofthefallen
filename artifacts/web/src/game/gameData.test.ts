@@ -34,4 +34,11 @@ describe("The Ashen Crossing level data", () => {
       expect(level.goalX).toBeLessThan(level.width);
     }
   });
+
+  it("gives beginners a forgiving opening route", () => {
+    const secondLevel = GAME_LEVELS[1];
+    expect(secondLevel.platforms[1]).toMatchObject({ x: 160, y: 400, w: 220 });
+    expect(secondLevel.platforms[2]).toMatchObject({ x: 455, y: 335, w: 190 });
+    expect(secondLevel.platforms[1].y - secondLevel.platforms[2].y).toBeLessThanOrEqual(70);
+  });
 });

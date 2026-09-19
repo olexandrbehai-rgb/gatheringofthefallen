@@ -751,7 +751,9 @@ export function GameCanvas({
           }
 
           const jumpDown = activeInput.jump;
-          if (jumpDown && !jumpWasDown) {
+          // Holding jump is intentionally forgiving: beginners do not need
+          // frame-perfect repeated taps to clear a sequence of platforms.
+          if (jumpDown && (!jumpWasDown || runtime.player.onGround)) {
             runtime.jumpBufferFor = GAME_PHYSICS.jumpBufferTime;
           }
           runtime.jumpBufferFor = Math.max(0, runtime.jumpBufferFor - delta);

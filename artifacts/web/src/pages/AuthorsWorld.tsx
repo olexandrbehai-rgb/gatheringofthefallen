@@ -310,9 +310,9 @@ function AuthorNode({
         }`}>
           <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
           {author.avatarUrl ? (
-            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-contain" />
+            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-cover transition-[object-fit] duration-300 group-hover:object-contain group-focus-visible:object-contain" />
           ) : (
-            <span className="relative">{author.initials}</span>
+            <Plus className="relative h-7 w-7 text-[#00f0ff]/80" aria-hidden="true" />
           )}
         </span>
         <span className="relative z-20 hidden min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
@@ -1038,9 +1038,16 @@ export default function AuthorsWorld() {
                 <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
                   Додай свій малюнок. У світі він буде маленьким, а при наведенні повністю розгорнеться разом з інформацією автора.
                 </span>
-                <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-center gap-3 border border-dashed border-[#00f0ff]/55 bg-[#00f0ff]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:border-[#00f0ff] hover:bg-[#00f0ff]/12">
-                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
-                  {isProcessingAvatar ? "ПІДГОТОВКА ІКОНКИ..." : "ДОДАТИ ІКОНКУ ПРОФІЛЮ"}
+                 <div className="mt-3 flex items-center gap-4 border border-white/10 bg-black/20 p-3">
+                   <label className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-[#00f0ff]/65 bg-[#00f0ff]/5 text-[#b9f7ff] transition-[border-radius,box-shadow] duration-300 hover:border-solid hover:border-[#00f0ff] hover:shadow-[0_0_24px_rgba(0,240,255,0.35)]">
+                     {draft.avatarUrl ? (
+                       <img src={draft.avatarUrl} alt="Попередній перегляд аватарки автора" className="h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                     ) : (
+                       <Plus className="h-8 w-8" aria-hidden="true" />
+                     )}
+                     <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/65 font-mono text-[8px] uppercase tracking-[0.12em] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                       Змінити
+                     </span>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1051,7 +1058,14 @@ export default function AuthorsWorld() {
                       event.currentTarget.value = "";
                     }}
                   />
-                </label>
+                   </label>
+                   <div className="min-w-0 font-mono text-[10px] leading-relaxed text-white/50">
+                     <p className="font-bold uppercase tracking-[0.14em] text-[#b9f7ff]">
+                       {isProcessingAvatar ? "ПІДГОТОВКА ІКОНКИ..." : draft.avatarUrl ? "Аватарка готова" : "Натисни на плюс"}
+                     </p>
+                     <p className="mt-1">Зображення автоматично стиснеться і стане круглим у світі авторів. Наведи курсор, щоб побачити його повністю.</p>
+                   </div>
+                 </div>
                 {avatarError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{avatarError}</p>}
                 <label className="mt-3 block">
                   <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Або пряме посилання</span>

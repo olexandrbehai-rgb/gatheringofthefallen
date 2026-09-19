@@ -38,14 +38,14 @@ export type GameLevel = {
 };
 
 export const GAME_PHYSICS = {
-  playerSpeed: 235,
+  playerSpeed: 250,
   sprintMultiplier: 1.35,
-  gravity: 1050,
-  jumpSpeed: 640,
+  gravity: 980,
+  jumpSpeed: 700,
   playerWidth: 24,
   playerHeight: 40,
-  coyoteTime: 0.12,
-  jumpBufferTime: 0.14,
+  coyoteTime: 0.18,
+  jumpBufferTime: 0.22,
 } as const;
 
 const floor = (width: number): GameRect => ({ x: 0, y: 476, w: width, h: 64 });
@@ -83,12 +83,12 @@ const BASE_LEVELS: GameLevel[] = [
     palette: palettes[1],
     platforms: [
       floor(2550),
-      { x: 190, y: 370, w: 160, h: 18 }, { x: 430, y: 270, w: 130, h: 18 },
-      { x: 700, y: 350, w: 220, h: 18 }, { x: 1030, y: 245, w: 160, h: 18 },
-      { x: 1280, y: 365, w: 170, h: 18 }, { x: 1580, y: 300, w: 200, h: 18 },
-      { x: 1900, y: 390, w: 145, h: 18 }, { x: 2180, y: 280, w: 190, h: 18 },
+      { x: 160, y: 400, w: 220, h: 18 }, { x: 455, y: 335, w: 190, h: 18 },
+      { x: 720, y: 390, w: 225, h: 18 }, { x: 1035, y: 320, w: 205, h: 18 },
+      { x: 1325, y: 375, w: 205, h: 18 }, { x: 1610, y: 315, w: 230, h: 18 },
+      { x: 1940, y: 390, w: 185, h: 18 }, { x: 2220, y: 330, w: 220, h: 18 },
     ],
-    hazards: [{ x: 565, y: 450, w: 110, h: 28 }, { x: 1470, y: 450, w: 95, h: 28 }, { x: 2050, y: 450, w: 110, h: 28 }],
+    hazards: [{ x: 395, y: 450, w: 42, h: 28 }, { x: 1248, y: 450, w: 52, h: 28 }, { x: 1855, y: 450, w: 52, h: 28 }],
     enemies: [{ x: 340, y: 438, minX: 150, maxX: 600, speed: 46 }, { x: 900, y: 438, minX: 760, maxX: 1200, speed: 52 }, { x: 1650, y: 438, minX: 1500, maxX: 1880, speed: 48 }, { x: 2280, y: 438, minX: 2150, maxX: 2460, speed: 55 }],
     relics: [{ x: 270, y: 330 }, { x: 490, y: 230 }, { x: 820, y: 310 }, { x: 1100, y: 205 }, { x: 1670, y: 260 }, { x: 2260, y: 240 }],
     goalX: 2420,
@@ -101,13 +101,13 @@ const BASE_LEVELS: GameLevel[] = [
     palette: palettes[2],
     platforms: [
       floor(2700),
-      { x: 240, y: 320, w: 150, h: 18 }, { x: 500, y: 220, w: 155, h: 18 },
-      { x: 770, y: 355, w: 180, h: 18 }, { x: 1060, y: 280, w: 125, h: 18 },
-      { x: 1300, y: 185, w: 175, h: 18 }, { x: 1590, y: 340, w: 210, h: 18 },
-      { x: 1920, y: 245, w: 145, h: 18 }, { x: 2200, y: 355, w: 180, h: 18 },
-      { x: 2470, y: 260, w: 150, h: 18 },
+      { x: 190, y: 360, w: 190, h: 18 }, { x: 470, y: 290, w: 185, h: 18 },
+      { x: 760, y: 370, w: 210, h: 18 }, { x: 1070, y: 305, w: 180, h: 18 },
+      { x: 1335, y: 245, w: 205, h: 18 }, { x: 1630, y: 355, w: 230, h: 18 },
+      { x: 1950, y: 285, w: 185, h: 18 }, { x: 2240, y: 370, w: 210, h: 18 },
+      { x: 2520, y: 305, w: 175, h: 18 },
     ],
-    hazards: [{ x: 660, y: 450, w: 90, h: 28 }, { x: 1195, y: 450, w: 95, h: 28 }, { x: 1815, y: 450, w: 90, h: 28 }, { x: 2390, y: 450, w: 70, h: 28 }],
+    hazards: [{ x: 675, y: 450, w: 50, h: 28 }, { x: 1260, y: 450, w: 48, h: 28 }, { x: 1875, y: 450, w: 50, h: 28 }, { x: 2465, y: 450, w: 45, h: 28 }],
     enemies: [{ x: 600, y: 438, minX: 400, maxX: 730, speed: 50 }, { x: 980, y: 438, minX: 800, maxX: 1200, speed: 42 }, { x: 1500, y: 438, minX: 1350, maxX: 1880, speed: 54 }, { x: 2100, y: 438, minX: 1980, maxX: 2440, speed: 50 }],
     relics: [{ x: 305, y: 280 }, { x: 575, y: 180 }, { x: 1115, y: 240 }, { x: 1385, y: 145 }, { x: 1990, y: 205 }, { x: 2535, y: 220 }],
     goalX: 2580,
