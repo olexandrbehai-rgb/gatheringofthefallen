@@ -26,6 +26,8 @@ const PAGE_BACKGROUNDS: Record<string, string> = {
   "/contacts": bgContacts,
 };
 
+const authorsWorldButtonBackground = `${import.meta.env.BASE_URL}authors-world-button-background.png`;
+
 function useDesktopHeroEnabled(): boolean {
   const [enabled, setEnabled] = useState(
     () =>
@@ -105,6 +107,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           }`}
         >
           <span aria-hidden="true" className="pointer-events-none absolute inset-2 border border-[#00f0ff]/30" />
+          <img
+            src={authorsWorldButtonBackground}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-75 transition-transform duration-700 group-hover:scale-110"
+          />
           <span aria-hidden="true" className="pointer-events-none absolute -inset-8 bg-[radial-gradient(circle,rgba(0,240,255,0.2),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <span className="relative z-10 font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff]">
             ІНШИЙ

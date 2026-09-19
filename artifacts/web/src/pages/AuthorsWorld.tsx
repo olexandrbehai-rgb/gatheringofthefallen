@@ -733,7 +733,16 @@ export default function AuthorsWorld() {
           )}
         </div>
 
-        <section id="authors-world-chat" className="mt-5 scroll-mt-6 border border-[#8a2be2]/45 bg-[#090711]/85 p-5 shadow-[inset_0_0_45px_rgba(138,43,226,0.08),0_0_28px_rgba(0,0,0,0.35)]">
+        <section
+          id="authors-world-chat"
+          className="mt-5 scroll-mt-6 border border-[#8a2be2]/55 bg-[#090711]/45 p-5 shadow-[inset_0_0_45px_rgba(138,43,226,0.08),0_0_28px_rgba(0,0,0,0.35)]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(2, 4, 10, 0.42), rgba(2, 4, 10, 0.62)), url("${import.meta.env.BASE_URL}authors-room-background.png")`,
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "100% 100%, 100% 100%",
+          }}
+        >
           <div className="flex flex-col gap-4 border-b border-[#8a2be2]/25 pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">Local network // authors world</p>
