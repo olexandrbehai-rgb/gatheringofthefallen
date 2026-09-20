@@ -150,7 +150,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   }
 
   return (
-    <main className="author-portal-readable relative min-h-[calc(100dvh-82px)] overflow-hidden bg-[#03060b] px-4 py-10 text-white sm:px-6 lg:px-10">
+    <main className="author-portal-readable relative min-h-[calc(100dvh-82px)] overflow-x-clip bg-[#03060b] px-3 py-7 text-white sm:px-6 sm:py-10 lg:px-10">
       {author.backgroundUrl && (
         <img
           src={author.backgroundUrl}
@@ -159,8 +159,10 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
         />
       )}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,4,10,0.58)_0%,rgba(2,4,10,0.48)_34%,rgba(2,4,10,0.86)_100%),radial-gradient(circle_at_50%_0%,rgba(0,240,255,0.18),transparent_38%),radial-gradient(circle_at_82%_58%,rgba(138,43,226,0.2),transparent_42%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,4,10,0.58)_0%,rgba(2,4,10,0.48)_34%,rgba(2,4,10,0.86)_100%),radial-gradient(circle_at_50%_0%,rgba(0,240,255,0.18),transparent_38%),radial-gradient(circle_at_82%_58%,rgba(255,45,149,0.22),transparent_42%),radial-gradient(circle_at_12%_72%,rgba(142,255,92,0.14),transparent_34%)]" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(rgba(0,240,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.06)_1px,transparent_1px)] [background-size:42px_42px]" />
+      <div aria-hidden="true" className="author-neon-orb author-neon-orb-magenta pointer-events-none absolute -right-20 top-28 h-64 w-64 rounded-full" />
+      <div aria-hidden="true" className="author-neon-orb author-neon-orb-lime pointer-events-none absolute -left-24 top-[52%] h-56 w-56 rounded-full" />
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/authors-world" className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 hover:text-[#00f0ff]">← Світ авторів</Link>
@@ -170,22 +172,22 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
             </button>
           )}
         </div>
-        <header className="mt-10 grid gap-6 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-5 shadow-[inset_0_0_30px_rgba(0,240,255,0.07),0_8px_28px_rgba(0,0,0,0.6)] backdrop-blur-md md:grid-cols-[auto_1fr] md:items-center">
-          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] shadow-[0_0_34px_rgba(0,240,255,0.25)]">
+        <header className="author-portal-hero mt-7 grid min-w-0 gap-5 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:gap-6 sm:p-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
+          <div className="author-avatar-glow mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
             {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
           </div>
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#ffad7f]">Авторський портал // {author.slug}</p>
-            <h1 className="mt-2 font-creepster text-6xl tracking-[0.08em] text-[#00f0ff]">{author.displayName}</h1>
-            <p className="mt-1 font-mono text-xs uppercase tracking-[0.18em] text-[#ffcf9e]">{author.role}</p>
+          <div className="min-w-0 text-center md:text-left">
+            <p className="break-all font-mono text-[9px] uppercase tracking-[0.16em] text-[#ffad7f] sm:text-[10px] sm:tracking-[0.28em]">Авторський портал // {author.slug}</p>
+            <h1 className="author-portal-title mt-3 max-w-full break-words font-creepster text-[clamp(2.35rem,13vw,4.5rem)] leading-[0.94] tracking-[0.035em] sm:tracking-[0.06em]">{author.displayName}</h1>
+            <p className="mt-3 break-words font-mono text-[11px] uppercase tracking-[0.13em] text-[#ffcf9e] sm:text-xs sm:tracking-[0.18em]">{author.role}</p>
             <p className="mt-5 max-w-3xl font-mono text-sm leading-relaxed text-white/65">“{author.bio}”</p>
           </div>
         </header>
 
-        <div className="mt-8 flex flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.52)] backdrop-blur-md">
-          <button type="button" onClick={() => setActivePlatform("all")} className={`border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>Усі роботи</button>
+        <div className="author-neon-panel mt-6 flex max-w-full flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 backdrop-blur-md sm:mt-8">
+          <button type="button" onClick={() => setActivePlatform("all")} className={`min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>Усі роботи</button>
           {tabs.map(([platform, label]) => (
-            <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] ${activePlatform === platform ? "border-[#8a2be2] bg-[#8a2be2]/20 text-white" : "border-white/15 text-white/55 hover:border-[#8a2be2]/60"}`}>
+            <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`min-w-0 max-w-full break-words border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === platform ? "border-[#ff2d95] bg-[#ff2d95]/15 text-white" : "border-white/15 text-white/55 hover:border-[#ff2d95]/60"}`}>
               {label}
             </button>
           ))}
@@ -202,13 +204,13 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         )}
 
-        <section className="mt-10 rounded border border-white/15 bg-[#020811]/78 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.52)] backdrop-blur-md">
-          <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
-            <div>
+        <section className="author-neon-panel mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
+          <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>
-              <h2 className="mt-2 font-creepster text-4xl tracking-[0.1em] text-[#ffcf9e]">Авторські роботи</h2>
+              <h2 className="author-section-title mt-2 break-words font-creepster text-3xl tracking-[0.07em] sm:text-4xl sm:tracking-[0.1em]">Авторські роботи</h2>
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{searchedCreations.length} карток</span>
+            <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{searchedCreations.length} карток</span>
           </div>
           <label className="mt-4 flex min-h-11 max-w-xl items-center border border-white/15 bg-black/20 px-3 focus-within:border-[#00f0ff]/60">
             <span className="mr-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">Пошук</span>
