@@ -1076,19 +1076,19 @@ export default function AuthorsWorld() {
             <button
               type="button"
               onClick={() => document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="authors-world-top-action inline-flex min-h-11 w-full items-center justify-center border border-[#8a2be2]/55 bg-[#8a2be2]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] transition-all hover:border-white/80 hover:bg-[#8a2be2]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
+              className="authors-world-top-action authors-world-control-purple inline-flex min-h-11 w-full items-center justify-center border px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#eadcff] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
               Загальний чат
             </button>
             <button
               type="button"
                onClick={openAuthorPortal}
-              className="authors-world-top-action inline-flex min-h-11 w-full items-center justify-center border border-[#00f0ff]/55 bg-[#00f0ff]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_5px_rgba(0,240,255,0.1)] transition-all hover:border-white/80 hover:bg-[#00f0ff]/10 hover:text-white hover:shadow-[0_0_10px_rgba(0,240,255,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
+              className="authors-world-top-action authors-world-control-cyan inline-flex min-h-11 w-full items-center justify-center border px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d9fbff] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
               {!authLoaded ? "ПЕРЕВІРКА ДОСТУПУ..." : !isSignedIn ? "УВІЙТИ ДЛЯ ПОРТАЛУ" : myAuthor ? "РЕДАГУВАТИ МІЙ ПОРТАЛ" : "ЗАЛИШИТИСЯ У СПОГАДІ"}
             </button>
           </div>
-           <div className="mt-3 flex flex-col gap-3 border border-[#00f0ff]/20 bg-black/25 p-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
+           <div className="authors-world-account-panel mt-3 flex flex-col gap-3 border p-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
              <div className="min-w-0">
                <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-[#ffad7f]">
                  <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Авторський акаунт
@@ -1109,14 +1109,14 @@ export default function AuthorsWorld() {
                    <button
                      type="button"
                      onClick={openAuthorPortal}
-                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#00f0ff]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:border-white hover:bg-[#00f0ff]/10 sm:flex-none"
+                     className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
                    >
                      <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Мій портал
                    </button>
                    <button
                      type="button"
                      onClick={() => void handleAuthorSignOut()}
-                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#ff7043]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffb184] transition-colors hover:border-white hover:bg-[#ff7043]/10 sm:flex-none"
+                     className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all sm:flex-none"
                    >
                      <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Вийти
                    </button>
@@ -1125,13 +1125,13 @@ export default function AuthorsWorld() {
                  <>
                    <Link
                      href="/sign-in"
-                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#00f0ff]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:border-white hover:bg-[#00f0ff]/10 sm:flex-none"
+                      className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
                    >
                      <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Увійти email
                    </Link>
                    <Link
                      href="/sign-up"
-                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border border-[#ffad7f]/55 px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffcf9e] transition-colors hover:border-white hover:bg-[#ffad7f]/10 sm:flex-none"
+                      className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffe0c0] transition-all sm:flex-none"
                    >
                      <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Реєстрація email
                    </Link>
@@ -1149,8 +1149,8 @@ export default function AuthorsWorld() {
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
-            <label className="flex min-h-10 items-center border border-white/15 bg-black/30 px-3 focus-within:border-[#00f0ff]/60 sm:w-80">
-              <span className="mr-2 font-mono text-[10px] uppercase tracking-widest text-white/40">Пошук</span>
+             <label className="authors-world-search-control flex min-h-11 items-center border px-3 sm:w-80">
+               <span className="mr-2 font-mono text-[10px] font-bold uppercase tracking-widest text-[#b9f7ff]">Пошук</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -1295,10 +1295,10 @@ export default function AuthorsWorld() {
                 ["02", "Зайди", "Натисни на портал і подивись світ автора."],
                 ["03", "Залишся", "Додай власну історію та свої майданчики."],
               ].map(([number, title, text]) => (
-                <div key={number} className="border-l border-[#00f0ff]/45 pl-3">
-                  <span className="font-mono text-[10px] text-[#00f0ff]">{number}</span>
+                 <div key={number} className="authors-world-step-card">
+                   <span className="authors-world-step-number font-mono text-[10px] text-[#b9f7ff]">{number}</span>
                   <h3 className="mt-2 font-creepster text-xl tracking-[0.12em] text-[#ffcf9e]">{title}</h3>
-                  <p className="mt-1 font-mono text-xs leading-relaxed text-white/45">{text}</p>
+                   <p className="mt-1 font-mono text-xs leading-relaxed text-white/75">{text}</p>
                 </div>
               ))}
             </div>
