@@ -78,22 +78,14 @@ function initialsFor(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "??";
 }
 
-function memoryLinksFor(value: string) {
-  return value
-    .split(/\r?\n/)
-    .map((link) => link.trim())
-    .filter((link) => /^https?:\/\/\S+$/i.test(link));
-}
-
 export default function AuthorProfile({ params }: { params: { slug: string } }) {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [author, setAuthor] = useState<Author | null>(null);
   const [creations, setCreations] = useState<Creation[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [activePlatform, setActivePlatform] = useState("all");
   const [creationSearch, setCreationSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(24);
-  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,13 +118,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     };
   }, [params.slug]);
 
-  useEffect(() => {
-    const memoryId = Number(new URLSearchParams(location.split("?")[1] ?? "").get("memory"));
-    setSelectedMemoryId(Number.isInteger(memoryId) && memoryId > 0 ? memoryId : null);
-  }, [location]);
-
   const memories = useMemo(() => creations.filter((creation) => creation.kind === "memory"), [creations]);
-  const selectedMemory = memories.find((memory) => memory.id === selectedMemoryId) ?? null;
 
   const tabs = useMemo(() => {
     const values = new Map<string, { label: string; url?: string }>();
@@ -257,7 +243,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                  <button
                    key={memory.id}
                    type="button"
-                   onClick={() => setLocation(`/author/${author.slug}?memory=${memory.id}`)}
+                    onClick={() => setLocation(`/author/${author.slug}/memory/${memory.id}`)}
                    className="author-memory-card group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/65 bg-[#140d18] text-center shadow-[0_0_18px_rgba(255,207,158,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcf9e]"
                    title={memory.title}
                  >
@@ -274,49 +260,6 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
             <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>
               <h2 className="author-section-title mt-2 break-words font-creepster text-3xl tracking-[0.07em] sm:text-4xl sm:tracking-[0.1em]">Авторські роботи</h2>
-         {selectedMemory && (
-           <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-[#08040b]/88 p-3 backdrop-blur-md sm:items-center sm:p-6">
-             <article className="author-memory-parchment relative my-2 w-full max-w-3xl overflow-hidden px-5 py-8 text-[#2c1b16] shadow-[0_0_80px_rgba(255,207,158,0.24)] sm:my-6 sm:px-12 sm:py-14">
-               <div aria-hidden="true" className="pointer-events-none absolute inset-3 border border-[#6f4630]/35 sm:inset-5" />
-               <button
-                 type="button"
-                 onClick={() => setLocation(`/author/${author.slug}`)}
-                 className="absolute right-5 top-5 z-10 border border-[#6f4630]/50 bg-[#f1d8a9]/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#4a2d22] hover:bg-[#f8e8c7]/80"
-               >
-                 Закрити
-               </button>
-               <div className="relative z-10">
-                 <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#6f4630]">Кристалічна сітка // сторінка пам’яті</p>
-                 <h2 className="mt-7 max-w-2xl font-creepster text-5xl leading-none tracking-[0.06em] text-[#39211a] sm:text-7xl">{selectedMemory.title}</h2>
-                 <div className="mt-7 grid gap-7 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:items-start">
-                   {selectedMemory.imageUrl && <img src={selectedMemory.imageUrl} alt="" className="mx-auto max-h-80 w-full max-w-sm object-contain mix-blend-multiply sm:mx-0" />}
-                   <div>
-                      <p className="whitespace-pre-wrap font-serif text-lg leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.description}</p>
-                      {selectedMemory.poem && (
-                        <div className="mt-7 border-t border-[#6f4630]/25 pt-5">
-                          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#6f4630]">Вірш</p>
-                          <p className="mt-3 whitespace-pre-wrap font-serif text-lg italic leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.poem}</p>
-                        </div>
-                      )}
-                      {memoryLinksFor(selectedMemory.links).length > 0 && (
-                        <div className="mt-7 border-t border-[#6f4630]/25 pt-5">
-                          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#6f4630]">Посилання</p>
-                          <div className="mt-3 space-y-2">
-                            {memoryLinksFor(selectedMemory.links).map((link) => (
-                              <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="block break-all font-mono text-xs text-[#6f4630] underline decoration-[#6f4630]/45 underline-offset-4 hover:text-[#24150f]">
-                                {link}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                     <p className="mt-8 border-t border-[#6f4630]/30 pt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6f4630]">{author.displayName} // {author.role}</p>
-                   </div>
-                 </div>
-               </div>
-             </article>
-           </div>
-         )}
        </div>
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{searchedCreations.length} карток</span>
           </div>

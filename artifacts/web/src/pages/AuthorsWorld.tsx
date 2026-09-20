@@ -117,6 +117,8 @@ const WORLD_CELL_WIDTH = 260;
 const WORLD_CELL_HEIGHT = 220;
 const WORLD_PADDING_X = 150;
 const WORLD_PADDING_Y = 150;
+const WORLD_COLUMN_GAP = 84;
+const WORLD_ROW_GAP = 82;
 const DEFAULT_WORLD_ZOOM = 0.72;
 const MIN_WORLD_ZOOM = 0.42;
 const MAX_WORLD_ZOOM = 2.4;
@@ -133,13 +135,51 @@ function worldPositionFor(index: number, compact = false) {
   };
 }
 
-function worldDimensions(authorCount: number, compact = false) {
-  const columns = compact ? 1 : WORLD_COLUMNS;
-  const rows = Math.max(1, Math.ceil(Math.max(authorCount, 1) / columns));
+function authorFootprintFor(author: Pick<Author, "memories">, compact: boolean) {
+  const memoryCount = Math.min(author.memories.length, 20);
+  const memoryRadiusX = compact ? 92 : 132 + memoryCount * 2;
+  const memoryRadiusY = compact ? 70 : 108 + memoryCount * 1.5;
+  const memorySize = Math.max(42, 72 - memoryCount * 1.25);
 
   return {
-    width: compact ? 300 : Math.max(1040, WORLD_PADDING_X * 2 + (WORLD_COLUMNS - 1) * WORLD_CELL_WIDTH),
-    height: compact ? Math.max(300, 200 + (rows - 1) * 170) : Math.max(760, WORLD_PADDING_Y * 2 + (rows - 1) * WORLD_CELL_HEIGHT),
+    width: Math.max(compact ? 300 : 430, memoryRadiusX * 2 + memorySize + (compact ? 28 : 92)),
+    height: Math.max(compact ? 220 : 330, memoryRadiusY * 2 + memorySize + (compact ? 44 : 92)),
+  };
+}
+
+function worldLayoutFor(authors: Author[], compact = false) {
+  const columns = compact ? 1 : Math.min(WORLD_COLUMNS, Math.max(1, authors.length));
+  const footprints = authors.map((author) => authorFootprintFor(author, compact));
+  const columnWidths = Array.from({ length: columns }, (_, column) =>
+    Math.max(...footprints.filter((_, index) => index % columns === column).map((footprint) => footprint.width), compact ? 300 : WORLD_CELL_WIDTH),
+  );
+  const rows = Math.max(1, Math.ceil(Math.max(authors.length, 1) / columns));
+  const rowHeights = Array.from({ length: rows }, (_, row) =>
+    Math.max(...footprints.slice(row * columns, row * columns + columns).map((footprint) => footprint.height), compact ? 220 : WORLD_CELL_HEIGHT),
+  );
+  const columnOffsets = columnWidths.map((_, column) =>
+    WORLD_PADDING_X + columnWidths.slice(0, column).reduce((sum, width) => sum + width + WORLD_COLUMN_GAP, 0),
+  );
+  const rowOffsets = rowHeights.map((_, row) =>
+    WORLD_PADDING_Y + rowHeights.slice(0, row).reduce((sum, height) => sum + height + WORLD_ROW_GAP, 0),
+  );
+  const positions = authors.map((author, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    return {
+      left: columnOffsets[column] + columnWidths[column] / 2,
+      top: rowOffsets[row] + rowHeights[row] / 2,
+    };
+  });
+
+  return {
+    positions,
+    width: compact
+      ? Math.max(300, WORLD_PADDING_X * 2 + columnWidths[0])
+      : Math.max(1040, WORLD_PADDING_X * 2 + columnWidths.reduce((sum, width) => sum + width, 0) + WORLD_COLUMN_GAP * (columns - 1)),
+    height: compact
+      ? Math.max(300, WORLD_PADDING_Y * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + WORLD_ROW_GAP * (rows - 1))
+      : Math.max(760, WORLD_PADDING_Y * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + WORLD_ROW_GAP * (rows - 1)),
   };
 }
 
@@ -555,7 +595,8 @@ export default function AuthorsWorld() {
   } | null>(null);
   const worldViewInitializedRef = useRef(false);
   const panAnimationRef = useRef<number | null>(null);
-  const worldSize = useMemo(() => worldDimensions(authors.length, isCompactViewport), [authors.length, isCompactViewport]);
+  const worldLayout = useMemo(() => worldLayoutFor(authors, isCompactViewport), [authors, isCompactViewport]);
+  const worldSize = worldLayout;
   const accountEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? "";
 
   const openAuthorPortal = () => {
@@ -977,11 +1018,11 @@ export default function AuthorsWorld() {
       return;
     }
 
-    const matchIndex = authors.findIndex((author) => author.id === match.id);
+     const matchIndex = authors.findIndex((author) => author.id === match.id);
     setSelectedAuthorId(match.id);
     setLocatingAuthorId(match.id);
     const frame = window.requestAnimationFrame(() => {
-      centerWorldOn(worldPositionFor(matchIndex, isCompactViewport));
+       centerWorldOn(worldLayout.positions[matchIndex] ?? worldPositionFor(matchIndex, isCompactViewport));
     });
     const timeout = window.setTimeout(() => setLocatingAuthorId(null), 1400);
 
@@ -989,7 +1030,7 @@ export default function AuthorsWorld() {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timeout);
     };
-  }, [authors, centerWorldOn, isCompactViewport, search]);
+  }, [authors, centerWorldOn, isCompactViewport, search, worldLayout.positions]);
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1519,7 +1560,7 @@ export default function AuthorsWorld() {
                     )}
                     {visibleAuthors.map((author) => {
                       const authorIndex = authors.findIndex((item) => item.id === author.id);
-                      const authorPosition = worldPositionFor(authorIndex, isCompactViewport);
+                       const authorPosition = worldLayout.positions[authorIndex] ?? worldPositionFor(authorIndex, isCompactViewport);
                       const shouldShowMemories = !isCompactViewport || author.id === selectedAuthorId;
                       const memorySize = Math.max(42, 72 - Math.min(author.memories.length, 20) * 1.25);
                       return hoveredAuthorId && hoveredAuthorId !== author.id ? null : (
@@ -1543,7 +1584,7 @@ export default function AuthorsWorld() {
                                   position={position}
                                   size={memorySize}
                                   ariaLabel={`${memory.title}. ${copy.memory.open}`}
-                                  onSelect={() => setLocation(`/author/${author.slug}?memory=${memory.id}`)}
+                                 onSelect={() => setLocation(`/author/${author.slug}/memory/${memory.id}`)}
                                 />
                               </div>
                             );
