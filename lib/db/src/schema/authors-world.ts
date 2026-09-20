@@ -56,6 +56,8 @@ export const authorCreationsTable = pgTable(
     description: text("description").notNull().default(""),
     imageUrl: text("image_url"),
     contentUrl: text("content_url"),
+    memoryPoem: text("memory_poem"),
+    memoryLinks: text("memory_links"),
     worldLeft: integer("world_left"),
     worldTop: integer("world_top"),
     isHidden: boolean("is_hidden").notNull().default(false),

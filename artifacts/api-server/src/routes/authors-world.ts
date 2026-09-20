@@ -29,6 +29,8 @@ type AuthorCreation = {
   kind: string;
   title: string;
   description: string;
+  poem: string;
+  links: string;
   imageUrl: string | null;
   contentUrl: string | null;
   audioUrl: string | null;
@@ -128,6 +130,8 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         description TEXT NOT NULL DEFAULT '',
         image_url TEXT,
         content_url TEXT,
+        memory_poem TEXT,
+        memory_links TEXT,
         world_left INTEGER,
         world_top INTEGER,
         is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
@@ -141,6 +145,8 @@ function ensureAuthorsWorldSchema(): Promise<void> {
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS content_url TEXT;
+      ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS memory_poem TEXT;
+      ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS memory_links TEXT;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS world_left INTEGER;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS world_top INTEGER;
       ALTER TABLE author_creations ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;
@@ -287,6 +293,8 @@ function serializeAuthor(row: Record<string, unknown>) {
           id: Number(value.id),
           title: typeof value.title === "string" ? value.title : "Memory",
           description: typeof value.description === "string" ? value.description : "",
+          poem: typeof value.memory_poem === "string" ? value.memory_poem : "",
+          links: typeof value.memory_links === "string" ? value.memory_links : "",
           imageUrl: typeof value.image_url === "string" ? value.image_url : null,
           createdAt: value.created_at,
         };
@@ -304,6 +312,8 @@ function serializeCreation(row: Record<string, unknown>): AuthorCreation {
     kind: typeof row.kind === "string" ? row.kind : "card",
     title: row.title as string,
     description: typeof row.description === "string" ? row.description : "",
+    poem: typeof row.memory_poem === "string" ? row.memory_poem : "",
+    links: typeof row.memory_links === "string" ? row.memory_links : "",
     imageUrl: typeof row.image_url === "string" ? row.image_url : null,
     contentUrl: typeof row.content_url === "string" ? row.content_url : null,
     audioUrl: typeof row.audio_object_path === "string"
@@ -324,7 +334,7 @@ function serializeCreation(row: Record<string, unknown>): AuthorCreation {
 async function creationsForAuthor(authorId: number, includeHidden = false) {
   const result = await pool.query(
     `SELECT id, sort_order, platform, kind, title, description, image_url, content_url,
-            world_left, world_top, is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at
+            memory_poem, memory_links, world_left, world_top, is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at
      FROM author_creations
      WHERE author_id = $1
        AND ($2::boolean OR kind <> 'memory' OR is_hidden = FALSE)
@@ -355,6 +365,8 @@ function normalizedCreationBody(body: unknown) {
     : {};
   const title = textField(candidate.title);
   const description = typeof candidate.description === "string" ? candidate.description.trim() : "";
+  const poem = typeof candidate.poem === "string" ? candidate.poem.trim() : "";
+  const rawLinks = typeof candidate.links === "string" ? candidate.links.trim() : "";
   const platform = textField(candidate.platform) ?? "other";
   const kind = textField(candidate.kind) ?? "card";
   const imageUrl = normalizedOptionalImage(candidate.imageUrl);
@@ -371,6 +383,16 @@ function normalizedCreationBody(body: unknown) {
   if (imageUrl === "invalid" || contentUrl === "invalid") {
     return { error: "Image must be an http(s) link or a compressed image, and content links must use http(s)" as const };
   }
+  if (poem.length > 12_000) {
+    return { error: "The poem must be no longer than 12,000 characters" as const };
+  }
+  const links = rawLinks
+    ? rawLinks.split(/\r?\n/).map((link) => link.trim()).filter(Boolean)
+    : [];
+  if (links.length > 20 || links.some((link) => !/^https?:\/\/\S+$/i.test(link))) {
+    return { error: "Memory links must be http(s) URLs, one per line, with a maximum of 20 links" as const };
+  }
+  const normalizedMemoryLinks = links.length > 0 ? links.join("\n") : null;
   if (audioObjectPath && !/^\/objects\/uploads\/[a-z0-9-]+$/i.test(audioObjectPath)) {
     return { error: "Audio upload path is invalid" as const };
   }
@@ -384,6 +406,8 @@ function normalizedCreationBody(body: unknown) {
     value: {
       title,
       description,
+      poem: kind === "memory" ? poem : null,
+      links: kind === "memory" ? normalizedMemoryLinks : null,
       platform,
       kind: ["card", "banner", "creation", "memory"].includes(kind) ? kind : "card",
       imageUrl,
@@ -495,8 +519,10 @@ router.get("/authors-world/authors", async (_req, res) => {
                SELECT json_agg(json_build_object(
                  'id', memories.id,
                  'title', memories.title,
-                 'description', memories.description,
-                 'image_url', memories.image_url,
+                  'description', memories.description,
+                  'memory_poem', memories.memory_poem,
+                  'memory_links', memories.memory_links,
+                  'image_url', memories.image_url,
                  'created_at', memories.created_at
                ) ORDER BY memories.sort_order ASC NULLS LAST, memories.created_at ASC, memories.id ASC)
                FROM author_creations memories
@@ -528,6 +554,8 @@ router.get("/authors-world/me", async (req, res) => {
                   'id', memories.id,
                   'title', memories.title,
                   'description', memories.description,
+                  'memory_poem', memories.memory_poem,
+                  'memory_links', memories.memory_links,
                   'image_url', memories.image_url,
                   'created_at', memories.created_at
                 ) ORDER BY memories.sort_order ASC NULLS LAST, memories.created_at ASC, memories.id ASC)
@@ -648,8 +676,10 @@ router.get("/authors-world/author/:slug", async (req, res) => {
                SELECT json_agg(json_build_object(
                  'id', memories.id,
                  'title', memories.title,
-                 'description', memories.description,
-                 'image_url', memories.image_url,
+                  'description', memories.description,
+                  'memory_poem', memories.memory_poem,
+                  'memory_links', memories.memory_links,
+                  'image_url', memories.image_url,
                  'created_at', memories.created_at
                ) ORDER BY memories.sort_order ASC NULLS LAST, memories.created_at ASC, memories.id ASC)
                FROM author_creations memories
@@ -853,16 +883,16 @@ router.post("/authors-world/me/creations", async (req, res) => {
     const result = await pool.query(
       `INSERT INTO author_creations
          (author_id, sort_order, platform, kind, title, description, image_url, content_url,
-           is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds)
+            memory_poem, memory_links, is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds)
        SELECT authors.id,
               (SELECT COALESCE(MAX(existing.sort_order) + 1, 0)
                FROM author_creations existing
                WHERE existing.author_id = authors.id),
-                $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+                 $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
        FROM authors
        WHERE user_id = $1
        RETURNING id, sort_order, platform, kind, title, description, image_url, content_url,
-                  is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at`,
+                   memory_poem, memory_links, is_hidden, audio_object_path, audio_size_bytes, audio_duration_seconds, created_at, updated_at`,
       [
         userId,
         normalized.value.platform,
@@ -871,6 +901,8 @@ router.post("/authors-world/me/creations", async (req, res) => {
         normalized.value.description,
         normalized.value.imageUrl,
         normalized.value.contentUrl,
+         normalized.value.poem,
+         normalized.value.links,
          normalized.value.isHidden,
         audio.objectPath,
         audio.sizeBytes,
@@ -936,13 +968,15 @@ router.patch("/authors-world/me/creations/:id", async (req, res) => {
     const result = await pool.query(
       `UPDATE author_creations AS creations
        SET platform = $1, kind = $2, title = $3, description = $4,
-           image_url = $5, content_url = $6, is_hidden = $7, audio_object_path = $8,
-           audio_size_bytes = $9, audio_duration_seconds = $10, updated_at = NOW()
+           image_url = $5, content_url = $6, memory_poem = $7, memory_links = $8,
+           is_hidden = $9, audio_object_path = $10, audio_size_bytes = $11,
+           audio_duration_seconds = $12, updated_at = NOW()
        FROM authors
-       WHERE creations.id = $11 AND creations.author_id = authors.id AND authors.user_id = $12
+       WHERE creations.id = $13 AND creations.author_id = authors.id AND authors.user_id = $14
        RETURNING creations.id, creations.platform, creations.kind, creations.title,
-                 creations.sort_order, creations.description, creations.image_url, creations.content_url,
-                  creations.is_hidden, creations.audio_object_path, creations.audio_size_bytes, creations.audio_duration_seconds,
+                  creations.sort_order, creations.description, creations.image_url, creations.content_url,
+                  creations.memory_poem, creations.memory_links, creations.is_hidden, creations.audio_object_path,
+                  creations.audio_size_bytes, creations.audio_duration_seconds,
                  creations.created_at, creations.updated_at`,
       [
         normalized.value.platform,
@@ -951,6 +985,8 @@ router.patch("/authors-world/me/creations/:id", async (req, res) => {
         normalized.value.description,
         normalized.value.imageUrl,
         normalized.value.contentUrl,
+         normalized.value.poem,
+         normalized.value.links,
          normalized.value.isHidden,
         audio.objectPath,
         audio.sizeBytes,

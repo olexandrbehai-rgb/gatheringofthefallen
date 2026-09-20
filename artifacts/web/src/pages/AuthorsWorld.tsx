@@ -19,6 +19,8 @@ type AuthorMemory = {
   id: number;
   title: string;
   description: string;
+  poem: string;
+  links: string;
   imageUrl?: string | null;
   isHidden?: boolean;
   createdAt?: string;
@@ -73,6 +75,8 @@ type AuthorCreation = {
   kind: string;
   title: string;
   description: string;
+  poem: string;
+  links: string;
   imageUrl?: string | null;
   contentUrl?: string | null;
   audioUrl?: string | null;
@@ -100,6 +104,8 @@ type CreationDraft = {
 type MemoryDraft = {
   title: string;
   description: string;
+  poem: string;
+  links: string;
   imageUrl: string;
   isHidden: boolean;
 };
@@ -188,6 +194,8 @@ const EMPTY_CREATION_DRAFT: CreationDraft = {
 const EMPTY_MEMORY_DRAFT: MemoryDraft = {
   title: "",
   description: "",
+  poem: "",
+  links: "",
   imageUrl: "",
   isHidden: false,
 };
@@ -366,7 +374,11 @@ function mapApiAuthor(
     backgroundUrl: value.backgroundUrl,
     position: value.position ?? worldPositionFor(index),
     memories: Array.isArray((value as { memories?: AuthorMemory[] }).memories)
-      ? (value as unknown as { memories: AuthorMemory[] }).memories
+      ? (value as unknown as { memories: Array<AuthorMemory & { poem?: unknown; links?: unknown }> }).memories.map((memory) => ({
+        ...memory,
+        poem: typeof memory.poem === "string" ? memory.poem : "",
+        links: typeof memory.links === "string" ? memory.links : "",
+      }))
       : [],
   };
 }
@@ -779,6 +791,29 @@ export default function AuthorsWorld() {
   }, []);
 
   useEffect(() => {
+    if (!isRegistering) return;
+
+    const body = document.body;
+    const html = document.documentElement;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+    };
+  }, [isRegistering]);
+
+  useEffect(() => {
     let active = true;
 
     const loadAuthors = async () => {
@@ -1123,6 +1158,8 @@ export default function AuthorsWorld() {
     event.preventDefault();
     const title = memoryDraft.title.trim();
     const description = memoryDraft.description.trim();
+    const poem = memoryDraft.poem.trim();
+    const links = memoryDraft.links.trim();
     if (!title || !description || isSavingMemory || isProcessingMemory) return;
     setMemoryError(null);
     setMemorySavedNotice(null);
@@ -1140,6 +1177,8 @@ export default function AuthorsWorld() {
           kind: "memory",
           title,
           description,
+          poem,
+          links,
           imageUrl: memoryDraft.imageUrl || null,
           contentUrl: null,
           audioObjectPath: null,
@@ -1168,6 +1207,8 @@ export default function AuthorsWorld() {
                 id: savedMemory.id,
                 title: savedMemory.title,
                 description: savedMemory.description,
+                 poem: savedMemory.poem,
+                 links: savedMemory.links,
                 imageUrl: savedMemory.imageUrl,
                 createdAt: savedMemory.createdAt,
               }]),
@@ -1184,6 +1225,8 @@ export default function AuthorsWorld() {
               id: savedMemory.id,
               title: savedMemory.title,
               description: savedMemory.description,
+               poem: savedMemory.poem,
+               links: savedMemory.links,
               imageUrl: savedMemory.imageUrl,
               createdAt: savedMemory.createdAt,
             }]),
@@ -1728,8 +1771,8 @@ export default function AuthorsWorld() {
       </div>
 
       {isRegistering && (
-         <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto overscroll-contain bg-[#02040a]/85 p-2 backdrop-blur-md sm:items-center sm:p-4">
-           <div role="dialog" aria-modal="true" aria-labelledby="author-registration-title" className="my-2 max-h-[calc(100dvh-16px)] w-full max-w-xl overflow-y-auto border border-[#00f0ff]/55 bg-[#06111a]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(0,240,255,0.2)] sm:my-0 sm:max-h-[calc(100dvh-32px)] sm:p-7">
+         <div className="fixed inset-0 z-[70] flex h-[100dvh] items-start justify-center overflow-hidden overscroll-none bg-[#02040a]/85 p-2 backdrop-blur-md sm:items-center sm:p-4">
+           <div role="dialog" aria-modal="true" aria-labelledby="author-registration-title" className="my-2 max-h-[calc(100dvh-16px)] w-full max-w-xl touch-pan-y overflow-y-auto overscroll-contain border border-[#00f0ff]/55 bg-[#06111a]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(0,240,255,0.2)] sm:my-0 sm:max-h-[calc(100dvh-32px)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">{copy.editor.newPortal}</p>
@@ -2019,7 +2062,15 @@ export default function AuthorsWorld() {
                                onClick={() => {
                                  setMemorySavedNotice(null);
                                  setEditingMemoryId(memory.id);
-                                 setMemoryDraft({ title: memory.title, description: memory.description, imageUrl: memory.imageUrl ?? "", isHidden: Boolean(memory.isHidden) });
+                                  const savedMemory = creations.find((creation) => creation.id === memory.id);
+                                  setMemoryDraft({
+                                    title: memory.title,
+                                    description: memory.description,
+                                    poem: savedMemory?.poem ?? memory.poem,
+                                    links: savedMemory?.links ?? memory.links,
+                                    imageUrl: memory.imageUrl ?? "",
+                                    isHidden: Boolean(memory.isHidden),
+                                  });
                                }}
                                className="border border-white/15 px-2 py-2 font-mono text-[9px] uppercase text-white/60 hover:border-[#ffcf9e] hover:text-white"
                              >
@@ -2040,6 +2091,14 @@ export default function AuthorsWorld() {
                        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.story}</span>
                        <textarea required value={memoryDraft.description} onChange={(event) => setMemoryDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-[#140d18] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#ffcf9e]/70" placeholder={copy.memory.storyPlaceholder} />
                      </label>
+                      <label className="block">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.poem}</span>
+                        <textarea value={memoryDraft.poem} onChange={(event) => setMemoryDraft((current) => ({ ...current, poem: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-[#140d18] px-3 py-2 font-serif text-sm leading-relaxed text-white outline-none focus:border-[#ffcf9e]/70" placeholder={copy.memory.poemPlaceholder} />
+                      </label>
+                      <label className="block">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.links}</span>
+                        <textarea value={memoryDraft.links} onChange={(event) => setMemoryDraft((current) => ({ ...current, links: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-[#140d18] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#ffcf9e]/70" placeholder={copy.memory.linksPlaceholder} />
+                      </label>
                      <div>
                        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.photo}</span>
                        <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-dashed border-[#ffcf9e]/55 bg-[#ffcf9e]/5 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffcf9e] hover:border-[#ffcf9e]">

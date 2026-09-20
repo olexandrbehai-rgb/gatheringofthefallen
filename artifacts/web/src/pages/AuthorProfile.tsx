@@ -22,6 +22,8 @@ type Creation = {
   kind: string;
   title: string;
   description: string;
+  poem: string;
+  links: string;
   imageUrl?: string | null;
   contentUrl?: string | null;
   audioUrl?: string | null;
@@ -74,6 +76,13 @@ function youtubeId(url: string) {
 
 function initialsFor(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "??";
+}
+
+function memoryLinksFor(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((link) => link.trim())
+    .filter((link) => /^https?:\/\/\S+$/i.test(link));
 }
 
 export default function AuthorProfile({ params }: { params: { slug: string } }) {
@@ -282,7 +291,25 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                  <div className="mt-7 grid gap-7 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:items-start">
                    {selectedMemory.imageUrl && <img src={selectedMemory.imageUrl} alt="" className="mx-auto max-h-80 w-full max-w-sm object-contain mix-blend-multiply sm:mx-0" />}
                    <div>
-                     <p className="whitespace-pre-wrap font-serif text-lg leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.description}</p>
+                      <p className="whitespace-pre-wrap font-serif text-lg leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.description}</p>
+                      {selectedMemory.poem && (
+                        <div className="mt-7 border-t border-[#6f4630]/25 pt-5">
+                          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#6f4630]">Вірш</p>
+                          <p className="mt-3 whitespace-pre-wrap font-serif text-lg italic leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.poem}</p>
+                        </div>
+                      )}
+                      {memoryLinksFor(selectedMemory.links).length > 0 && (
+                        <div className="mt-7 border-t border-[#6f4630]/25 pt-5">
+                          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#6f4630]">Посилання</p>
+                          <div className="mt-3 space-y-2">
+                            {memoryLinksFor(selectedMemory.links).map((link) => (
+                              <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="block break-all font-mono text-xs text-[#6f4630] underline decoration-[#6f4630]/45 underline-offset-4 hover:text-[#24150f]">
+                                {link}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                      <p className="mt-8 border-t border-[#6f4630]/30 pt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6f4630]">{author.displayName} // {author.role}</p>
                    </div>
                  </div>
