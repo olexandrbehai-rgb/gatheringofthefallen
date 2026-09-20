@@ -143,18 +143,25 @@ export default function Game() {
       // iOS and embedded browsers can deny element fullscreen.
     }
 
-    if (window.matchMedia("(max-width: 767px), (max-height: 767px)").matches) {
-      let landscapeLocked = false;
+    if (window.matchMedia("(max-width: 767px), (max-height: 767px), (pointer: coarse)").matches) {
       if (orientation?.lock) {
         try {
           await orientation.lock("landscape");
-          landscapeLocked = true;
         } catch {
           // Unsupported or denied: use the CSS landscape fallback below.
         }
       }
 
-      if (!landscapeLocked && (!fullscreenEntered || window.matchMedia("(orientation: portrait)").matches)) {
+      // Some mobile Chromium hosts resolve orientation.lock() without changing
+      // the actual viewport. Verify the rendered viewport instead of trusting
+      // the promise, then rotate with CSS when the host stays in portrait.
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => window.setTimeout(resolve, 180));
+      });
+      const visibleWidth = window.visualViewport?.width ?? window.innerWidth;
+      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+      const viewportStillPortrait = visibleHeight > visibleWidth;
+      if (!fullscreenEntered || viewportStillPortrait) {
         setIsLandscapeFallback(true);
       }
     }
