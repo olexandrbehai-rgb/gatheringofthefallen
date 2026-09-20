@@ -188,7 +188,7 @@ export function OracleChat() {
     if (!viewport) return;
 
     const updateViewport = () => {
-      if (window.innerWidth >= 768) {
+      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
         setKeyboardInset(0);
         setMobileViewportHeight(null);
         setMobileViewportTop(null);
@@ -197,7 +197,7 @@ export function OracleChat() {
 
       const rawKeyboardInset = Math.max(
         0,
-        window.innerHeight - viewport.height - viewport.offsetTop,
+        window.innerHeight - viewport.height,
       );
       if (rawKeyboardInset > 80) {
         setKeyboardInset(rawKeyboardInset);
@@ -328,8 +328,8 @@ export function OracleChat() {
       ? {
           top: `${Math.max(mobileViewportTop + 8, 8)}px`,
           bottom: "auto",
-          height: `${Math.max(mobileViewportHeight - 16, 180)}px`,
-          maxHeight: `${Math.max(mobileViewportHeight - 16, 180)}px`,
+          height: `${Math.max(mobileViewportHeight - 16, 0)}px`,
+          maxHeight: `${Math.max(mobileViewportHeight - 16, 0)}px`,
         }
       : undefined;
 
@@ -372,11 +372,14 @@ export function OracleChat() {
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, x: -20, scale: 0.9 }}
             style={keyboardAwareStyle}
-            className="fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] min-h-0 flex-col overflow-hidden overscroll-y-contain rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl [touch-action:pan-y] md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]"
+            className={cn(
+              "fixed inset-x-2 bottom-2 z-50 flex h-[min(78dvh,650px)] max-h-[calc(100dvh-16px)] min-h-0 flex-col overflow-hidden overscroll-y-contain rounded-[20px] border border-secondary/40 bg-[#0a0414]/95 shadow-[0_0_30px_rgba(138,43,226,0.25),inset_0_0_20px_rgba(138,43,226,0.1)] backdrop-blur-xl [touch-action:pan-y]",
+              keyboardInset === 0 && "md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]",
+            )}
             role="dialog"
             aria-label="Чат з Оракулом"
           >
-            <div className="relative shrink-0">
+            <div className={cn("relative shrink-0", keyboardInset > 0 && "hidden")}>
               <OraclePortrait
                 isSpeaking={isOracleSpeaking}
                 isThinking={isTyping}
