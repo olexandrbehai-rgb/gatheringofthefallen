@@ -9,6 +9,7 @@ import { Layout } from "@/components/Layout";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { CartProvider } from "@/hooks/useCart";
 import { CurrencyProvider } from "@/hooks/useCurrency";
+import { AmbientMusicProvider } from "@/hooks/useAmbientMusic";
 import { trackEvent } from "@/lib/analytics";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
@@ -170,14 +171,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <CurrencyProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <WouterRouter base={basePath}>
-                <AuthenticatedApp />
-              </WouterRouter>
-              <Toaster />
-            </TooltipProvider>
-          </CartProvider>
+          <AmbientMusicProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <WouterRouter base={basePath}>
+                  <AuthenticatedApp />
+                </WouterRouter>
+                <Toaster />
+              </TooltipProvider>
+            </CartProvider>
+          </AmbientMusicProvider>
         </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>

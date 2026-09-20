@@ -8,8 +8,9 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useT } from "@/i18n/LanguageContext";
 import { AUTHORS_WORLD_COPY } from "@/i18n/authorsWorld";
 import { useCart } from "@/hooks/useCart";
+import { useAmbientMusic } from "@/hooks/useAmbientMusic";
 import { CartDrawer } from "./CartDrawer";
-import { ArrowLeft, LogIn, LogOut, ShoppingCart, UserRound } from "lucide-react";
+import { ArrowLeft, LogIn, LogOut, Music2, ShoppingCart, UserRound, Volume2, VolumeX } from "lucide-react";
 import { HeroSequence } from "./HeroSequence";
 import { Domovyk } from "./author-world/Domovyk";
 import { AmbientCreature } from "./AmbientCreature";
@@ -89,8 +90,13 @@ export function Layout({ children, authEnabled = true }: { children: React.React
   const { t, lang } = useT();
   const authorsWorldCopy = AUTHORS_WORLD_COPY[lang].header;
   const { count: cartCount, open: openCart } = useCart();
+  const { enabled, playing, toggle, setRouteMuted } = useAmbientMusic();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
+
+  useEffect(() => {
+    setRouteMuted(location === "/game");
+  }, [location, setRouteMuted]);
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -252,6 +258,16 @@ export function Layout({ children, authEnabled = true }: { children: React.React
               >
                 {t("home.ownerStats")}
               </Link>
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
+                title={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
+                className={`neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
+              >
+                {playing ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
+                <span className="hidden sm:inline">Музика</span>
+              </button>
               <button
                 type="button"
                 onClick={openCart}
