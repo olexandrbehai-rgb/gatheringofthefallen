@@ -11,6 +11,7 @@ import { CartDrawer } from "./CartDrawer";
 import { ArrowLeft, LogIn, LogOut, ShoppingCart, UserRound } from "lucide-react";
 import { HeroSequence } from "./HeroSequence";
 import { Domovyk } from "./author-world/Domovyk";
+import { AmbientCreature } from "./AmbientCreature";
 import { useClerk, useUser } from "@clerk/react";
 import logoImg from "@assets/logo_1776018973004.png";
 import bgHome from "@/assets/home-background.png";
@@ -118,6 +119,11 @@ export function Layout({ children, authEnabled = true }: { children: React.React
 
       {location === "/" && heroEnabled && (
         <HeroSequence className="pointer-events-none fixed inset-x-0 top-0 z-[1] h-svh" />
+      )}
+      {location === "/authors-world" && (
+        <AmbientCreature
+          className="bottom-[2vh] right-[2vw] z-[1] h-[min(54vw,290px)] w-[min(54vw,290px)] sm:bottom-[3vh] sm:right-[4vw] sm:h-[min(34vw,440px)] sm:w-[min(34vw,440px)]"
+        />
       )}
 
       <FallingAsh />
