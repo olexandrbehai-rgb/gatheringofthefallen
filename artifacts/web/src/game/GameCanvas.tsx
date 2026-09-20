@@ -492,7 +492,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: Player, time: number,
   ctx.restore();
 }
 
-function startAudio(): AudioRuntime | null {
+function startAudio(theme = 0): AudioRuntime | null {
   const AudioConstructor = (
     window.AudioContext ||
     (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -501,39 +501,110 @@ function startAudio(): AudioRuntime | null {
 
   const context = new AudioConstructor();
   const gain = context.createGain();
-  gain.gain.value = 0.045;
+  const musicBus = context.createGain();
+  const warmth = context.createBiquadFilter();
+  const compressor = context.createDynamicsCompressor();
+
+  // Give the soundtrack more presence while keeping peaks controlled and the
+  // high end soft enough for long mobile play sessions.
+  gain.gain.value = 0.068;
+  musicBus.gain.value = 0.82;
+  warmth.type = "lowpass";
+  warmth.frequency.value = 4800;
+  warmth.Q.value = 0.65;
+  compressor.threshold.value = -24;
+  compressor.knee.value = 22;
+  compressor.ratio.value = 3;
+  compressor.attack.value = 0.018;
+  compressor.release.value = 0.24;
+  musicBus.connect(warmth);
+  warmth.connect(compressor);
+  compressor.connect(gain);
   gain.connect(context.destination);
-  const melody = [220, 277.18, 329.63, 277.18, 246.94, 329.63, 369.99, 329.63];
-  const bass = [110, 110, 123.47, 92.5];
   const audio: AudioRuntime = { context, gain, timer: 0, step: 0 };
+  const roots = [220, 196, 233.08, 207.65];
+  const motifs = [
+    [0, 3, 7, 3, 10, 7, 3, 0, 0, 3, 7, 12, 10, 7, 3, null],
+    [0, null, 3, 7, 10, 7, 3, null, 0, 3, 5, 7, 12, 10, 7, 3],
+    [0, 5, 7, 10, 7, 5, 3, 0, 3, 5, 7, 12, 10, 7, 5, null],
+    [0, 3, null, 7, 10, 12, 10, 7, 5, 7, 10, 7, 5, 3, 0, null],
+  ] as const;
+  const bassOffsets = [0, 0, -5, -5, -3, -3, -7, -7];
+  const noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.08), context.sampleRate);
+  const noiseData = noiseBuffer.getChannelData(0);
+  for (let index = 0; index < noiseData.length; index += 1) {
+    const envelope = 1 - index / noiseData.length;
+    noiseData[index] = Math.sin(index * 17.31 + theme * 2.7) * envelope * 0.7;
+  }
+
+  const playTone = (
+    frequency: number,
+    duration: number,
+    peak: number,
+    type: OscillatorType,
+    now: number,
+    detune = 0,
+  ) => {
+    const tone = context.createOscillator();
+    const toneGain = context.createGain();
+    tone.type = type;
+    tone.frequency.setValueAtTime(frequency, now);
+    tone.detune.value = detune;
+    toneGain.gain.setValueAtTime(0.0001, now);
+    toneGain.gain.exponentialRampToValueAtTime(peak, now + Math.min(0.04, duration * 0.18));
+    toneGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    tone.connect(toneGain);
+    toneGain.connect(musicBus);
+    tone.start(now);
+    tone.stop(now + duration + 0.04);
+  };
 
   const playNote = () => {
     const now = context.currentTime;
-    const tone = context.createOscillator();
-    const toneGain = context.createGain();
-    tone.type = "triangle";
-    tone.frequency.value = melody[audio.step % melody.length];
-    toneGain.gain.setValueAtTime(0.0001, now);
-    toneGain.gain.exponentialRampToValueAtTime(0.17, now + 0.025);
-    toneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
-    tone.connect(toneGain);
-    toneGain.connect(gain);
-    tone.start(now);
-    tone.stop(now + 0.26);
+    const phrase = Math.floor(audio.step / 16);
+    const stepInPhrase = audio.step % 16;
+    const root = roots[(theme + phrase) % roots.length];
+    const motif = motifs[(theme + phrase) % motifs.length];
+    const offset = motif[stepInPhrase];
 
-    if (audio.step % 2 === 0) {
-      const low = context.createOscillator();
-      const lowGain = context.createGain();
-      low.type = "sine";
-      low.frequency.value = bass[(audio.step / 2) % bass.length];
-      lowGain.gain.setValueAtTime(0.0001, now);
-      lowGain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
-      lowGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-      low.connect(lowGain);
-      lowGain.connect(gain);
-      low.start(now);
-      low.stop(now + 0.32);
+    if (offset !== null) {
+      const frequency = root * 2 ** (offset / 12);
+      playTone(frequency, 0.26, 0.13, "triangle", now);
+      if (stepInPhrase % 4 === 0) {
+        playTone(frequency * 2, 0.18, 0.026, "sine", now + 0.015, -5);
+      }
     }
+
+    if (stepInPhrase % 2 === 0) {
+      const bassFrequency = root / 2 * 2 ** (bassOffsets[(stepInPhrase / 2) % bassOffsets.length] / 12);
+      playTone(bassFrequency, 0.42, 0.17, "sine", now);
+    }
+
+    if (stepInPhrase === 0 || stepInPhrase === 8) {
+      const chordRoot = root / 2;
+      playTone(chordRoot, 1.7, 0.026, "sine", now);
+      playTone(chordRoot * 2 ** (3 / 12), 1.55, 0.018, "triangle", now, -4);
+      playTone(chordRoot * 2 ** (7 / 12), 1.4, 0.014, "triangle", now, 4);
+    }
+
+    if (stepInPhrase === 4 || stepInPhrase === 12) {
+      const percussion = context.createBufferSource();
+      const percussionFilter = context.createBiquadFilter();
+      const percussionGain = context.createGain();
+      percussion.buffer = noiseBuffer;
+      percussionFilter.type = "bandpass";
+      percussionFilter.frequency.value = stepInPhrase === 4 ? 720 : 1120;
+      percussionFilter.Q.value = 0.9;
+      percussionGain.gain.setValueAtTime(0.0001, now);
+      percussionGain.gain.exponentialRampToValueAtTime(0.045, now + 0.006);
+      percussionGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+      percussion.connect(percussionFilter);
+      percussionFilter.connect(percussionGain);
+      percussionGain.connect(musicBus);
+      percussion.start(now);
+      percussion.stop(now + 0.08);
+    }
+
     audio.step += 1;
   };
 
@@ -605,7 +676,7 @@ export function GameCanvas({
     };
 
     const ensureAudio = () => {
-      if (!audioRef.current) audioRef.current = startAudio();
+      if (!audioRef.current) audioRef.current = startAudio(runtime.levelIndex);
       if (audioRef.current?.context.state === "suspended") {
         void audioRef.current.context.resume();
       }
@@ -1054,7 +1125,7 @@ export function GameCanvas({
 
       const gamepadConnected = connectedBefore;
       if (audioRef.current) {
-        const targetGain = audioEnabledRef.current ? 0.045 : 0.0001;
+        const targetGain = audioEnabledRef.current ? 0.068 : 0.0001;
         audioRef.current.gain.gain.setTargetAtTime(targetGain, audioRef.current.context.currentTime, 0.04);
       }
       if (time - lastHudUpdate > 100) {
