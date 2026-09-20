@@ -18,6 +18,7 @@ import Contacts from "@/pages/Contacts";
 import Game from "@/pages/Game";
 import AuthorsWorld from "@/pages/AuthorsWorld";
 import AuthorProfile from "@/pages/AuthorProfile";
+import AuthorAvatarPreview from "@/pages/AuthorAvatarPreview";
 import OwnerAnalytics from "@/pages/OwnerAnalytics";
 import NotFound from "@/pages/not-found";
 
@@ -101,6 +102,7 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
       {!authEnabled && <Route path="/sign-in/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/sign-up/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/owner-analytics"><Redirect to="/" /></Route>}
+      <Route path="/author-avatar-preview" component={AuthorAvatarPreview} />
       <Route
         path="/game"
         component={() => (
