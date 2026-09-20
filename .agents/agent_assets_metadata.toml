@@ -256,3 +256,73 @@ mtime_ms = 1789682351199
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/612a7ae3-cf5f-436c-b6be-7e2eabe53587/9f57b1a6-2b97-4da9-b06d-a5128bfd58f5"
 storage_version_token = "1789682358275731"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "O3fq4_Cl_fqAKdtfTaFKa"
+uri = "file://screenshots/authors-world-transparent-preview.jpg"
+type = "image"
+title = "Прозорий Світ авторів — preview"
+description = "Оновлена сцена без темної заливки й сітки: видно водоспади, дивани та книжки; залишені тонкі неонові рамки, контури кіл і GOTF-dot pattern."
+logical_id = "1557f1d6-133c-4671-8238-4bf5bd9b7f8e"
+content_hash = "sha256:8061a447b55cc14c41ff35c4850c85b366dfe4584066f9b3448cbeb464b43a8f"
+size = 284883
+mtime_ms = 1789885752221
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/1557f1d6-133c-4671-8238-4bf5bd9b7f8e/1731058d-f9cb-43e1-b28d-e88eb60d73e3"
+storage_version_token = "1789885763419345"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "lU_aABxY2IaXg-GGrcmCU"
+uri = "file://screenshots/authors-world-tinted-preview.jpg"
+type = "image"
+title = "Світ авторів — легке тонування"
+description = "Легкий прозорий холодний tint у полі: фон і деталі залишаються видимими, але область світу читається краще."
+logical_id = "47ac57dd-7b7d-4574-a251-3dc8c5420c81"
+content_hash = "sha256:f4bd108b45241e5f9e1c9741da9818ff3efe0018e49ee01e492f4a846c636e21"
+size = 280457
+mtime_ms = 1789886142769
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/47ac57dd-7b7d-4574-a251-3dc8c5420c81/336c7c64-e1aa-4a78-8220-42155d58a4dc"
+storage_version_token = "1789886148234903"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "RuAGhNk4qP6Lwk-Vuj985"
+uri = "file://screenshots/authors-world-controls-full.jpg"
+type = "image"
+title = "Світ авторів — об’ємні локально підсвічені елементи"
+description = "Фінальний desktop preview: кнопки, авторський акаунт, пошук і кроки стали контрастнішими та об’ємними без розмитого світіння на фон."
+logical_id = "b676a874-d3ad-48c8-a00a-cfe7622f9dca"
+content_hash = "sha256:756875b0439f88d8a33e3f3a31cfd5849c6c083239fe9e53d420ec26dc21fec0"
+size = 430978
+mtime_ms = 1789886486977
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/b676a874-d3ad-48c8-a00a-cfe7622f9dca/63e37ffb-1e11-4107-b04f-05ca9d8b5b7f"
+storage_version_token = "1789886496210497"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "21RP2Y5If8Nn1cScvbK8c"
+uri = "file://artifacts/web/src/assets/author-garden-mist.mp4"
+type = "video"
+title = "Author Garden mist video"
+description = "Оптимізований беззвучний MP4-шар для desktop/tablet у рамці Саду авторів; прозорість і змішування застосовуються в інтерфейсі поверх бібліотеки."
+logical_id = "b6a141ca-9467-4e40-9d1e-2a8f356136c2"
+content_hash = "sha256:7e8963d69a2a197e3a70df7e6504a90268a9f4a6e4d0529484ced791a952097e"
+size = 14060995
+mtime_ms = 1789926226501
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/b6a141ca-9467-4e40-9d1e-2a8f356136c2/6d95ac04-d58b-4dc2-a3c7-eee2a1394e29"
+storage_version_token = "1789926391295679"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "eWruBtphP8FUTJUOwIKYk"
+uri = "file://artifacts/web/src/assets/author-garden-mist-poster.jpg"
+type = "image"
+title = "Author Garden mobile poster"
+description = "Легкий статичний постер для мобільних пристроїв без завантаження важкого відео."
+logical_id = "9dc9d4ad-0dbc-4bfa-94d7-21ba22da51c4"
+content_hash = "sha256:ac4d9baa20fd8ad3fcca5f3184f3abd0d630fdbc4458f2de9132f677c900dc3c"
+size = 403534
+mtime_ms = 1789926232594
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:58f3e59c-b82b-4ef1-9eb8-012bd48b91d2/9dc9d4ad-0dbc-4bfa-94d7-21ba22da51c4/e6e199d5-79d2-451e-99fa-63ed8d2353ab"
+storage_version_token = "1789926392065901"
+content_type = "image/jpeg"

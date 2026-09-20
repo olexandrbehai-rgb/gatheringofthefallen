@@ -15,6 +15,15 @@ type AuthorLink = {
   url: string;
 };
 
+type AuthorMemory = {
+  id: number;
+  title: string;
+  description: string;
+  imageUrl?: string | null;
+  isHidden?: boolean;
+  createdAt?: string;
+};
+
 type PlatformKey = "website" | "spotify" | "suno" | "youtube-music" | "youtube" | "instagram" | "tiktok" | "bandcamp" | "soundcloud" | "audio" | "other";
 
 type PlatformLinkDraft = {
@@ -34,6 +43,7 @@ type Author = {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
   position: { left: number; top: number };
+  memories: AuthorMemory[];
 };
 
 type ChatMessage = {
@@ -69,6 +79,9 @@ type AuthorCreation = {
   audioObjectPath?: string | null;
   audioSizeBytes?: number | null;
   audioDurationSeconds?: number | null;
+  position?: { left: number; top: number } | null;
+  isHidden?: boolean;
+  createdAt?: string;
 };
 
 type CreationDraft = {
@@ -82,6 +95,13 @@ type CreationDraft = {
   audioFileName: string;
   audioSizeBytes: number | null;
   audioDurationSeconds: number | null;
+};
+
+type MemoryDraft = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  isHidden: boolean;
 };
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
@@ -163,6 +183,13 @@ const EMPTY_CREATION_DRAFT: CreationDraft = {
   audioFileName: "",
   audioSizeBytes: null,
   audioDurationSeconds: null,
+};
+
+const EMPTY_MEMORY_DRAFT: MemoryDraft = {
+  title: "",
+  description: "",
+  imageUrl: "",
+  isHidden: false,
 };
 
 function initialsFor(name: string) {
@@ -292,6 +319,10 @@ function compressedBackgroundFromFile(file: File) {
   return compressedImageFromFile(file, 1600, 0.78, "Фон профілю");
 }
 
+function compressedMemoryImageFromFile(file: File) {
+  return compressedImageFromFile(file, 900, 0.82, "Фото спогаду");
+}
+
 function audioDurationFromFile(file: File) {
   return new Promise<number | null>((resolve) => {
     const objectUrl = URL.createObjectURL(file);
@@ -334,6 +365,21 @@ function mapApiAuthor(
     avatarUrl: value.avatarUrl,
     backgroundUrl: value.backgroundUrl,
     position: value.position ?? worldPositionFor(index),
+    memories: Array.isArray((value as { memories?: AuthorMemory[] }).memories)
+      ? (value as unknown as { memories: AuthorMemory[] }).memories
+      : [],
+  };
+}
+
+function memoryPositionFor(authorPosition: { left: number; top: number }, index: number, total: number, compact: boolean) {
+  const angle = compact
+    ? (index % 2 === 0 ? -0.65 : 0.65) + Math.floor(index / 2) * 0.12
+    : (Math.PI * 2 * index) / Math.max(total, 1) - Math.PI / 2;
+  const radiusX = compact ? 92 : 132 + Math.min(total, 20) * 2;
+  const radiusY = compact ? 70 : 108 + Math.min(total, 20) * 1.5;
+  return {
+    left: authorPosition.left + Math.cos(angle) * radiusX,
+    top: authorPosition.top + Math.sin(angle) * radiusY,
   };
 }
 
@@ -399,6 +445,43 @@ function AuthorNode({
   );
 }
 
+function MemoryNode({
+  memory,
+  position,
+  size,
+  ariaLabel,
+  onSelect,
+}: {
+  memory: AuthorMemory;
+  position: { left: number; top: number };
+  size: number;
+  ariaLabel: string;
+  onSelect: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onSelect}
+      whileHover={{ scale: 1.12 }}
+      whileFocus={{ scale: 1.12 }}
+      transition={{ type: "spring", stiffness: 280, damping: 22 }}
+      className="authors-world-memory-node group absolute z-[180] flex -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/70 bg-[#140d18]/90 text-center shadow-[0_0_18px_rgba(255,207,158,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcf9e]"
+      style={{ left: `${position.left}px`, top: `${position.top}px`, width: `${size}px`, height: `${size}px` }}
+      aria-label={ariaLabel}
+      title={memory.title}
+    >
+      <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#ffcf9e]/45" />
+      {memory.imageUrl ? (
+        <img src={memory.imageUrl} alt="" className="h-full w-full object-cover opacity-85 transition-opacity group-hover:opacity-100" />
+      ) : (
+        <span className="relative px-2 font-creepster text-[11px] leading-tight tracking-[0.06em] text-[#ffcf9e]">
+          {memory.title}
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
 export default function AuthorsWorld() {
   const [location, setLocation] = useLocation();
   const { lang } = useT();
@@ -436,6 +519,12 @@ export default function AuthorsWorld() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [editingCreationId, setEditingCreationId] = useState<number | null>(null);
+  const [memoryDraft, setMemoryDraft] = useState<MemoryDraft>(EMPTY_MEMORY_DRAFT);
+  const [memoryError, setMemoryError] = useState<string | null>(null);
+  const [memorySavedNotice, setMemorySavedNotice] = useState<string | null>(null);
+  const [isSavingMemory, setIsSavingMemory] = useState(false);
+  const [isProcessingMemory, setIsProcessingMemory] = useState(false);
+  const [editingMemoryId, setEditingMemoryId] = useState<number | null>(null);
   const [locatingAuthorId, setLocatingAuthorId] = useState<string | null>(null);
   const [isCompactViewport, setIsCompactViewport] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches);
   const [isMobileViewport, setIsMobileViewport] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
@@ -637,6 +726,20 @@ export default function AuthorsWorld() {
     }
   };
 
+  const handleMemoryFile = async (file: File | undefined) => {
+    if (!file) return;
+    setMemoryError(null);
+    setIsProcessingMemory(true);
+    try {
+      const imageUrl = await compressedMemoryImageFromFile(file);
+      setMemoryDraft((current) => ({ ...current, imageUrl }));
+    } catch (error) {
+      setMemoryError(lang === "ua" && error instanceof Error ? error.message : copy.errors.memoryImage);
+    } finally {
+      setIsProcessingMemory(false);
+    }
+  };
+
   const handleAudioFile = async (file: File | undefined) => {
     if (!file) return;
     setAudioError(null);
@@ -807,6 +910,8 @@ export default function AuthorsWorld() {
   }, [authors, search]);
 
   const selectedAuthor = authors.find((author) => author.id === selectedAuthorId) ?? null;
+  const authoredWorks = useMemo(() => creations.filter((creation) => creation.kind !== "memory"), [creations]);
+  const authoredMemories = useMemo(() => creations.filter((creation) => creation.kind === "memory"), [creations]);
   useEffect(() => {
     if (authors.length === 0 || worldViewInitializedRef.current) return;
 
@@ -1014,7 +1119,119 @@ export default function AuthorsWorld() {
     }
   };
 
+  const handleSaveMemory = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = memoryDraft.title.trim();
+    const description = memoryDraft.description.trim();
+    if (!title || !description || isSavingMemory || isProcessingMemory) return;
+    setMemoryError(null);
+    setMemorySavedNotice(null);
+    setIsSavingMemory(true);
+    try {
+      const endpoint = editingMemoryId
+        ? `${API_ROOT}/authors-world/me/creations/${editingMemoryId}`
+        : `${API_ROOT}/authors-world/me/creations`;
+      const response = await fetch(endpoint, {
+        method: editingMemoryId ? "PATCH" : "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: "other",
+          kind: "memory",
+          title,
+          description,
+          imageUrl: memoryDraft.imageUrl || null,
+          contentUrl: null,
+          audioObjectPath: null,
+          audioDurationSeconds: null,
+          hidden: memoryDraft.isHidden,
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        creation?: AuthorCreation;
+        error?: string;
+      };
+      if (!response.ok || !payload.creation) {
+        throw new Error(payload.error ?? copy.errors.saveMemory);
+      }
+      const savedMemory = payload.creation;
+      setCreations((current) => editingMemoryId
+        ? current.map((item) => item.id === editingMemoryId ? savedMemory : item)
+        : [...current, savedMemory]);
+      setAuthors((current) => current.map((author) =>
+        author.id === myAuthor?.id
+          ? {
+            ...author,
+            memories: [
+              ...author.memories.filter((memory) => memory.id !== savedMemory.id),
+              ...(savedMemory.isHidden ? [] : [{
+                id: savedMemory.id,
+                title: savedMemory.title,
+                description: savedMemory.description,
+                imageUrl: savedMemory.imageUrl,
+                createdAt: savedMemory.createdAt,
+              }]),
+            ],
+          }
+          : author,
+      ));
+      setMyAuthor((current) => current
+        ? {
+          ...current,
+          memories: [
+            ...current.memories.filter((memory) => memory.id !== savedMemory.id),
+            ...(savedMemory.isHidden ? [] : [{
+              id: savedMemory.id,
+              title: savedMemory.title,
+              description: savedMemory.description,
+              imageUrl: savedMemory.imageUrl,
+              createdAt: savedMemory.createdAt,
+            }]),
+          ],
+        }
+        : current);
+      setMemoryDraft(EMPTY_MEMORY_DRAFT);
+      setEditingMemoryId(null);
+      setMemorySavedNotice(copy.notices.memorySaved);
+    } catch (error) {
+      setMemoryError(error instanceof Error ? error.message : copy.errors.saveMemory);
+    } finally {
+      setIsSavingMemory(false);
+    }
+  };
+
+  const handleDeleteMemory = async (memoryId: number) => {
+    if (!window.confirm(copy.errors.confirmDeleteMemory)) return;
+    setMemoryError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/me/creations/${memoryId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(payload.error ?? copy.errors.deleteMemory);
+      }
+      setCreations((current) => current.filter((item) => item.id !== memoryId));
+      setAuthors((current) => current.map((author) =>
+        author.id === myAuthor?.id
+          ? { ...author, memories: author.memories.filter((memory) => memory.id !== memoryId) }
+          : author,
+      ));
+      setMyAuthor((current) => current
+        ? { ...current, memories: current.memories.filter((memory) => memory.id !== memoryId) }
+        : current);
+      if (editingMemoryId === memoryId) {
+        setEditingMemoryId(null);
+        setMemoryDraft(EMPTY_MEMORY_DRAFT);
+      }
+    } catch (error) {
+      setMemoryError(error instanceof Error ? error.message : copy.errors.deleteMemory);
+    }
+  };
+
   const handleDeleteCreation = async (creationId: number) => {
+    if (!window.confirm(copy.errors.confirmDeleteWork)) return;
     setCreationError(null);
     try {
       const response = await fetch(`${API_ROOT}/authors-world/me/creations/${creationId}`, {
@@ -1259,24 +1476,52 @@ export default function AuthorsWorld() {
                     )}
                     {visibleAuthors.map((author) => {
                       const authorIndex = authors.findIndex((item) => item.id === author.id);
+                      const authorPosition = worldPositionFor(authorIndex, isCompactViewport);
+                      const shouldShowMemories = !isCompactViewport || author.id === selectedAuthorId;
+                      const memorySize = Math.max(42, 72 - Math.min(author.memories.length, 20) * 1.25);
                       return hoveredAuthorId && hoveredAuthorId !== author.id ? null : (
-                        <AuthorNode
-                          key={author.id}
-                          author={author}
-                          ariaLabel={`${author.name}, ${author.role}. ${copy.selected.open}`}
-                          position={worldPositionFor(authorIndex, isCompactViewport)}
-                          active={author.id === selectedAuthorId}
-                          expanded={author.id === hoveredAuthorId}
-                          locating={author.id === locatingAuthorId}
-                          nodeRef={(node) => {
-                            authorNodeRefs.current[author.id] = node;
-                          }}
-                          onHoverChange={(expanded) => setHoveredAuthorId(expanded ? author.id : null)}
-                          onSelect={() => {
-                            setSelectedAuthorId(author.id);
-                            setLocation(`/author/${author.slug}`);
-                          }}
-                        />
+                        <div key={author.id}>
+                          {shouldShowMemories && author.memories.map((memory, memoryIndex) => {
+                            const position = memoryPositionFor(authorPosition, memoryIndex, author.memories.length, isCompactViewport);
+                            return (
+                              <div key={memory.id}>
+                                <div
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute z-[140] h-px origin-left bg-gradient-to-r from-[#ffcf9e]/75 via-[#00f0ff]/45 to-transparent"
+                                  style={{
+                                    left: `${authorPosition.left}px`,
+                                    top: `${authorPosition.top}px`,
+                                    width: `${Math.hypot(position.left - authorPosition.left, position.top - authorPosition.top)}px`,
+                                    transform: `rotate(${Math.atan2(position.top - authorPosition.top, position.left - authorPosition.left)}rad)`,
+                                  }}
+                                />
+                                <MemoryNode
+                                  memory={memory}
+                                  position={position}
+                                  size={memorySize}
+                                  ariaLabel={`${memory.title}. ${copy.memory.open}`}
+                                  onSelect={() => setLocation(`/author/${author.slug}?memory=${memory.id}`)}
+                                />
+                              </div>
+                            );
+                          })}
+                          <AuthorNode
+                            author={author}
+                            ariaLabel={`${author.name}, ${author.role}. ${copy.selected.open}`}
+                            position={authorPosition}
+                            active={author.id === selectedAuthorId}
+                            expanded={author.id === hoveredAuthorId}
+                            locating={author.id === locatingAuthorId}
+                            nodeRef={(node) => {
+                              authorNodeRefs.current[author.id] = node;
+                            }}
+                            onHoverChange={(expanded) => setHoveredAuthorId(expanded ? author.id : null)}
+                            onSelect={() => {
+                              setSelectedAuthorId(author.id);
+                              setLocation(`/author/${author.slug}`);
+                            }}
+                          />
+                        </div>
                       );
                     })}
                   </>
@@ -1744,12 +1989,81 @@ export default function AuthorsWorld() {
             </form>
             {myAuthor && (
               <section className="mt-8 border-t border-[#00f0ff]/20 pt-6">
+                 <div className="border border-[#ffcf9e]/35 bg-[#140d18]/35 p-4">
+                   <div className="flex items-end justify-between gap-3">
+                     <div>
+                       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffcf9e]">{copy.memory.title}</p>
+                       <h3 className="mt-1 font-creepster text-3xl tracking-[0.1em] text-[#ffcf9e]">{formatAuthorsWorldCopy(copy.memory.saved, { count: authoredMemories.length })}</h3>
+                     </div>
+                     <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">TREE // MEMORY</span>
+                   </div>
+                   <p className="mt-2 font-mono text-[10px] leading-relaxed text-white/45">{copy.memory.photoHelp}</p>
+                   {memoryError && <p className="mt-3 border border-[#ff7043]/35 bg-[#ff7043]/5 px-3 py-2 font-mono text-xs text-[#ffb184]">{memoryError}</p>}
+                   {memorySavedNotice && <p role="status" className="save-notice mt-3 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em]">✓ {memorySavedNotice}</p>}
+                   {authoredMemories.length > 0 && (
+                     <div className="mt-4 max-h-56 space-y-2 overflow-y-auto pr-1 [scrollbar-color:#ffcf9e55_#140d18]">
+                       {authoredMemories.map((memory) => (
+                         <div key={memory.id} className="flex items-center justify-between gap-3 border border-[#ffcf9e]/15 bg-black/20 p-3">
+                           <div className="flex min-w-0 items-center gap-3">
+                             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/45 bg-[#140d18]">
+                               {memory.imageUrl ? <img src={memory.imageUrl} alt="" className="h-full w-full object-cover" /> : <span className="font-creepster text-xs text-[#ffcf9e]">{memory.title.slice(0, 2)}</span>}
+                             </div>
+                             <div className="min-w-0">
+                               <p className="truncate font-mono text-xs text-white">{memory.title} {memory.isHidden && <span className="text-[#ffad7f]">// hidden</span>}</p>
+                               <p className="mt-1 line-clamp-1 font-mono text-[9px] text-white/40">{memory.description}</p>
+                             </div>
+                           </div>
+                           <div className="flex shrink-0 gap-2">
+                             <button
+                               type="button"
+                               onClick={() => {
+                                 setMemorySavedNotice(null);
+                                 setEditingMemoryId(memory.id);
+                                 setMemoryDraft({ title: memory.title, description: memory.description, imageUrl: memory.imageUrl ?? "", isHidden: Boolean(memory.isHidden) });
+                               }}
+                               className="border border-white/15 px-2 py-2 font-mono text-[9px] uppercase text-white/60 hover:border-[#ffcf9e] hover:text-white"
+                             >
+                               {copy.memory.edit}
+                             </button>
+                             <button type="button" onClick={() => void handleDeleteMemory(memory.id)} className="border border-[#ff7043]/35 px-2 py-2 font-mono text-[9px] uppercase text-[#ffb184] hover:border-[#ff7043]">{copy.memory.remove}</button>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                   <form onSubmit={handleSaveMemory} className="mt-4 grid gap-3 border border-[#ffcf9e]/15 bg-black/20 p-4">
+                     <label className="block">
+                       <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.name}</span>
+                       <input required value={memoryDraft.title} onChange={(event) => setMemoryDraft((current) => ({ ...current, title: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#140d18] px-3 font-mono text-xs text-white outline-none focus:border-[#ffcf9e]/70" placeholder={copy.memory.namePlaceholder} />
+                     </label>
+                     <label className="block">
+                       <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.story}</span>
+                       <textarea required value={memoryDraft.description} onChange={(event) => setMemoryDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-[#140d18] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#ffcf9e]/70" placeholder={copy.memory.storyPlaceholder} />
+                     </label>
+                     <div>
+                       <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.memory.photo}</span>
+                       <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-dashed border-[#ffcf9e]/55 bg-[#ffcf9e]/5 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffcf9e] hover:border-[#ffcf9e]">
+                         {isProcessingMemory ? copy.memory.saving : memoryDraft.imageUrl ? copy.memory.photoReady : copy.memory.choosePhoto}
+                         <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" disabled={isProcessingMemory} onChange={(event) => { void handleMemoryFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+                       </label>
+                       {memoryDraft.imageUrl && <img src={memoryDraft.imageUrl} alt="" className="mt-3 h-24 w-24 rounded-full border border-[#ffcf9e]/45 object-cover" />}
+                     </div>
+                     <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/55">
+                       <input type="checkbox" checked={memoryDraft.isHidden} onChange={(event) => setMemoryDraft((current) => ({ ...current, isHidden: event.target.checked }))} className="accent-[#ffcf9e]" />
+                       {memoryDraft.isHidden ? "НЕ ПОКАЗУВАТИ ВІДВІДУВАЧАМ" : "ПОКАЗУВАТИ ВІДВІДУВАЧАМ"}
+                     </label>
+                     <div className="flex flex-wrap gap-2">
+                       <button type="submit" disabled={isSavingMemory || isProcessingMemory} className="min-h-10 border border-[#ffcf9e]/70 bg-[#ffcf9e]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffcf9e] hover:bg-[#ffcf9e]/20 disabled:opacity-50">{isSavingMemory ? copy.memory.saving : editingMemoryId ? copy.memory.saveChanges : copy.memory.save}</button>
+                       {editingMemoryId && <button type="button" onClick={() => { setEditingMemoryId(null); setMemoryDraft(EMPTY_MEMORY_DRAFT); }} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white">{copy.memory.cancel}</button>}
+                     </div>
+                   </form>
+                 </div>
                 <div className="flex items-end justify-between gap-3">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffad7f]">{copy.creations.eyebrow}</p>
                     <h3 className="mt-1 font-creepster text-3xl tracking-[0.1em] text-[#d7b6ff]">{copy.creations.title}</h3>
                   </div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">{formatAuthorsWorldCopy(copy.creations.saved, { count: creations.length })}</span>
+                   <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">{formatAuthorsWorldCopy(copy.creations.saved, { count: authoredWorks.length })}</span>
                 </div>
                 <p className="mt-2 font-mono text-[10px] leading-relaxed text-white/45">
                   {copy.creations.help}
@@ -1760,9 +2074,9 @@ export default function AuthorsWorld() {
                     ✓ {creationSavedNotice}
                   </p>
                 )}
-                {creations.length > 0 && (
+                 {authoredWorks.length > 0 && (
                   <div className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-1 [scrollbar-color:#00f0ff55_#06111a]">
-                    {creations.map((creation) => (
+                     {authoredWorks.map((creation) => (
                       <div key={creation.id} className="flex items-center justify-between gap-3 border border-white/10 bg-black/20 p-3">
                         <div className="min-w-0">
                           <p className="truncate font-mono text-xs text-white">{creation.title}</p>

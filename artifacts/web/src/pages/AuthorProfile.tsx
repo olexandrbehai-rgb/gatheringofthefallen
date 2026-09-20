@@ -28,6 +28,7 @@ type Creation = {
   audioObjectPath?: string | null;
   audioSizeBytes?: number | null;
   audioDurationSeconds?: number | null;
+  createdAt?: string;
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -76,13 +77,14 @@ function initialsFor(name: string) {
 }
 
 export default function AuthorProfile({ params }: { params: { slug: string } }) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [author, setAuthor] = useState<Author | null>(null);
   const [creations, setCreations] = useState<Creation[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [activePlatform, setActivePlatform] = useState("all");
   const [creationSearch, setCreationSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(24);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,13 +117,21 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     };
   }, [params.slug]);
 
+  useEffect(() => {
+    const memoryId = Number(new URLSearchParams(location.split("?")[1] ?? "").get("memory"));
+    setSelectedMemoryId(Number.isInteger(memoryId) && memoryId > 0 ? memoryId : null);
+  }, [location]);
+
+  const memories = useMemo(() => creations.filter((creation) => creation.kind === "memory"), [creations]);
+  const selectedMemory = memories.find((memory) => memory.id === selectedMemoryId) ?? null;
+
   const tabs = useMemo(() => {
     const values = new Map<string, { label: string; url?: string }>();
     author?.platformLinks.forEach((link) => {
       const platform = platformForLink(link);
       values.set(platform, { label: PLATFORM_LABELS[platform] ?? link.label, url: link.url });
     });
-    creations.forEach((creation) => {
+    creations.filter((creation) => creation.kind !== "memory").forEach((creation) => {
       if (!values.has(creation.platform)) {
         values.set(creation.platform, { label: PLATFORM_LABELS[creation.platform] ?? creation.platform });
       }
@@ -130,8 +140,8 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   }, [author, creations]);
 
   const visibleCreations = activePlatform === "all"
-    ? creations
-    : creations.filter((creation) => creation.platform === activePlatform);
+    ? creations.filter((creation) => creation.kind !== "memory")
+    : creations.filter((creation) => creation.kind !== "memory" && creation.platform === activePlatform);
   const searchedCreations = visibleCreations.filter((creation) =>
     `${creation.title} ${creation.description}`.toLowerCase().includes(creationSearch.trim().toLowerCase()),
   );
@@ -221,12 +231,66 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         )}
 
-        <section className="author-neon-panel mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
+         {memories.length > 0 && (
+           <section className="author-memory-panel mt-8 min-w-0 rounded border border-[#ffcf9e]/40 bg-[#160e16]/82 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
+             <div className="flex items-end justify-between gap-3 border-b border-[#ffcf9e]/15 pb-3">
+               <div>
+                 <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffcf9e]">Кристалічна сітка // {memories.length}</p>
+                 <h2 className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#ffcf9e] sm:text-4xl">Спогади автора</h2>
+               </div>
+               <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">MEMORY TREE</span>
+             </div>
+             <div className="relative mt-5 flex flex-wrap items-center justify-center gap-5 py-3 sm:gap-8">
+               <div className="author-memory-root relative z-10 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-xs font-bold tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_28px_rgba(0,240,255,0.25)]">
+                 {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
+               </div>
+               {memories.map((memory) => (
+                 <button
+                   key={memory.id}
+                   type="button"
+                   onClick={() => setLocation(`/author/${author.slug}?memory=${memory.id}`)}
+                   className="author-memory-card group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/65 bg-[#140d18] text-center shadow-[0_0_18px_rgba(255,207,158,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcf9e]"
+                   title={memory.title}
+                 >
+                   {memory.imageUrl ? <img src={memory.imageUrl} alt="" className="h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100" /> : <span className="px-2 font-creepster text-sm leading-tight text-[#ffcf9e]">{memory.title}</span>}
+                   <span className="pointer-events-none absolute inset-1 rounded-full border border-dashed border-[#ffcf9e]/40" />
+                 </button>
+               ))}
+             </div>
+           </section>
+         )}
+
+         <section className="author-neon-panel mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
           <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>
               <h2 className="author-section-title mt-2 break-words font-creepster text-3xl tracking-[0.07em] sm:text-4xl sm:tracking-[0.1em]">Авторські роботи</h2>
-            </div>
+         {selectedMemory && (
+           <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-[#08040b]/88 p-3 backdrop-blur-md sm:items-center sm:p-6">
+             <article className="author-memory-parchment relative my-2 w-full max-w-3xl overflow-hidden px-5 py-8 text-[#2c1b16] shadow-[0_0_80px_rgba(255,207,158,0.24)] sm:my-6 sm:px-12 sm:py-14">
+               <div aria-hidden="true" className="pointer-events-none absolute inset-3 border border-[#6f4630]/35 sm:inset-5" />
+               <button
+                 type="button"
+                 onClick={() => setLocation(`/author/${author.slug}`)}
+                 className="absolute right-5 top-5 z-10 border border-[#6f4630]/50 bg-[#f1d8a9]/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#4a2d22] hover:bg-[#f8e8c7]/80"
+               >
+                 Закрити
+               </button>
+               <div className="relative z-10">
+                 <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#6f4630]">Кристалічна сітка // сторінка пам’яті</p>
+                 <h2 className="mt-7 max-w-2xl font-creepster text-5xl leading-none tracking-[0.06em] text-[#39211a] sm:text-7xl">{selectedMemory.title}</h2>
+                 <div className="mt-7 grid gap-7 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:items-start">
+                   {selectedMemory.imageUrl && <img src={selectedMemory.imageUrl} alt="" className="mx-auto max-h-80 w-full max-w-sm object-contain mix-blend-multiply sm:mx-0" />}
+                   <div>
+                     <p className="whitespace-pre-wrap font-serif text-lg leading-[1.8] text-[#3e2920] sm:text-xl">{selectedMemory.description}</p>
+                     <p className="mt-8 border-t border-[#6f4630]/30 pt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6f4630]">{author.displayName} // {author.role}</p>
+                   </div>
+                 </div>
+               </div>
+             </article>
+           </div>
+         )}
+       </div>
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{searchedCreations.length} карток</span>
           </div>
           <label className="mt-4 flex min-h-11 max-w-xl items-center border border-white/15 bg-black/20 px-3 focus-within:border-[#00f0ff]/60">

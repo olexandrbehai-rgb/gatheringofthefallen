@@ -1,5 +1,6 @@
 import { createInsertSchema } from "drizzle-zod";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -55,6 +56,9 @@ export const authorCreationsTable = pgTable(
     description: text("description").notNull().default(""),
     imageUrl: text("image_url"),
     contentUrl: text("content_url"),
+    worldLeft: integer("world_left"),
+    worldTop: integer("world_top"),
+    isHidden: boolean("is_hidden").notNull().default(false),
     audioObjectPath: text("audio_object_path"),
     audioSizeBytes: integer("audio_size_bytes"),
     audioDurationSeconds: real("audio_duration_seconds"),

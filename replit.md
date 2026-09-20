@@ -56,6 +56,11 @@ Multi-page post-apocalyptic themed website for the Ukrainian rock/metal band "Ga
 - Facebook: /share/1CYJR7yWJz/
 - Email: gatheringofthefallen@gmail.com
 
+### Authors’ World Media Performance
+- Heavy decorative videos are desktop/tablet-only by default.
+- Mobile author worlds should use a static poster/background instead of large video assets.
+- Small, lightweight animations may be enabled on mobile only after separate review.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
