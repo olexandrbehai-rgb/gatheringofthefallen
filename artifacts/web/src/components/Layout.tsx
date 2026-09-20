@@ -6,6 +6,7 @@ import { SecretLevel } from "./SecretLevel";
 import { GlitchText } from "./GlitchText";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useT } from "@/i18n/LanguageContext";
+import { AUTHORS_WORLD_COPY } from "@/i18n/authorsWorld";
 import { useCart } from "@/hooks/useCart";
 import { CartDrawer } from "./CartDrawer";
 import { ArrowLeft, LogIn, LogOut, ShoppingCart, UserRound } from "lucide-react";
@@ -54,28 +55,30 @@ function useDesktopHeroEnabled(): boolean {
 }
 
 function AuthControls() {
+  const { lang } = useT();
+  const copy = AUTHORS_WORLD_COPY[lang].header;
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
 
   if (!isLoaded) {
-    return <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#8ceeff]/60">Перевірка доступу...</span>;
+    return <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#8ceeff]/60">{copy.checking}</span>;
   }
 
   if (!isSignedIn) {
     return (
       <Link href="/sign-in" className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#b9f7ff]">
-        <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Увійти
+        <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> {copy.signIn}
       </Link>
     );
   }
 
   return (
     <div className="flex items-center gap-2">
-      <Link href="/authors-world?edit=1" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? "Мій портал"}>
-        <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Мій портал
+      <Link href="/authors-world?edit=1" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? copy.myPortal}>
+        <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {copy.myPortal}
       </Link>
       <button type="button" onClick={() => void signOut({ redirectUrl: "/" })} className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184]">
-        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Вийти
+        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> {copy.signOut}
       </button>
     </div>
   );
@@ -83,7 +86,8 @@ function AuthControls() {
 
 export function Layout({ children, authEnabled = true }: { children: React.ReactNode; authEnabled?: boolean }) {
   const [location, setLocation] = useLocation();
-  const { t } = useT();
+  const { t, lang } = useT();
+  const authorsWorldCopy = AUTHORS_WORLD_COPY[lang].header;
   const { count: cartCount, open: openCart } = useCart();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
@@ -130,8 +134,8 @@ export function Layout({ children, authEnabled = true }: { children: React.React
       <SecretLevel />
       <Link
         href="/authors-world"
-        aria-label="Інший світ — світ авторів"
-        title="Інший світ — світ авторів"
+        aria-label={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
+        title={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
          className={`fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-24 md:h-32 md:w-24 ${location === "/game" ? "hidden" : location === "/authors-world" ? "hidden md:block" : "block"}`}
       >
         <motion.span
@@ -155,13 +159,13 @@ export function Layout({ children, authEnabled = true }: { children: React.React
           />
           <span aria-hidden="true" className="pointer-events-none absolute -inset-8 bg-[radial-gradient(circle,rgba(0,240,255,0.2),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <span className="relative z-10 font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff]">
-            ІНШИЙ
+            {authorsWorldCopy.other}
           </span>
           <span className="relative z-10 mt-1 font-creepster text-sm leading-none tracking-[0.12em] text-[#00f0ff] drop-shadow-[0_0_7px_#00f0ff]">
-            СВІТ
+            {authorsWorldCopy.world}
           </span>
           <span className="relative z-10 mt-2 border-t border-[#00f0ff]/40 pt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-white/70">
-            АВТОРИ
+            {authorsWorldCopy.authors}
           </span>
         </motion.span>
       </Link>

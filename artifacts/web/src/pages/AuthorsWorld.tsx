@@ -5,6 +5,8 @@ import { useClerk, useUser } from "@clerk/react";
 import type { IconType } from "react-icons";
 import { SiBandcamp, SiInstagram, SiSuno, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link, useLocation } from "wouter";
+import { useT } from "@/i18n/LanguageContext";
+import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
 
 type AuthorLink = {
   label: string;
@@ -339,6 +341,7 @@ function AuthorNode({
   active,
   expanded,
   locating,
+  ariaLabel,
   nodeRef,
   onSelect,
   onHoverChange,
@@ -348,6 +351,7 @@ function AuthorNode({
   active: boolean;
   expanded: boolean;
   locating: boolean;
+  ariaLabel: string;
   nodeRef: (node: HTMLButtonElement | null) => void;
   onSelect: () => void;
   onHoverChange: (expanded: boolean) => void;
@@ -367,7 +371,7 @@ function AuthorNode({
         expanded ? "z-[1200]" : active ? "z-[210]" : "z-[100]"
       } ${locating ? "author-node-locating" : ""}`}
        style={{ left: `${nodePosition.left}px`, top: `${nodePosition.top}px`, transformOrigin: "left center" }}
-      aria-label={`${author.name}, ${author.role}. Відкрити портал автора`}
+      aria-label={ariaLabel}
     >
        <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
          <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-36 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-36 group-focus-visible:rounded-none group-focus-visible:border-0 ${
@@ -395,6 +399,9 @@ function AuthorNode({
 
 export default function AuthorsWorld() {
   const [location, setLocation] = useLocation();
+  const { lang } = useT();
+  const copy = AUTHORS_WORLD_COPY[lang];
+  const locale = lang === "ua" ? "uk-UA" : lang === "fr" ? "fr-FR" : "en-CA";
   const { signOut } = useClerk();
   const { isLoaded: authLoaded, isSignedIn, user } = useUser();
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -607,7 +614,7 @@ export default function AuthorsWorld() {
       const avatarUrl = await compressedAvatarFromFile(file);
       setDraft((current) => ({ ...current, avatarUrl }));
     } catch (error) {
-      setAvatarError(error instanceof Error ? error.message : "Не вдалося підготувати іконку.");
+      setAvatarError(lang === "ua" && error instanceof Error ? error.message : copy.errors.avatar);
     } finally {
       setIsProcessingAvatar(false);
     }
@@ -621,7 +628,7 @@ export default function AuthorsWorld() {
       const backgroundUrl = await compressedBackgroundFromFile(file);
       setDraft((current) => ({ ...current, backgroundUrl }));
     } catch (error) {
-      setBackgroundError(error instanceof Error ? error.message : "Не вдалося підготувати фон профілю.");
+      setBackgroundError(lang === "ua" && error instanceof Error ? error.message : copy.errors.background);
     } finally {
       setIsProcessingBackground(false);
     }
@@ -631,11 +638,11 @@ export default function AuthorsWorld() {
     if (!file) return;
     setAudioError(null);
     if (!/\.mp3$/i.test(file.name)) {
-      setAudioError("Потрібен саме MP3-файл.");
+      setAudioError(copy.errors.mp3Type);
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      setAudioError("MP3 має бути не більшим за 20 МБ.");
+      setAudioError(copy.errors.mp3Size);
       return;
     }
     setAudioFile(file);
@@ -667,7 +674,7 @@ export default function AuthorsWorld() {
           fetch(`${API_ROOT}/authors-world/me`, { credentials: "include" }),
         ]);
         if (!authorsResponse.ok || !meResponse.ok) {
-          throw new Error("Не вдалося завантажити світ авторів.");
+          throw new Error(copy.errors.loadWorld);
         }
 
         const authorsPayload = await authorsResponse.json() as {
@@ -707,7 +714,7 @@ export default function AuthorsWorld() {
       } catch (error) {
         if (!active) return;
         setAuthors([]);
-        setAuthorsError(error instanceof Error ? error.message : "Не вдалося завантажити авторів.");
+        setAuthorsError(error instanceof Error ? error.message : copy.errors.loadAuthors);
       } finally {
         if (active) setAuthorsLoading(false);
       }
@@ -743,12 +750,12 @@ export default function AuthorsWorld() {
         const response = await fetch(`${API_ROOT}/authors-world/chat`, {
           credentials: "include",
         });
-        if (!response.ok) throw new Error("Не вдалося підключитися до загального чату.");
+        if (!response.ok) throw new Error(copy.errors.connectChat);
         const payload = await response.json() as { messages?: ChatMessage[] };
         if (active) setChatMessages(Array.isArray(payload.messages) ? payload.messages : []);
       } catch (error) {
         if (active) {
-          setChatError(error instanceof Error ? error.message : "Чат тимчасово недоступний.");
+          setChatError(error instanceof Error ? error.message : copy.errors.chatUnavailable);
         }
       } finally {
         if (active) setChatLoading(false);
@@ -771,7 +778,7 @@ export default function AuthorsWorld() {
       }
     };
     stream.onerror = () => {
-      if (active) setChatError("Live-з’єднання перервано. Спроба відновлення триває.");
+      if (active) setChatError(copy.errors.liveInterrupted);
     };
 
     return () => {
@@ -838,7 +845,7 @@ export default function AuthorsWorld() {
     setFormError(null);
     setProfileSavedNotice(null);
     if (!isSignedIn) {
-      setFormError("Спочатку увійди до акаунта — тоді зміни збережуться у твоєму порталі.");
+      setFormError(copy.errors.signInFirst);
       return;
     }
     const formData = new FormData(event.currentTarget);
@@ -853,7 +860,7 @@ export default function AuthorsWorld() {
     const backgroundUrl = fieldValue("backgroundUrl", draft.backgroundUrl);
     const missingField = !name ? "displayName" : !role ? "role" : !memory ? "bio" : null;
     if (missingField) {
-      setFormError("Заповни, будь ласка, ім’я, роль і коротке послання.");
+      setFormError(copy.errors.requiredFields);
       (event.currentTarget.elements.namedItem(missingField) as HTMLInputElement | HTMLTextAreaElement | null)?.focus();
       return;
     }
@@ -862,7 +869,7 @@ export default function AuthorsWorld() {
     try {
       links = platformLinksForDraft(draft.links);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Перевір адреси майданчиків.");
+      setFormError(lang === "ua" && error instanceof Error ? error.message : copy.errors.platformAddresses);
       return;
     }
 
@@ -886,7 +893,7 @@ export default function AuthorsWorld() {
         error?: string;
       };
       if (!response.ok || !payload.author) {
-        throw new Error(payload.error ?? "Не вдалося відкрити портал.");
+        throw new Error(payload.error ?? copy.errors.openPortal);
       }
 
       const savedAuthor = mapApiAuthor(payload.author, authors.length);
@@ -909,9 +916,9 @@ export default function AuthorsWorld() {
         backgroundUrl: savedAuthor.backgroundUrl ?? "",
         links: savedAuthor.links.length > 0 ? savedAuthor.links.map(draftLinkFor) : [emptyPlatformLink()],
       });
-      setProfileSavedNotice("Збережено. Можеш продовжити редагування нижче.");
+      setProfileSavedNotice(copy.notices.profileSaved);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Не вдалося відкрити портал.");
+      setFormError(error instanceof Error ? error.message : copy.errors.openPortal);
     } finally {
       setIsSavingProfile(false);
     }
@@ -923,7 +930,7 @@ export default function AuthorsWorld() {
     setCreationError(null);
     setCreationSavedNotice(null);
     if (!creationDraft.contentUrl.trim() && !audioFile && !creationDraft.audioObjectPath) {
-      setCreationError("Додай MP3-файл або посилання на роботу.");
+      setCreationError(copy.errors.needWork);
       return;
     }
     setIsSavingCreation(true);
@@ -948,7 +955,7 @@ export default function AuthorsWorld() {
           error?: string;
         };
         if (!uploadUrlResponse.ok || !uploadPayload.uploadURL || !uploadPayload.objectPath) {
-          throw new Error(uploadPayload.error ?? "Не вдалося підготувати завантаження MP3.");
+          throw new Error(uploadPayload.error ?? copy.errors.prepareUpload);
         }
         const uploadResponse = await fetch(uploadPayload.uploadURL, {
           method: "PUT",
@@ -956,7 +963,7 @@ export default function AuthorsWorld() {
           body: audioFile,
         });
         if (!uploadResponse.ok) {
-          throw new Error("MP3 не завантажився у сховище. Спробуй ще раз.");
+          throw new Error(copy.errors.uploadMp3);
         }
         audioObjectPath = uploadPayload.objectPath;
       }
@@ -978,7 +985,7 @@ export default function AuthorsWorld() {
         error?: string;
       };
       if (!response.ok || !payload.creation) {
-        throw new Error(payload.error ?? "Не вдалося зберегти авторську роботу.");
+        throw new Error(payload.error ?? copy.errors.saveWork);
       }
       setCreations((current) => editingCreationId
         ? current.map((item) => item.id === editingCreationId ? payload.creation as AuthorCreation : item)
@@ -987,9 +994,9 @@ export default function AuthorsWorld() {
       setAudioFile(null);
       setAudioError(null);
       setEditingCreationId(null);
-      setCreationSavedNotice("Збережено. Роботу опубліковано у твоєму порталі.");
+      setCreationSavedNotice(copy.notices.workSaved);
     } catch (error) {
-      setCreationError(error instanceof Error ? error.message : "Не вдалося зберегти авторську роботу.");
+      setCreationError(error instanceof Error ? error.message : copy.errors.saveWork);
     } finally {
       setIsUploadingAudio(false);
       setIsSavingCreation(false);
@@ -1005,7 +1012,7 @@ export default function AuthorsWorld() {
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(payload.error ?? "Не вдалося видалити авторську роботу.");
+        throw new Error(payload.error ?? copy.errors.deleteWork);
       }
       setCreations((current) => current.filter((item) => item.id !== creationId));
       if (editingCreationId === creationId) {
@@ -1015,7 +1022,7 @@ export default function AuthorsWorld() {
         setAudioError(null);
       }
     } catch (error) {
-      setCreationError(error instanceof Error ? error.message : "Не вдалося видалити авторську роботу.");
+      setCreationError(error instanceof Error ? error.message : copy.errors.deleteWork);
     }
   };
 
@@ -1038,7 +1045,7 @@ export default function AuthorsWorld() {
         error?: string;
       };
       if (!response.ok || !payload.message) {
-        throw new Error(payload.error ?? "Повідомлення не відправлено.");
+        throw new Error(payload.error ?? copy.chat.failed);
       }
       setChatMessages((current) =>
         current.some((item) => item.id === payload.message?.id)
@@ -1047,7 +1054,7 @@ export default function AuthorsWorld() {
       );
       setChatDraft("");
     } catch (error) {
-      setChatError(error instanceof Error ? error.message : "Повідомлення не відправлено.");
+      setChatError(error instanceof Error ? error.message : copy.chat.failed);
     } finally {
       setIsSendingChat(false);
     }
@@ -1062,14 +1069,14 @@ export default function AuthorsWorld() {
         <div className="mb-6 flex flex-col gap-5 border-b border-[#00f0ff]/20 pb-5 sm:mb-8 sm:gap-6 sm:pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link href="/" className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/45 transition-colors hover:text-[#00f0ff]">
-              ← Повернутися до Gathering Of The Fallen
+              {copy.nav.back}
             </Link>
-            <p className="mt-5 font-mono text-[9px] uppercase tracking-[0.22em] text-[#ffad7f] sm:mt-6 sm:text-[10px] sm:tracking-[0.32em]">Інтерактивний архів // точка входу</p>
+            <p className="mt-5 font-mono text-[9px] uppercase tracking-[0.22em] text-[#ffad7f] sm:mt-6 sm:text-[10px] sm:tracking-[0.32em]">{copy.nav.archive}</p>
             <h1 className="authors-world-title mt-2 font-creepster text-4xl tracking-[0.06em] text-[#00f0ff] sm:text-7xl sm:tracking-[0.08em]">
-              Інший світ
+              {copy.nav.title}
             </h1>
             <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-white/65 sm:text-base">
-              Світ авторів, музики та історій. Знайди голос, який залишився у пам’яті, або залиш тут власний слід.
+              {copy.nav.intro}
             </p>
           </div>
           <div className="grid w-full gap-2 sm:flex sm:flex-wrap sm:gap-3 lg:w-auto">
@@ -1078,32 +1085,32 @@ export default function AuthorsWorld() {
               onClick={() => document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" })}
               className="authors-world-top-action authors-world-control-purple inline-flex min-h-11 w-full items-center justify-center border px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#eadcff] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
-              Загальний чат
+              {copy.nav.chat}
             </button>
             <button
               type="button"
                onClick={openAuthorPortal}
               className="authors-world-top-action authors-world-control-cyan inline-flex min-h-11 w-full items-center justify-center border px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d9fbff] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
-              {!authLoaded ? "ПЕРЕВІРКА ДОСТУПУ..." : !isSignedIn ? "УВІЙТИ ДЛЯ ПОРТАЛУ" : myAuthor ? "РЕДАГУВАТИ МІЙ ПОРТАЛ" : "ЗАЛИШИТИСЯ У СПОГАДІ"}
+              {!authLoaded ? copy.nav.checking : !isSignedIn ? copy.nav.signInPortal : myAuthor ? copy.nav.editPortal : copy.nav.leaveMemory}
             </button>
           </div>
            <div className="authors-world-account-panel mt-3 flex flex-col gap-3 border p-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
              <div className="min-w-0">
                <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-[#ffad7f]">
-                 <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Авторський акаунт
+                  <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {copy.account.title}
                </p>
                <p className="mt-1 truncate font-mono text-[10px] text-white/55">
                  {!authLoaded
-                   ? "Перевіряємо email-сесію..."
+                    ? copy.account.checking
                    : isSignedIn
-                     ? accountEmail || "Email підтверджено"
-                     : "Кожен портал прив’язаний до власного email-акаунта."}
+                      ? accountEmail || copy.account.verified
+                      : copy.account.description}
                </p>
              </div>
              <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
                {!authLoaded ? (
-                 <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Завантаження...</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{copy.account.loading}</span>
                ) : isSignedIn ? (
                  <>
                    <button
@@ -1111,14 +1118,14 @@ export default function AuthorsWorld() {
                      onClick={openAuthorPortal}
                      className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
                    >
-                     <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Мій портал
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.myPortal}
                    </button>
                    <button
                      type="button"
                      onClick={() => void handleAuthorSignOut()}
                      className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all sm:flex-none"
                    >
-                     <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Вийти
+                      <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signOut}
                    </button>
                  </>
                ) : (
@@ -1127,13 +1134,13 @@ export default function AuthorsWorld() {
                      href="/sign-in"
                       className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
                    >
-                     <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Увійти email
+                      <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signIn}
                    </Link>
                    <Link
                      href="/sign-up"
                       className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffe0c0] transition-all sm:flex-none"
                    >
-                     <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Реєстрація email
+                      <Mail className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signUp}
                    </Link>
                  </>
                )}
@@ -1143,28 +1150,28 @@ export default function AuthorsWorld() {
 
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-creepster text-2xl tracking-[0.1em] text-[#ffcf9e] sm:text-3xl sm:tracking-[0.12em]">Світ авторів</h2>
+             <h2 className="font-creepster text-2xl tracking-[0.1em] text-[#ffcf9e] sm:text-3xl sm:tracking-[0.12em]">{copy.world.title}</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/40">
-              {authorsLoading ? "підключення до мережі авторів..." : `${visibleAuthors.length} відкритих порталів // наведи курсор, щоб збільшити портал`}
+               {authorsLoading ? copy.world.connecting : formatAuthorsWorldCopy(copy.world.portals, { count: visibleAuthors.length })}
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
              <label className="authors-world-search-control flex min-h-11 items-center border px-3 sm:w-80">
-               <span className="mr-2 font-mono text-[10px] font-bold uppercase tracking-widest text-[#b9f7ff]">Пошук</span>
+               <span className="mr-2 font-mono text-[10px] font-bold uppercase tracking-widest text-[#b9f7ff]">{copy.world.search}</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="ім’я або роль"
+                 placeholder={copy.world.searchPlaceholder}
                 className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25"
-                aria-label="Пошук авторів"
+                 aria-label={copy.world.searchAria}
               />
             </label>
             <p role="status" className="min-h-4 font-mono text-[9px] uppercase tracking-[0.14em] text-[#00f0ff]/60">
               {search.trim()
                 ? visibleAuthors.length > 0
-                  ? `GPS // знайдено: ${visibleAuthors[0].name}`
-                  : "GPS // портал не знайдено"
-                : "Введи ім’я — світ знайде портал"}
+                   ? formatAuthorsWorldCopy(copy.world.found, { name: visibleAuthors[0].name })
+                   : copy.world.notFound
+                 : copy.world.searchHint}
             </p>
           </div>
         </div>
@@ -1179,7 +1186,7 @@ export default function AuthorsWorld() {
           className={`authors-world-surface relative h-[min(48dvh,420px)] min-h-[300px] overflow-hidden overscroll-none touch-none select-none sm:h-[min(70dvh,760px)] sm:min-h-[560px] ${
             isWorldDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
-          aria-label="Поле навігації світу авторів"
+          aria-label={copy.world.navigationAria}
         >
           <div
             aria-hidden="true"
@@ -1201,12 +1208,12 @@ export default function AuthorsWorld() {
               <div aria-hidden="true" className="authors-world-orbit authors-world-orbit-inner absolute left-1/2 top-[42%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full" />
               <div aria-hidden="true" className="authors-world-gotf-dots absolute inset-0" />
               <div className="pointer-events-none absolute inset-x-0 top-4 text-center font-mono text-[9px] uppercase tracking-[0.35em] text-[#00f0ff]/35">
-                Координати мережі // перетягни поле для навігації
+                 {copy.world.coordinates}
               </div>
               {visibleAuthors.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
                   <p className="max-w-sm font-mono text-sm leading-relaxed text-white/50">
-                    {authorsError ?? "Цей сектор ще мовчить. Спробуй інший запит або залиш власний слід."}
+                     {authorsError ?? copy.world.quiet}
                   </p>
                 </div>
               ) : (
@@ -1214,7 +1221,7 @@ export default function AuthorsWorld() {
                     {hoveredAuthorId && (
                       <button
                         type="button"
-                        aria-label="Закрити активний портал автора"
+                         aria-label={copy.world.closePortal}
                         onClick={() => setHoveredAuthorId(null)}
                          className="absolute inset-0 z-[500] cursor-default bg-transparent transition-opacity duration-200"
                       />
@@ -1225,6 +1232,7 @@ export default function AuthorsWorld() {
                         <AuthorNode
                           key={author.id}
                           author={author}
+                          ariaLabel={`${author.name}, ${author.role}. ${copy.selected.open}`}
                           position={worldPositionFor(authorIndex, isCompactViewport)}
                           active={author.id === selectedAuthorId}
                           expanded={author.id === hoveredAuthorId}
@@ -1249,7 +1257,7 @@ export default function AuthorsWorld() {
             <div className="pointer-events-auto border border-[#00f0ff]/25 bg-black/20 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[#b9f7ff]/75">
                 <Move size={13} aria-hidden="true" />
-                Перетягування // нескінченне поле
+                 {copy.world.drag}
               </p>
               <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.14em] text-white/35">
                 GOTF // {Math.round(worldZoom * 100)}%
@@ -1258,7 +1266,7 @@ export default function AuthorsWorld() {
             <div className="pointer-events-auto flex items-center gap-1 border border-[#00f0ff]/25 bg-black/20 p-1 backdrop-blur-sm">
               <button
                 type="button"
-                aria-label="Зменшити масштаб поля"
+                 aria-label={copy.world.zoomOut}
                 onClick={() => changeWorldZoom(worldZoom - WORLD_ZOOM_STEP)}
                 className="inline-flex h-9 w-9 items-center justify-center border border-white/15 text-[#b9f7ff] transition-colors hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
               >
@@ -1267,7 +1275,7 @@ export default function AuthorsWorld() {
               <span className="min-w-12 text-center font-mono text-[10px] text-[#ffcf9e]">{Math.round(worldZoom * 100)}%</span>
               <button
                 type="button"
-                aria-label="Збільшити масштаб поля"
+                 aria-label={copy.world.zoomIn}
                 onClick={() => changeWorldZoom(worldZoom + WORLD_ZOOM_STEP)}
                 className="inline-flex h-9 w-9 items-center justify-center border border-white/15 text-[#b9f7ff] transition-colors hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
               >
@@ -1275,9 +1283,9 @@ export default function AuthorsWorld() {
               </button>
               <button
                 type="button"
-                aria-label="Центрувати мережу авторів"
+                 aria-label={copy.world.center}
                 onClick={() => centerWorld()}
-                title="Центрувати мережу авторів"
+                 title={copy.world.center}
                 className="ml-1 inline-flex h-9 w-9 items-center justify-center border border-[#8a2be2]/45 text-[#d7b6ff] transition-colors hover:border-[#8a2be2] hover:bg-[#8a2be2]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2]"
               >
                 <LocateFixed size={16} />
@@ -1288,13 +1296,9 @@ export default function AuthorsWorld() {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="border border-white/10 bg-black/25 p-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">Як це працює</p>
+             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">{copy.steps.heading}</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              {[
-                ["01", "Знайди", "Скануй світ і відкривай нові імена."],
-                ["02", "Зайди", "Натисни на портал і подивись світ автора."],
-                ["03", "Залишся", "Додай власну історію та свої майданчики."],
-              ].map(([number, title, text]) => (
+               {copy.steps.items.map(([number, title, text]: string[]) => (
                  <div key={number} className="authors-world-step-card">
                    <span className="authors-world-step-number font-mono text-[10px] text-[#b9f7ff]">{number}</span>
                   <h3 className="mt-2 font-creepster text-xl tracking-[0.12em] text-[#ffcf9e]">{title}</h3>
@@ -1306,11 +1310,11 @@ export default function AuthorsWorld() {
 
           {selectedAuthor ? (
             <section className="border border-[#00f0ff]/35 bg-[#06111a]/75 p-5 shadow-[0_0_25px_rgba(0,240,255,0.1)]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#00f0ff]">Відкритий портал</p>
+               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#00f0ff]">{copy.selected.open}</p>
               <div className="mt-3 flex items-start gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-[#00f0ff]/50 bg-[radial-gradient(circle,rgba(0,240,255,0.24),rgba(10,5,24,0.95)_68%)] font-mono text-sm font-bold tracking-[0.14em] text-[#b9f7ff]">
                   {selectedAuthor.avatarUrl ? (
-                    <img src={selectedAuthor.avatarUrl} alt={`Портрет ${selectedAuthor.name}`} className="h-full w-full bg-black/20 object-contain" />
+                     <img src={selectedAuthor.avatarUrl} alt={formatAuthorsWorldCopy(copy.selected.portrait, { name: selectedAuthor.name })} className="h-full w-full bg-black/20 object-contain" />
                   ) : (
                     selectedAuthor.initials
                   )}
@@ -1340,12 +1344,12 @@ export default function AuthorsWorld() {
                 href={`/author/${selectedAuthor.slug}`}
                 className="mt-5 inline-flex min-h-11 max-w-full items-center justify-center border border-[#00f0ff]/65 bg-[#00f0ff]/10 px-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:bg-[#00f0ff]/20 hover:text-white sm:tracking-[0.16em]"
               >
-                Відкрити всі роботи автора
+                 {copy.selected.openAll}
               </Link>
             </section>
           ) : (
             <section className="flex items-center border border-white/10 bg-black/25 p-5">
-              <p className="font-mono text-sm leading-relaxed text-white/45">Обери портал у світі, щоб відкрити автора.</p>
+               <p className="font-mono text-sm leading-relaxed text-white/45">{copy.selected.choose}</p>
             </section>
           )}
         </div>
@@ -1362,31 +1366,31 @@ export default function AuthorsWorld() {
         >
           <div className="flex flex-col gap-4 border-b border-[#8a2be2]/25 pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">Local network // authors world</p>
+               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{copy.chat.eyebrow}</p>
               <h2 className="mt-2 font-creepster text-4xl tracking-[0.12em] text-[#d7b6ff] drop-shadow-[0_0_10px_rgba(138,43,226,0.55)]">
-                Загальний чат
+                 {copy.chat.title}
               </h2>
               <p className="mt-1 max-w-2xl font-mono text-xs leading-relaxed text-white/45">
-                Одна внутрішня кімната для всіх авторів. Повідомлення залишаються на цьому сайті й не передаються у зовнішні месенджери.
+                 {copy.chat.description}
               </p>
             </div>
             <div className="border border-[#00f0ff]/25 bg-black/30 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[#8ceeff]">
-              {myAuthor ? "Портал підключений до мережі" : "Для повідомлень потрібен портал"}
+               {myAuthor ? copy.chat.connected : copy.chat.required}
             </div>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_250px]">
              <div className="min-h-56 border border-[#00f0ff]/20 bg-[#02070d]/90 p-3 sm:min-h-72">
               <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-white/35">
-                <span>Головна кімната // усі автори</span>
+                 <span>{copy.chat.room}</span>
                 <span className="text-[#00f0ff]">{chatMessages.length}/100</span>
               </div>
                <div className="max-h-80 min-h-44 space-y-3 overflow-y-auto pr-2 [scrollbar-color:#8a2be244_#02070d] sm:max-h-96 sm:min-h-56">
                 {chatLoading ? (
-                  <p className="font-mono text-xs text-white/40">Синхронізація історії повідомлень...</p>
+                   <p className="font-mono text-xs text-white/40">{copy.chat.loading}</p>
                 ) : chatMessages.length === 0 ? (
                   <p className="font-mono text-xs leading-relaxed text-white/40">
-                    У мережі поки тихо. Відкрий портал і залиш перше повідомлення.
+                     {copy.chat.empty}
                   </p>
                 ) : (
                   chatMessages.map((message) => (
@@ -1395,7 +1399,7 @@ export default function AuthorsWorld() {
                         <span className="font-mono text-xs font-bold text-[#8ceeff]">{message.author.displayName}</span>
                         <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffad7f]/70">{message.author.role}</span>
                         <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
-                          {new Date(message.createdAt).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}
+                           {new Date(message.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
                         </time>
                       </div>
                       <p className="mt-1 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-white/70">{message.body}</p>
@@ -1406,11 +1410,9 @@ export default function AuthorsWorld() {
             </div>
 
             <aside className="border border-[#8a2be2]/25 bg-[#10091b]/65 p-4">
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#ffad7f]">Стан локальної мережі</p>
+               <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#ffad7f]">{copy.chat.status}</p>
               <div className="mt-4 space-y-3 font-mono text-[10px] text-white/55">
-                <p><span className="mr-2 text-[#00f0ff]">●</span>Автори бачать імена та ніки одне одного.</p>
-                <p><span className="mr-2 text-[#00f0ff]">●</span>Історія зберігається у спільній кімнаті.</p>
-                <p><span className="mr-2 text-[#00f0ff]">●</span>Канал працює тільки всередині сайту.</p>
+                 {copy.chat.statusItems.map((item: string) => <p key={item}><span className="mr-2 text-[#00f0ff]">●</span>{item}</p>)}
               </div>
             </aside>
           </div>
@@ -1421,13 +1423,13 @@ export default function AuthorsWorld() {
 
           {myAuthor ? (
             <form onSubmit={handleSendChat} className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <label className="sr-only" htmlFor="authors-world-chat-input">Повідомлення у загальний чат</label>
+               <label className="sr-only" htmlFor="authors-world-chat-input">{copy.chat.inputLabel}</label>
               <input
                 id="authors-world-chat-input"
                 value={chatDraft}
                 onChange={(event) => setChatDraft(event.target.value)}
                 maxLength={1000}
-                placeholder={`Написати від імені ${myAuthor.name}...`}
+                 placeholder={formatAuthorsWorldCopy(copy.chat.placeholder, { name: myAuthor.name })}
                 className="min-h-12 min-w-0 flex-1 border border-white/15 bg-black/35 px-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
               />
               <button
@@ -1435,14 +1437,14 @@ export default function AuthorsWorld() {
                 disabled={isSendingChat || !chatDraft.trim()}
                 className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.16em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {isSendingChat ? "ВІДПРАВЛЕННЯ..." : "НАДІСЛАТИ"}
+                 {isSendingChat ? copy.chat.sending : copy.chat.send}
               </button>
             </form>
           ) : (
             <p className="mt-4 border border-white/10 bg-black/20 px-3 py-3 font-mono text-xs leading-relaxed text-white/45">
-              Щоб писати у внутрішньому чаті, створи авторський портал після входу на сайт.{" "}
+               {copy.chat.needsPortal}{" "}
               <Link href="/sign-in" className="text-[#8ceeff] underline decoration-[#00f0ff]/50 underline-offset-4 hover:text-white">
-                Увійти
+                 {copy.chat.signIn}
               </Link>
             </p>
           )}
@@ -1454,15 +1456,15 @@ export default function AuthorsWorld() {
            <div role="dialog" aria-modal="true" aria-labelledby="author-registration-title" className="my-2 max-h-[calc(100dvh-16px)] w-full max-w-xl overflow-y-auto border border-[#00f0ff]/55 bg-[#06111a]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(0,240,255,0.2)] sm:my-0 sm:max-h-[calc(100dvh-32px)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">Новий портал</p>
-                 <h2 id="author-registration-title" className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#00f0ff] sm:text-4xl sm:tracking-[0.1em]">Залишитися у спогаді</h2>
+                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">{copy.editor.newPortal}</p>
+                  <h2 id="author-registration-title" className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#00f0ff] sm:text-4xl sm:tracking-[0.1em]">{copy.editor.title}</h2>
               </div>
-              <button type="button" onClick={() => setIsRegistering(false)} className="border border-white/15 px-3 py-2 font-mono text-xs text-white/55 transition-colors hover:border-[#00f0ff] hover:text-white" aria-label="Закрити форму">
-                ЗАКРИТИ
+               <button type="button" onClick={() => setIsRegistering(false)} className="border border-white/15 px-3 py-2 font-mono text-xs text-white/55 transition-colors hover:border-[#00f0ff] hover:text-white" aria-label={copy.editor.closeAria}>
+                 {copy.editor.close}
               </button>
             </div>
             <p className="author-copy mt-3 font-mono text-xs leading-relaxed text-white/55">
-                Створи або онови свій портал. Профіль збережеться у внутрішній базі сайту, автоматично з’явиться у світі авторів і дасть доступ до загального чату. Для публікації потрібен акаунт із email та паролем.
+                 {copy.editor.description}
             </p>
             {profileSavedNotice && (
               <p role="status" className="save-notice mt-4 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em]">
@@ -1474,40 +1476,40 @@ export default function AuthorsWorld() {
                 {formError}{" "}
                 {formError.toLowerCase().includes("sign in") || formError.toLowerCase().includes("увій") ? (
                   <>
-                    <Link href="/sign-in" className="text-[#8ceeff] underline underline-offset-4 hover:text-white">Увійти</Link>
-                    <span className="text-white/35"> або </span>
-                    <Link href="/sign-up" className="text-[#ffcf9e] underline underline-offset-4 hover:text-white">створити акаунт</Link>
+                     <Link href="/sign-in" className="text-[#8ceeff] underline underline-offset-4 hover:text-white">{copy.editor.signIn}</Link>
+                     <span className="text-white/35"> {copy.editor.or} </span>
+                     <Link href="/sign-up" className="text-[#ffcf9e] underline underline-offset-4 hover:text-white">{copy.editor.createAccount}</Link>
                   </>
                 ) : null}
               </p>
             )}
             <form onSubmit={handleRegister} className="mt-6 space-y-4">
               <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Ім’я або псевдонім *</span>
-                <input name="displayName" autoComplete="nickname" required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Твоє ім’я або назва проєкту" />
+                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.name}</span>
+                 <input name="displayName" autoComplete="nickname" required value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder={copy.editor.namePlaceholder} />
               </label>
               <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Хто ти у цьому світі *</span>
-                <input name="role" autoComplete="organization-title" required value={draft.role} onChange={(event) => setDraft((current) => ({ ...current, role: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Музикант, авторка, художник..." />
+                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.role}</span>
+                 <input name="role" autoComplete="organization-title" required value={draft.role} onChange={(event) => setDraft((current) => ({ ...current, role: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-black/30 px-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder={copy.editor.rolePlaceholder} />
               </label>
               <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Що ти залишаєш у пам’яті? *</span>
-                <textarea name="bio" autoComplete="off" required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder="Коротке послання або опис твоєї творчості" />
+                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.memory}</span>
+                 <textarea name="bio" autoComplete="off" required value={draft.memory} onChange={(event) => setDraft((current) => ({ ...current, memory: event.target.value }))} className="mt-2 min-h-24 w-full resize-y border border-white/15 bg-black/30 px-3 py-3 font-mono text-sm text-white outline-none transition-colors focus:border-[#00f0ff]/70" placeholder={copy.editor.memoryPlaceholder} />
               </label>
               <div className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Іконка профілю</span>
+                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.avatar}</span>
                 <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
-                  Додай свій малюнок. У світі він буде маленьким, а при наведенні повністю розгорнеться разом з інформацією автора.
+                   {copy.editor.avatarHelp}
                 </span>
                   <div className="mt-3 flex items-start gap-3 border border-white/10 bg-black/20 p-3 sm:items-center sm:gap-4">
                    <label className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-[#00f0ff]/65 bg-[#00f0ff]/5 text-[#b9f7ff] transition-[border-radius,box-shadow] duration-300 hover:border-solid hover:border-[#00f0ff] hover:shadow-[0_0_24px_rgba(0,240,255,0.35)]">
                      {draft.avatarUrl ? (
-                       <img src={draft.avatarUrl} alt="Попередній перегляд аватарки автора" className="h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                        <img src={draft.avatarUrl} alt={copy.editor.avatarPreview} className="h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
                      ) : (
                        <Plus className="h-8 w-8" aria-hidden="true" />
                      )}
                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/65 font-mono text-[8px] uppercase tracking-[0.12em] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                       Змінити
+                        {copy.editor.change}
                      </span>
                   <input
                     type="file"
@@ -1522,14 +1524,14 @@ export default function AuthorsWorld() {
                    </label>
                     <div className="min-w-0 flex-1 font-mono text-[10px] leading-relaxed text-white/50">
                      <p className="font-bold uppercase tracking-[0.14em] text-[#b9f7ff]">
-                       {isProcessingAvatar ? "ПІДГОТОВКА ІКОНКИ..." : draft.avatarUrl ? "Аватарка готова" : "Натисни на плюс"}
+                        {isProcessingAvatar ? copy.editor.preparingAvatar : draft.avatarUrl ? copy.editor.avatarReady : copy.editor.pressPlus}
                      </p>
-                      <p className="mt-1">Оригінальне зображення збережеться без змін, якщо воно вкладається в ліміт. Великі файли оптимізуються у високій якості. Наведи курсор, щоб побачити його повністю.</p>
+                       <p className="mt-1">{copy.editor.avatarDetails}</p>
                    </div>
                  </div>
                 {avatarError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{avatarError}</p>}
                 <label className="mt-3 block">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Або пряме посилання</span>
+                   <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{copy.editor.directLink}</span>
                 <input
                   name="avatarUrl"
                   type="text"
@@ -1544,23 +1546,23 @@ export default function AuthorsWorld() {
                   <span className="mt-3 flex items-center gap-3 border border-white/10 bg-black/20 p-3">
                     <img
                       src={draft.avatarUrl}
-                      alt="Попередній перегляд фото профілю"
+                       alt={copy.editor.photoPreview}
                       className="h-16 w-16 rounded-full border border-[#00f0ff]/45 object-cover"
                     />
                     <span className="font-mono text-[10px] leading-relaxed text-white/45">
-                      Попередній перегляд. Після збереження фото з’явиться у світі авторів і чаті.
+                       {copy.editor.photoPreviewHelp}
                     </span>
                   </span>
                 )}
               </div>
               <div className="block">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Фон профілю</span>
+                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.background}</span>
                 <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">
-                  Завантаж широке зображення — воно стане атмосферним тлом твоєї сторінки автора.
+                   {copy.editor.backgroundHelp}
                 </span>
                 <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-center gap-3 border border-dashed border-[#8a2be2]/65 bg-[#8a2be2]/8 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#e1c8ff] transition-colors hover:border-[#b98cff] hover:bg-[#8a2be2]/15">
                   <ImagePlus className="h-5 w-5" aria-hidden="true" />
-                  {isProcessingBackground ? "ПІДГОТОВКА ФОНУ..." : "ДОДАТИ ФОН ПРОФІЛЮ"}
+                   {isProcessingBackground ? copy.editor.preparingBackground : copy.editor.addBackground}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1574,7 +1576,7 @@ export default function AuthorsWorld() {
                 </label>
                 {backgroundError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{backgroundError}</p>}
                 <label className="mt-3 block">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Або пряме посилання</span>
+                   <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{copy.editor.directLink}</span>
                   <input
                     name="backgroundUrl"
                     type="text"
@@ -1586,22 +1588,22 @@ export default function AuthorsWorld() {
                   />
                 </label>
                 {draft.backgroundUrl.trim() && (
-                  <div className="relative mt-3 h-32 overflow-hidden border border-[#8a2be2]/40 bg-[#07131b]" role="img" aria-label="Попередній перегляд фону профілю">
+                   <div className="relative mt-3 h-32 overflow-hidden border border-[#8a2be2]/40 bg-[#07131b]" role="img" aria-label={copy.editor.backgroundPreviewAria}>
                     <img src={draft.backgroundUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
                     <div className="relative flex h-full items-end bg-[linear-gradient(180deg,rgba(2,4,10,0.18),rgba(2,4,10,0.7))] p-3 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
-                      Попередній перегляд широкого фону
+                       {copy.editor.backgroundPreview}
                     </div>
                   </div>
                 )}
               </div>
               <fieldset className="border border-white/10 bg-black/20 p-3 sm:p-4">
-                <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">Твої майданчики</legend>
+                 <legend className="px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.editor.platforms}</legend>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <p className="font-mono text-[10px] leading-relaxed text-white/45">
-                    Додай окрему адресу для кожного профілю. Порожні рядки не збережуться.
+                     {copy.editor.platformsHelp}
                   </p>
                   <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-[#00f0ff]/55">
-                    {draft.links.length} {draft.links.length === 1 ? "рядок" : "рядки"}
+                     {formatAuthorsWorldCopy(copy.editor.rows, { count: draft.links.length })}
                   </span>
                 </div>
 
@@ -1615,7 +1617,7 @@ export default function AuthorsWorld() {
                         <div key={`${link.platform}-${linkIndex}`} className="border border-white/10 bg-black/25 p-3">
                           <div className="grid gap-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_auto] sm:items-end">
                             <label className="block min-w-0">
-                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Майданчик {linkIndex + 1}</span>
+                               <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{formatAuthorsWorldCopy(copy.editor.platform, { number: linkIndex + 1 })}</span>
                               <span className="flex min-h-11 items-center border border-white/15 bg-[#06111a]/90 px-2.5 transition-colors focus-within:border-[#00f0ff]/70">
                                 <PlatformIcon aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" style={{ color: option.color }} />
                                 <select
@@ -1632,11 +1634,11 @@ export default function AuthorsWorld() {
                                     }));
                                   }}
                                   className="min-w-0 flex-1 appearance-none bg-transparent font-mono text-xs text-white outline-none"
-                                  aria-label={`Вибрати майданчик ${linkIndex + 1}`}
+                                   aria-label={formatAuthorsWorldCopy(copy.editor.choosePlatform, { number: linkIndex + 1 })}
                                 >
                                   {PLATFORM_OPTIONS.map((platform) => (
                                     <option key={platform.value} value={platform.value} className="bg-[#06111a] text-white">
-                                      {platform.label}
+                                       {copy.platformLabels[platform.value] ?? platform.label}
                                     </option>
                                   ))}
                                 </select>
@@ -1644,7 +1646,7 @@ export default function AuthorsWorld() {
                             </label>
 
                             <label className="block min-w-0">
-                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Адреса профілю</span>
+                               <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{copy.editor.profileAddress}</span>
                               <input
                                 type="url"
                                 value={link.url}
@@ -1654,7 +1656,7 @@ export default function AuthorsWorld() {
                                 }))}
                                 className="min-h-11 w-full border border-white/15 bg-[#06111a]/90 px-3 font-mono text-xs text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
                                 placeholder={option.placeholder}
-                                aria-label={`Адреса профілю ${linkIndex + 1}`}
+                                 aria-label={formatAuthorsWorldCopy(copy.editor.profileAddressAria, { number: linkIndex + 1 })}
                               />
                             </label>
 
@@ -1665,16 +1667,16 @@ export default function AuthorsWorld() {
                                 links: current.links.filter((_, index) => index !== linkIndex),
                               }))}
                               className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#ff7043]/35 px-3 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184] transition-colors hover:border-[#ff7043] hover:bg-[#ff7043]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] sm:w-11 sm:px-0"
-                              aria-label={`Видалити майданчик ${linkIndex + 1}`}
+                               aria-label={formatAuthorsWorldCopy(copy.editor.removePlatform, { number: linkIndex + 1 })}
                             >
                               <Trash2 aria-hidden="true" className="h-4 w-4" />
-                              <span className="sm:hidden">Видалити</span>
+                               <span className="sm:hidden">{copy.editor.remove}</span>
                             </button>
                           </div>
 
                           {link.platform === "other" && (
                             <label className="mt-3 block">
-                              <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Назва майданчика</span>
+                               <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">{copy.editor.customPlatform}</span>
                               <input
                                 value={link.customLabel}
                                 onChange={(event) => setDraft((current) => ({
@@ -1682,7 +1684,7 @@ export default function AuthorsWorld() {
                                   links: current.links.map((item, index) => index === linkIndex ? { ...item, customLabel: event.target.value } : item),
                                 }))}
                                 className="min-h-10 w-full border border-white/15 bg-[#06111a]/90 px-3 font-mono text-xs text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00f0ff]/70"
-                                placeholder="Наприклад, Telegram або Patreon"
+                                 placeholder={copy.editor.customPlatformPlaceholder}
                               />
                             </label>
                           )}
@@ -1691,7 +1693,7 @@ export default function AuthorsWorld() {
                     })
                   ) : (
                     <p className="border border-dashed border-white/15 px-3 py-4 font-mono text-xs text-white/40">
-                      Поки що немає адрес. Додай перший майданчик нижче.
+                       {copy.editor.noPlatforms}
                     </p>
                   )}
                 </div>
@@ -1702,24 +1704,24 @@ export default function AuthorsWorld() {
                   className="mt-3 inline-flex min-h-10 items-center gap-2 border border-[#8a2be2]/60 bg-[#8a2be2]/10 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] transition-all hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
                 >
                   <Plus aria-hidden="true" className="h-4 w-4" />
-                  Додати майданчик
+                   {copy.editor.addPlatform}
                 </button>
               </fieldset>
               <button type="submit" disabled={isSavingProfile} className="min-h-12 w-full border border-[#00f0ff]/70 bg-[#00f0ff]/10 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white hover:shadow-[0_0_24px_rgba(0,240,255,0.35)] disabled:cursor-wait disabled:opacity-50">
-                {isSavingProfile ? "ПІДКЛЮЧЕННЯ ДО МЕРЕЖІ..." : myAuthor ? "ЗБЕРЕГТИ МІЙ ПОРТАЛ" : "ВІДКРИТИ МІЙ ПОРТАЛ"}
+                 {isSavingProfile ? copy.editor.connecting : myAuthor ? copy.editor.savePortal : copy.editor.openPortal}
               </button>
             </form>
             {myAuthor && (
               <section className="mt-8 border-t border-[#00f0ff]/20 pt-6">
                 <div className="flex items-end justify-between gap-3">
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffad7f]">Публічні роботи</p>
-                    <h3 className="mt-1 font-creepster text-3xl tracking-[0.1em] text-[#d7b6ff]">Банери та картки</h3>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffad7f]">{copy.creations.eyebrow}</p>
+                    <h3 className="mt-1 font-creepster text-3xl tracking-[0.1em] text-[#d7b6ff]">{copy.creations.title}</h3>
                   </div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">{creations.length} збережено</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">{formatAuthorsWorldCopy(copy.creations.saved, { count: creations.length })}</span>
                 </div>
                 <p className="mt-2 font-mono text-[10px] leading-relaxed text-white/45">
-                  Додай посилання на окрему роботу. Відвідувачі побачать її у вкладці відповідного майданчика, зокрема у вкладці YouTube.
+                  {copy.creations.help}
                 </p>
                 {creationError && <p className="mt-3 border border-[#ff7043]/35 bg-[#ff7043]/5 px-3 py-2 font-mono text-xs text-[#ffb184]">{creationError}</p>}
                 {creationSavedNotice && (
@@ -1747,14 +1749,14 @@ export default function AuthorsWorld() {
                               imageUrl: creation.imageUrl ?? "",
                               contentUrl: creation.contentUrl ?? "",
                               audioObjectPath: creation.audioObjectPath ?? "",
-                              audioFileName: creation.audioUrl ? "MP3 прикріплено" : "",
+                              audioFileName: creation.audioUrl ? copy.creations.attached : "",
                               audioSizeBytes: creation.audioSizeBytes ?? null,
                               audioDurationSeconds: creation.audioDurationSeconds ?? null,
                             });
                             setAudioFile(null);
                             setAudioError(null);
-                          }} className="border border-white/15 px-2 py-2 font-mono text-[9px] uppercase text-white/60 hover:border-[#00f0ff] hover:text-white">Змінити</button>
-                          <button type="button" onClick={() => void handleDeleteCreation(creation.id)} className="border border-[#ff7043]/35 px-2 py-2 font-mono text-[9px] uppercase text-[#ffb184] hover:border-[#ff7043]">Видалити</button>
+                          }} className="border border-white/15 px-2 py-2 font-mono text-[9px] uppercase text-white/60 hover:border-[#00f0ff] hover:text-white">{copy.creations.edit}</button>
+                          <button type="button" onClick={() => void handleDeleteCreation(creation.id)} className="border border-[#ff7043]/35 px-2 py-2 font-mono text-[9px] uppercase text-[#ffb184] hover:border-[#ff7043]">{copy.creations.remove}</button>
                         </div>
                       </div>
                     ))}
@@ -1763,40 +1765,40 @@ export default function AuthorsWorld() {
                 <form onSubmit={handleSaveCreation} className="mt-4 grid gap-3 border border-white/10 bg-black/20 p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
-                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Майданчик</span>
+                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.platform}</span>
                       <select value={creationDraft.platform} onChange={(event) => setCreationDraft((current) => ({ ...current, platform: event.target.value as PlatformKey }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70">
-                        {PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value} className="bg-[#06111a]">{option.label}</option>)}
+                        {PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value} className="bg-[#06111a]">{copy.platformLabels[option.value] ?? option.label}</option>)}
                       </select>
                     </label>
                     <label className="block">
-                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Формат</span>
+                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.format}</span>
                       <select value={creationDraft.kind} onChange={(event) => setCreationDraft((current) => ({ ...current, kind: event.target.value as CreationDraft["kind"] }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70">
-                        <option value="banner" className="bg-[#06111a]">Банер</option>
-                        <option value="card" className="bg-[#06111a]">Картка</option>
-                        <option value="creation" className="bg-[#06111a]">Творіння</option>
+                        <option value="banner" className="bg-[#06111a]">{copy.creations.banner}</option>
+                        <option value="card" className="bg-[#06111a]">{copy.creations.card}</option>
+                        <option value="creation" className="bg-[#06111a]">{copy.creations.creation}</option>
                       </select>
                     </label>
                   </div>
                   <label className="block">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Назва роботи *</span>
-                    <input required value={creationDraft.title} onChange={(event) => setCreationDraft((current) => ({ ...current, title: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="Назва пісні, відео або проєкту" />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.titleLabel}</span>
+                    <input required value={creationDraft.title} onChange={(event) => setCreationDraft((current) => ({ ...current, title: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder={copy.creations.titlePlaceholder} />
                   </label>
                   <label className="block">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Опис</span>
-                    <textarea value={creationDraft.description} onChange={(event) => setCreationDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-[#06111a] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="Коротко про цю роботу" />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.description}</span>
+                    <textarea value={creationDraft.description} onChange={(event) => setCreationDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-[#06111a] px-3 py-2 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder={copy.creations.descriptionPlaceholder} />
                   </label>
                    <div className="border border-[#00f0ff]/25 bg-[#06111a]/70 p-3">
                      <div className="flex items-start gap-3">
                        <UploadCloud className="mt-0.5 h-5 w-5 shrink-0 text-[#b9f7ff]" aria-hidden="true" />
                        <div>
-                         <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#b9f7ff]">Завантажити MP3</span>
+                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#b9f7ff]">{copy.creations.uploadMp3}</span>
                          <p className="mt-1 font-mono text-[10px] leading-relaxed text-white/50">
-                           Тільки MP3 до 20 МБ. Максимум 5 треків і 100 МБ на один портал.
+                            {copy.creations.mp3Help}
                          </p>
                        </div>
                      </div>
                      <label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center border border-dashed border-[#00f0ff]/55 bg-[#00f0ff]/5 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:border-[#00f0ff] hover:bg-[#00f0ff]/10">
-                       {audioFile ? `ВИБРАНО: ${audioFile.name}` : creationDraft.audioObjectPath ? "MP3 ПРИКРІПЛЕНО — НАТИСНИ, ЩОБ ЗАМІНИТИ" : "ОБРАТИ MP3-ФАЙЛ"}
+                        {audioFile ? formatAuthorsWorldCopy(copy.creations.selected, { name: audioFile.name }) : creationDraft.audioObjectPath ? copy.creations.replaceMp3 : copy.creations.chooseMp3}
                        <input
                          type="file"
                          accept=".mp3,audio/mpeg,audio/mp3"
@@ -1810,24 +1812,24 @@ export default function AuthorsWorld() {
                      </label>
                      {(audioFile || creationDraft.audioObjectPath) && (
                        <p className="mt-2 font-mono text-[10px] text-[#8ceeff]">
-                         {creationDraft.audioFileName || "MP3 прикріплено"}
-                         {creationDraft.audioSizeBytes ? ` // ${(creationDraft.audioSizeBytes / 1024 / 1024).toFixed(1)} МБ` : ""}
+                          {creationDraft.audioFileName || copy.creations.attached}
+                         {creationDraft.audioSizeBytes ? ` // ${(creationDraft.audioSizeBytes / 1024 / 1024).toFixed(1)} ${lang === "en" ? "MB" : lang === "fr" ? "Mo" : "МБ"}` : ""}
                          {creationDraft.audioDurationSeconds ? ` // ${Math.round(creationDraft.audioDurationSeconds / 60)}:${String(Math.round(creationDraft.audioDurationSeconds % 60)).padStart(2, "0")}` : ""}
                        </p>
                      )}
                      {audioError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{audioError}</p>}
                    </div>
                    <label className="block">
-                     <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Посилання на роботу (необов’язково)</span>
-                      <input type="url" value={creationDraft.contentUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder={creationDraft.platform === "suno" ? "https://suno.com/song/..." : "https://youtube.com/watch?v=... або залиш порожнім для MP3"} />
+                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.contentLink}</span>
+                       <input type="url" value={creationDraft.contentUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder={creationDraft.platform === "suno" ? "https://suno.com/song/..." : copy.creations.contentPlaceholder} />
                   </label>
                   <label className="block">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Обкладинка (необов’язково)</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.cover}</span>
                     <input type="url" value={creationDraft.imageUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, imageUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="https://.../cover.jpg" />
                   </label>
                   <div className="flex flex-wrap gap-2">
-                     <button type="submit" disabled={isSavingCreation || isUploadingAudio} className="min-h-10 border border-[#8a2be2]/70 bg-[#8a2be2]/15 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] hover:border-[#00f0ff] hover:text-white disabled:opacity-50">{isUploadingAudio ? "ЗАВАНТАЖЕННЯ MP3..." : isSavingCreation ? "ЗБЕРЕЖЕННЯ..." : editingCreationId ? "ЗБЕРЕГТИ ЗМІНИ" : "ДОДАТИ РОБОТУ"}</button>
-                      {editingCreationId && <button type="button" onClick={() => { setEditingCreationId(null); setCreationSavedNotice(null); setAudioFile(null); setAudioError(null); setCreationDraft(EMPTY_CREATION_DRAFT); }} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white">Скасувати</button>}
+                     <button type="submit" disabled={isSavingCreation || isUploadingAudio} className="min-h-10 border border-[#8a2be2]/70 bg-[#8a2be2]/15 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] hover:border-[#00f0ff] hover:text-white disabled:opacity-50">{isUploadingAudio ? copy.creations.uploading : isSavingCreation ? copy.creations.saving : editingCreationId ? copy.creations.saveChanges : copy.creations.addWork}</button>
+                      {editingCreationId && <button type="button" onClick={() => { setEditingCreationId(null); setCreationSavedNotice(null); setAudioFile(null); setAudioError(null); setCreationDraft(EMPTY_CREATION_DRAFT); }} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white">{copy.creations.cancel}</button>}
                   </div>
                 </form>
               </section>
