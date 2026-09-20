@@ -41,4 +41,17 @@ describe("The Ashen Crossing level data", () => {
     expect(secondLevel.platforms[2]).toMatchObject({ x: 455, y: 335, w: 190 });
     expect(secondLevel.platforms[1].y - secondLevel.platforms[2].y).toBeLessThanOrEqual(70);
   });
+
+  it("makes every level a four-section journey with its own backdrop seed", () => {
+    expect(GAME_LEVELS.every((level) => level.width >= 9600)).toBe(true);
+    expect(new Set(GAME_LEVELS.map((level) => level.backgroundSeed)).size).toBe(GAME_LEVELS.length);
+    expect(GAME_LEVELS.every((level) => level.backgroundStyle !== undefined)).toBe(true);
+  });
+
+  it("gives every level an aerial threat and more than one hazard language", () => {
+    for (const level of GAME_LEVELS) {
+      expect(level.enemies.some((enemy) => enemy.kind === "flying")).toBe(true);
+      expect(new Set(level.hazards.map((hazard) => hazard.kind)).size).toBeGreaterThanOrEqual(2);
+    }
+  });
 });
