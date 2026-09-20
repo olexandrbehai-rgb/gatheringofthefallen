@@ -232,6 +232,23 @@ function compressedImageFromFile(file: File, maxSide: number, quality: number, l
       return;
     }
 
+    // Preserve the exact uploaded image whenever it already fits the profile
+    // payload limit. Re-encoding small avatars needlessly softens line art,
+    // lettering, and pixel art before the author-world zoom is applied.
+    if (file.size <= 1_100_000) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== "string") {
+          reject(new Error("Не вдалося прочитати файл іконки."));
+          return;
+        }
+        resolve(reader.result);
+      };
+      reader.onerror = () => reject(new Error("Не вдалося прочитати файл іконки."));
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const objectUrl = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => {
@@ -262,7 +279,7 @@ function compressedImageFromFile(file: File, maxSide: number, quality: number, l
 }
 
 function compressedAvatarFromFile(file: File) {
-  return compressedImageFromFile(file, 640, 0.82, "Іконка");
+  return compressedImageFromFile(file, 1536, 0.94, "Іконка");
 }
 
 function compressedBackgroundFromFile(file: File) {
@@ -1177,8 +1194,8 @@ export default function AuthorsWorld() {
             style={{ transform: `translate3d(${worldPan.x}px, ${worldPan.y}px, 0)` }}
           >
             <div
-              className="relative overflow-visible bg-[radial-gradient(circle_at_50%_36%,rgba(16,63,82,0.2),transparent_32%),linear-gradient(rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(145deg,rgba(3,13,22,0.94),rgba(9,4,24,0.96)] [background-size:100%_100%,42px_42px,42px_42px,100%_100%] will-change-transform"
-              style={{ width: `${worldSize.width}px`, height: `${worldSize.height}px`, transform: `scale(${worldZoom})`, transformOrigin: "0 0" }}
+              className="relative overflow-visible bg-[radial-gradient(circle_at_50%_36%,rgba(16,63,82,0.2),transparent_32%),linear-gradient(rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(145deg,rgba(3,13,22,0.94),rgba(9,4,24,0.96)] [background-size:100%_100%,42px_42px,42px_42px,100%_100%]"
+              style={{ width: `${worldSize.width}px`, height: `${worldSize.height}px`, zoom: worldZoom }}
             >
               <div aria-hidden="true" className="absolute left-[12%] top-[27%] h-px w-[74%] rotate-[9deg] bg-gradient-to-r from-transparent via-[#00f0ff]/35 to-transparent" />
               <div aria-hidden="true" className="absolute left-[6%] top-[64%] h-px w-[84%] -rotate-[13deg] bg-gradient-to-r from-transparent via-[#8a2be2]/35 to-transparent" />
@@ -1509,7 +1526,7 @@ export default function AuthorsWorld() {
                      <p className="font-bold uppercase tracking-[0.14em] text-[#b9f7ff]">
                        {isProcessingAvatar ? "ПІДГОТОВКА ІКОНКИ..." : draft.avatarUrl ? "Аватарка готова" : "Натисни на плюс"}
                      </p>
-                     <p className="mt-1">Зображення автоматично стиснеться і стане круглим у світі авторів. Наведи курсор, щоб побачити його повністю.</p>
+                      <p className="mt-1">Оригінальне зображення збережеться без змін, якщо воно вкладається в ліміт. Великі файли оптимізуються у високій якості. Наведи курсор, щоб побачити його повністю.</p>
                    </div>
                  </div>
                 {avatarError && <p className="mt-2 font-mono text-[10px] text-[#ffb184]">{avatarError}</p>}
