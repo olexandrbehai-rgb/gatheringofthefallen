@@ -1206,7 +1206,6 @@ export default function AuthorsWorld() {
               <div className="pointer-events-none absolute inset-x-0 top-4 text-center font-mono text-[9px] uppercase tracking-[0.35em] text-[#00f0ff]/35">
                 Координати мережі // перетягни поле для навігації
               </div>
-
               {visibleAuthors.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
                   <p className="max-w-sm font-mono text-sm leading-relaxed text-white/50">
