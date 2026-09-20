@@ -58,6 +58,11 @@ type Enemy = {
   speed: number;
   direction: 1 | -1;
   alive: boolean;
+  kind: "ground" | "flying";
+  baseY: number;
+  minY: number;
+  maxY: number;
+  phase: number;
 };
 
 type Runtime = {
@@ -119,10 +124,16 @@ function createRuntime(levelIndex: number, lives = 4, relics = 0): Runtime {
     },
     enemies: level.enemies.map((enemy) => ({
       ...enemy,
+      y: enemy.kind === "flying" ? enemy.y : 438,
       w: 26,
       h: 32,
       direction: 1,
       alive: true,
+      kind: enemy.kind ?? "ground",
+      baseY: enemy.kind === "flying" ? enemy.y : 438,
+      minY: enemy.minY ?? enemy.y,
+      maxY: enemy.maxY ?? enemy.y,
+      phase: enemy.x * 0.031,
     })),
     collectedRelics: level.relics.map(() => false),
     health: 100,
@@ -184,6 +195,169 @@ function drawPlatform(ctx: CanvasRenderingContext2D, platform: GameRect, accent:
   ctx.moveTo(platform.x + 2, platform.y + platform.h - 1);
   ctx.lineTo(platform.x + platform.w - 2, platform.y + platform.h - 1);
   ctx.stroke();
+}
+
+function drawTribalBackdrop(
+  ctx: CanvasRenderingContext2D,
+  level: GameLevel,
+  camera: number,
+  time: number,
+) {
+  const style = level.backgroundStyle ?? 0;
+  const seed = level.backgroundSeed ?? 1;
+  const parallaxOffset = -((camera * 0.14) % 240);
+  const motifCount = 8;
+
+  ctx.save();
+  ctx.translate(parallaxOffset, 0);
+  ctx.globalAlpha = 0.62;
+  for (let motif = -1; motif < motifCount; motif += 1) {
+    const x = motif * 240 + 110;
+    const drift = Math.sin(time * 0.00035 + motif + seed) * 4;
+    const variant = Math.abs(seed + motif * 17) % 5;
+
+    ctx.strokeStyle = `${level.palette.accent}55`;
+    ctx.fillStyle = `${level.palette.glow}22`;
+    ctx.lineWidth = 2;
+
+    if (style % 12 === 0) {
+      ctx.beginPath();
+      ctx.arc(x, 150 + drift, 58 + variant * 5, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let ray = 0; ray < 8; ray += 1) {
+        const angle = ray * Math.PI / 4;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(angle) * 68, 150 + drift + Math.sin(angle) * 68);
+        ctx.lineTo(x + Math.cos(angle) * 100, 150 + drift + Math.sin(angle) * 100);
+        ctx.stroke();
+      }
+    } else if (style % 12 === 1) {
+      ctx.beginPath();
+      ctx.moveTo(x - 70, 390);
+      ctx.lineTo(x - 35, 190 + variant * 8);
+      ctx.lineTo(x, 390);
+      ctx.lineTo(x + 38, 155 + variant * 12);
+      ctx.lineTo(x + 78, 390);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (style % 12 === 2) {
+      ctx.beginPath();
+      ctx.moveTo(x - 56, 70);
+      ctx.lineTo(x - 8, 150);
+      ctx.lineTo(x - 42, 250);
+      ctx.lineTo(x + 30, 320);
+      ctx.lineTo(x + 70, 390);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + 22, 92);
+      ctx.lineTo(x - 5, 185);
+      ctx.lineTo(x + 42, 270);
+      ctx.lineTo(x + 5, 370);
+      ctx.stroke();
+    } else if (style % 12 === 3) {
+      for (let tree = 0; tree < 3; tree += 1) {
+        const treeX = x - 70 + tree * 65;
+        ctx.beginPath();
+        ctx.moveTo(treeX, 405);
+        ctx.lineTo(treeX + 28, 235 - tree * 18);
+        ctx.lineTo(treeX + 56, 405);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else if (style % 12 === 4) {
+      ctx.beginPath();
+      ctx.arc(x, 155, 72, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, 155, 45, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.stroke();
+      ctx.fillStyle = `${level.palette.accent}44`;
+      ctx.fillRect(x - 4, 90, 8, 130);
+    } else if (style % 12 === 5) {
+      ctx.beginPath();
+      ctx.moveTo(x - 82, 340);
+      ctx.quadraticCurveTo(x - 22, 250 + drift, x + 18, 350);
+      ctx.quadraticCurveTo(x + 54, 430, x + 84, 270);
+      ctx.stroke();
+      for (let leaf = 0; leaf < 5; leaf += 1) {
+        ctx.fillRect(x - 48 + leaf * 28, 250 + ((leaf * 37) % 90), 7, 18);
+      }
+    } else if (style % 12 === 6) {
+      ctx.fillStyle = `${level.palette.glow}26`;
+      ctx.beginPath();
+      ctx.arc(x, 170, 54, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `${level.palette.accent}70`;
+      for (let tooth = 0; tooth < 7; tooth += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x - 72 + tooth * 24, 225);
+        ctx.lineTo(x - 58 + tooth * 24, 270 + (tooth % 2) * 18);
+        ctx.stroke();
+      }
+    } else if (style % 12 === 7) {
+      ctx.strokeStyle = `${level.palette.glow}80`;
+      ctx.beginPath();
+      ctx.moveTo(x - 85, 100 + variant * 13);
+      ctx.lineTo(x - 45, 165);
+      ctx.lineTo(x - 10, 125);
+      ctx.lineTo(x + 32, 210);
+      ctx.lineTo(x + 82, 145);
+      ctx.stroke();
+      ctx.fillStyle = `${level.palette.accent}66`;
+      ctx.fillRect(x - 2, 260, 5, 110);
+    } else if (style % 12 === 8) {
+      for (let shard = 0; shard < 4; shard += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x - 90 + shard * 48, 390);
+        ctx.lineTo(x - 65 + shard * 48, 150 + (shard % 2) * 55);
+        ctx.lineTo(x - 30 + shard * 48, 390);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else if (style % 12 === 9) {
+      ctx.fillStyle = `${level.palette.glow}38`;
+      ctx.beginPath();
+      ctx.arc(x, 170, 64, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `${level.palette.accent}90`;
+      ctx.beginPath();
+      ctx.arc(x, 170, 84, Math.PI * 0.1, Math.PI * 1.1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, 170, 102, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    } else if (style % 12 === 10) {
+      ctx.fillStyle = `${level.palette.accent}28`;
+      ctx.fillRect(x - 70, 190, 140, 160);
+      ctx.strokeRect(x - 70, 190, 140, 160);
+      ctx.strokeRect(x - 50, 210, 100, 120);
+      ctx.beginPath();
+      ctx.moveTo(x - 40, 270);
+      ctx.lineTo(x, 225);
+      ctx.lineTo(x + 40, 270);
+      ctx.lineTo(x, 315);
+      ctx.closePath();
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = `${level.palette.glow}70`;
+      ctx.beginPath();
+      ctx.moveTo(x - 105, 285);
+      ctx.lineTo(x - 35, 320);
+      ctx.lineTo(x + 35, 285);
+      ctx.lineTo(x + 105, 320);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 105, 300);
+      ctx.lineTo(x - 35, 335);
+      ctx.lineTo(x + 35, 300);
+      ctx.lineTo(x + 105, 335);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -597,13 +771,15 @@ export function GameCanvas({
       const hasBackgroundImage = Boolean(backgroundImage?.complete && backgroundImage.naturalWidth > 0);
       if (hasBackgroundImage && backgroundImage) {
         context.save();
-        context.globalAlpha = 0.82;
+        context.globalAlpha = 0.3;
         context.drawImage(backgroundImage, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         context.globalAlpha = 1;
-        context.fillStyle = "rgba(7, 8, 17, .28)";
+        context.fillStyle = `${level.palette.skyBottom}66`;
         context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         context.restore();
       }
+
+      drawTribalBackdrop(context, level, camera, time);
 
       if (!hasBackgroundImage) {
         context.save();
@@ -640,16 +816,31 @@ export function GameCanvas({
       }
 
       level.platforms.forEach((platform, index) => drawPlatform(context, platform, level.palette.accent, index));
-      level.hazards.forEach((hazard) => {
-        context.fillStyle = "#6b2631";
+      level.hazards.forEach((hazard, hazardIndex) => {
+        if (hazard.kind === "void") {
+          context.fillStyle = "rgba(3, 2, 8, .92)";
+          context.fillRect(hazard.x, hazard.y, hazard.w, hazard.h);
+          context.strokeStyle = `${level.palette.glow}88`;
+          context.strokeRect(hazard.x, hazard.y + 2, hazard.w, hazard.h - 2);
+          for (let eye = 0; eye < 2; eye += 1) {
+            context.fillStyle = level.palette.accent;
+            context.fillRect(hazard.x + 12 + eye * 18, hazard.y + 10 + (hazardIndex % 2) * 4, 5, 2);
+          }
+          return;
+        }
+
+        context.fillStyle = hazard.kind === "fire" ? "#b64932" : "#6b2631";
+        context.shadowColor = hazard.kind === "fire" ? `${level.palette.glow}aa` : "transparent";
+        context.shadowBlur = hazard.kind === "fire" ? 12 : 0;
         for (let x = hazard.x; x < hazard.x + hazard.w; x += 12) {
           context.beginPath();
           context.moveTo(x, hazard.y + hazard.h);
-          context.lineTo(x + 6, hazard.y);
+          context.lineTo(x + 6, hazard.y + (hazard.kind === "fire" ? 3 + Math.sin(time * 0.008 + x) * 3 : 0));
           context.lineTo(x + 12, hazard.y + hazard.h);
           context.closePath();
           context.fill();
         }
+        context.shadowBlur = 0;
       });
 
       level.relics.forEach((relic, index) => {
@@ -673,9 +864,35 @@ export function GameCanvas({
       runtime.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
         context.save();
-        context.shadowColor = "#a44a5c";
+        const flying = enemy.kind === "flying";
+        context.shadowColor = flying ? level.palette.accent : "#a44a5c";
         context.shadowBlur = 10;
-        drawRect(context, { x: enemy.x, y: enemy.y, w: enemy.w, h: enemy.h }, "#5b3044");
+        if (flying) {
+          context.fillStyle = "#281a3e";
+          context.beginPath();
+          context.moveTo(enemy.x + 13, enemy.y);
+          context.lineTo(enemy.x + 27, enemy.y + 13);
+          context.lineTo(enemy.x + 21, enemy.y + 31);
+          context.lineTo(enemy.x + 5, enemy.y + 31);
+          context.lineTo(enemy.x - 1, enemy.y + 13);
+          context.closePath();
+          context.fill();
+          context.fillStyle = `${level.palette.accent}bb`;
+          context.beginPath();
+          context.moveTo(enemy.x + 8, enemy.y + 12);
+          context.lineTo(enemy.x - 14, enemy.y + 5);
+          context.lineTo(enemy.x - 5, enemy.y + 20);
+          context.closePath();
+          context.fill();
+          context.beginPath();
+          context.moveTo(enemy.x + 18, enemy.y + 12);
+          context.lineTo(enemy.x + 40, enemy.y + 5);
+          context.lineTo(enemy.x + 31, enemy.y + 20);
+          context.closePath();
+          context.fill();
+        } else {
+          drawRect(context, { x: enemy.x, y: enemy.y, w: enemy.w, h: enemy.h }, "#5b3044");
+        }
         context.shadowBlur = 0;
         drawRect(context, { x: enemy.x + 5, y: enemy.y + 7, w: 5, h: 4 }, "#ffad6a");
         drawRect(context, { x: enemy.x + 16, y: enemy.y + 7, w: 5, h: 4 }, "#ffad6a");
@@ -791,7 +1008,15 @@ export function GameCanvas({
           for (const enemy of runtime.enemies) {
             if (!enemy.alive) continue;
             enemy.x += enemy.direction * enemy.speed * delta;
-            if (enemy.x <= enemy.minX || enemy.x >= enemy.maxX) enemy.direction = enemy.direction === 1 ? -1 : 1;
+            if (enemy.x <= enemy.minX || enemy.x >= enemy.maxX) {
+              enemy.direction = enemy.direction === 1 ? -1 : 1;
+              enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX, enemy.x));
+            }
+            if (enemy.kind === "flying") {
+              const verticalRange = (enemy.maxY - enemy.minY) / 2;
+              const verticalCenter = enemy.minY + verticalRange;
+              enemy.y = verticalCenter + Math.sin(time * 0.0024 + enemy.phase) * verticalRange;
+            }
             const enemyRect = { x: enemy.x, y: enemy.y, w: enemy.w, h: enemy.h };
             if (runtime.strikeFor > 0) {
               const strikeRect = {
