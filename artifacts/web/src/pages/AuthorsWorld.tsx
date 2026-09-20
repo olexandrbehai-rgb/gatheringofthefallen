@@ -729,6 +729,21 @@ export default function AuthorsWorld() {
     });
   }, [chatDraft, mentionContext]);
 
+  const addressAuthor = useCallback((author: Pick<ChatMessage["author"], "slug">) => {
+    const prefix = `@${author.slug} `;
+    const nextDraft = `${prefix}${chatDraft}`;
+    const nextCursor = prefix.length;
+    setChatDraft(nextDraft);
+    setChatCursorPosition(nextCursor);
+    setMentionHighlightIndex(0);
+    setIsNotificationsOpen(false);
+    document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.requestAnimationFrame(() => {
+      chatInputRef.current?.focus();
+      chatInputRef.current?.setSelectionRange(nextCursor, nextCursor);
+    });
+  }, [chatDraft]);
+
   const openAuthorPortal = () => {
     setFormError(null);
     setProfileSavedNotice(null);
@@ -1740,15 +1755,18 @@ export default function AuthorsWorld() {
                          >
                            <div className="flex items-start justify-between gap-3">
                              <p className="min-w-0 font-mono text-xs leading-relaxed text-white/75">
-                               <Link
-                                 href={`/author/${notification.actor.slug}`}
-                                 onClick={() => {
-                                   if (!notification.isRead) void handleMarkNotificationRead(notification.id);
-                                 }}
-                                 className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/45 underline-offset-2 hover:text-white"
-                               >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!notification.isRead) void handleMarkNotificationRead(notification.id);
+                                    addressAuthor(notification.actor);
+                                  }}
+                                  className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/45 underline-offset-2 hover:text-white"
+                                  aria-label={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
+                                  title={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
+                                >
                                  {notification.actor.displayName}
-                               </Link>{" "}
+                                </button>{" "}
                                {copy.notifications.mentionedYou}
                              </p>
                              {!notification.isRead && (
@@ -2076,12 +2094,15 @@ export default function AuthorsWorld() {
                     return (
                       <article key={message.id} className="border-l border-[#00f0ff]/35 pl-3">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <Link
-                            href={`/author/${message.author.slug}`}
+                          <button
+                            type="button"
+                            onClick={() => addressAuthor(message.author)}
                             className="font-mono text-xs font-bold text-[#8ceeff] transition-colors hover:text-white"
+                            aria-label={formatAuthorsWorldCopy(copy.chat.replyTo, { name: message.author.displayName })}
+                            title={formatAuthorsWorldCopy(copy.chat.replyTo, { name: message.author.displayName })}
                           >
                             {message.author.displayName}
-                          </Link>
+                          </button>
                           <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffad7f]/70">{message.author.role}</span>
                           <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
                             {new Date(message.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
