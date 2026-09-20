@@ -11,11 +11,18 @@ export type EnemySeed = {
   minX: number;
   maxX: number;
   speed: number;
+  kind?: "ground" | "flying";
+  minY?: number;
+  maxY?: number;
 };
 
 export type RelicSeed = {
   x: number;
   y: number;
+};
+
+export type HazardSeed = GameRect & {
+  kind?: "spikes" | "fire" | "void";
 };
 
 export type GameLevel = {
@@ -30,11 +37,13 @@ export type GameLevel = {
     accent: string;
   };
   platforms: GameRect[];
-  hazards: GameRect[];
+  hazards: HazardSeed[];
   enemies: EnemySeed[];
   relics: RelicSeed[];
   goalX: number;
   checkpoint: string;
+  backgroundStyle?: number;
+  backgroundSeed?: number;
 };
 
 export const GAME_PHYSICS = {
@@ -405,6 +414,109 @@ function createExpeditionLevel(index: number): GameLevel {
   };
 }
 
+const SECTION_HEIGHT_OFFSETS = [0, 16, -14, 10] as const;
+const SECTION_WIDTH_OFFSETS = [0, -16, 22, -10] as const;
+const BACKDROP_STYLE_COUNT = 12;
+
+function clampLevelY(value: number) {
+  return Math.max(145, Math.min(408, value));
+}
+
+function elongateLevel(level: GameLevel, index: number): GameLevel {
+  const segmentWidth = level.width;
+  const platforms: GameRect[] = [floor(segmentWidth * 4)];
+  const hazards: HazardSeed[] = [];
+  const enemies: EnemySeed[] = [];
+  const relics: RelicSeed[] = [];
+
+  for (let section = 0; section < 4; section += 1) {
+    const xOffset = section * segmentWidth;
+    const yOffset = SECTION_HEIGHT_OFFSETS[section];
+    const widthOffset = SECTION_WIDTH_OFFSETS[section];
+
+    level.platforms.slice(1).forEach((platform, platformIndex) => {
+      const localXOffset = section === 0 ? 0 : section * 7;
+      platforms.push({
+        ...platform,
+        x: platform.x + xOffset + localXOffset,
+        y: clampLevelY(platform.y + yOffset + ((platformIndex + index) % 3 === 0 ? section - 1 : 0)),
+        w: Math.max(112, platform.w + widthOffset),
+      });
+    });
+
+    level.hazards.forEach((hazard, hazardIndex) => {
+      hazards.push({
+        ...hazard,
+        x: hazard.x + xOffset + (section === 0 ? 0 : section * 7),
+        w: Math.max(38, hazard.w + (section % 2 === 0 ? 8 : -4)),
+        kind: hazard.kind ?? (
+          (hazardIndex + section + index) % 3 === 0
+            ? "fire"
+            : (hazardIndex + section) % 2 === 0
+              ? "spikes"
+              : "void"
+        ),
+      });
+    });
+
+    level.enemies.forEach((enemy) => {
+      enemies.push({
+        ...enemy,
+        x: enemy.x + xOffset + (section === 0 ? 0 : section * 7),
+        minX: enemy.minX + xOffset + (section === 0 ? 0 : section * 7),
+        maxX: enemy.maxX + xOffset + (section === 0 ? 0 : section * 7),
+        speed: enemy.speed + section * 4,
+      });
+    });
+
+    level.relics.forEach((relic) => {
+      relics.push({
+        x: relic.x + xOffset + (section === 0 ? 0 : section * 7),
+        y: relic.y + yOffset,
+      });
+    });
+
+    const aerialCount = 2 + ((index + section) % 3);
+    for (let aerialIndex = 0; aerialIndex < aerialCount; aerialIndex += 1) {
+      const localX = 360 + aerialIndex * 285 + ((index * 47 + section * 71) % 120);
+      const y = 145 + ((index * 31 + section * 53 + aerialIndex * 37) % 150);
+      const minX = xOffset + localX - 90;
+      const maxX = Math.min(xOffset + segmentWidth - 90, xOffset + localX + 150);
+      enemies.push({
+        x: Math.min(maxX, minX + 35),
+        y,
+        minX,
+        maxX,
+        minY: Math.max(92, y - 42),
+        maxY: Math.min(350, y + 42),
+        speed: 34 + index * 1.8 + section * 4 + aerialIndex * 3,
+        kind: "flying",
+      });
+    }
+
+    const transitionHazardX = xOffset + segmentWidth - 150;
+    hazards.push({
+      x: transitionHazardX,
+      y: 450,
+      w: 62 + ((index + section) % 3) * 14,
+      h: 28,
+      kind: section % 2 === 0 ? "fire" : "spikes",
+    });
+  }
+
+  return {
+    ...level,
+    width: segmentWidth * 4,
+    platforms,
+    hazards,
+    enemies,
+    relics,
+    goalX: level.goalX + segmentWidth * 3,
+    backgroundStyle: (index * 5 + (level.backgroundStyle ?? index)) % BACKDROP_STYLE_COUNT,
+    backgroundSeed: 0x2f6e2b1 + index * 7919,
+  };
+}
+
 function landingTime(sourceY: number, targetY: number): number | null {
   const verticalDisplacement = targetY - sourceY;
   const discriminant =
@@ -494,4 +606,4 @@ export function validateLevelReachability(level: GameLevel): LevelReachabilityRe
 export const GAME_LEVELS: GameLevel[] = [
   ...BASE_LEVELS,
   ...Array.from({ length: 20 }, (_, index) => createExpeditionLevel(index)),
-];
+].map(elongateLevel);
