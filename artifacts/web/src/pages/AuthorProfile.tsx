@@ -116,15 +116,17 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   }, [params.slug]);
 
   const tabs = useMemo(() => {
-    const values = new Map<string, string>();
+    const values = new Map<string, { label: string; url?: string }>();
     author?.platformLinks.forEach((link) => {
       const platform = platformForLink(link);
-      values.set(platform, PLATFORM_LABELS[platform] ?? link.label);
+      values.set(platform, { label: PLATFORM_LABELS[platform] ?? link.label, url: link.url });
     });
     creations.forEach((creation) => {
-      if (!values.has(creation.platform)) values.set(creation.platform, PLATFORM_LABELS[creation.platform] ?? creation.platform);
+      if (!values.has(creation.platform)) {
+        values.set(creation.platform, { label: PLATFORM_LABELS[creation.platform] ?? creation.platform });
+      }
     });
-    return [...values.entries()];
+    return [...values.entries()].map(([platform, value]) => [platform, value.label, value.url] as const);
   }, [author, creations]);
 
   const visibleCreations = activePlatform === "all"
@@ -186,12 +188,25 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         </header>
 
-        <div className="author-neon-panel mt-6 flex max-w-full flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 backdrop-blur-md sm:mt-8">
+          <div className="author-neon-panel mt-6 flex max-w-full flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 backdrop-blur-md sm:mt-8">
           <button type="button" onClick={() => setActivePlatform("all")} className={`min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>Усі роботи</button>
-          {tabs.map(([platform, label]) => (
-            <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`min-w-0 max-w-full break-words border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === platform ? "border-[#ff2d95] bg-[#ff2d95]/15 text-white" : "border-white/15 text-white/55 hover:border-[#ff2d95]/60"}`}>
-              {label}
-            </button>
+           {tabs.map(([platform, label, url]) => (
+             url ? (
+               <a
+                 key={platform}
+                 href={url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="inline-flex min-w-0 max-w-full items-center gap-1.5 break-words border border-[#ff2d95]/70 bg-[#ff2d95]/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] text-white hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 sm:px-4 sm:tracking-[0.14em]"
+               >
+                 <span className="break-words">{label}</span>
+                 <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+               </a>
+             ) : (
+               <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`min-w-0 max-w-full break-words border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === platform ? "border-[#ff2d95] bg-[#ff2d95]/15 text-white" : "border-white/15 text-white/55 hover:border-[#ff2d95]/60"}`}>
+                 {label}
+               </button>
+             )
           ))}
         </div>
 
