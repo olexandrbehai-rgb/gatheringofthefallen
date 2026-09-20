@@ -1055,12 +1055,8 @@ export default function AuthorsWorld() {
 
   return (
     <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-transparent px-3 py-6 text-white sm:px-6 sm:py-10 lg:px-10">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,4,10,0.58)_0%,rgba(2,4,10,0.3)_34%,rgba(2,4,10,0.7)_100%),radial-gradient(circle_at_50%_14%,rgba(0,240,255,0.16),transparent_38%),radial-gradient(circle_at_82%_58%,rgba(138,43,226,0.18),transparent_42%)]"
-      />
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-80 [background-image:linear-gradient(rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.07)_1px,transparent_1px),radial-gradient(circle_at_50%_20%,rgba(0,240,255,0.2),transparent_42%),radial-gradient(circle_at_80%_75%,rgba(138,43,226,0.2),transparent_38%)] [background-size:42px_42px,42px_42px,100%_100%,100%_100%]" />
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full border border-[#00f0ff]/20 shadow-[0_0_80px_rgba(0,240,255,0.12)]" />
+      <div aria-hidden="true" className="authors-world-atmosphere pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="authors-world-orbit authors-world-orbit-outer pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full" />
 
       <div className="authors-world-readable relative z-10 mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-5 border-b border-[#00f0ff]/20 pb-5 sm:mb-8 sm:gap-6 sm:pb-6 lg:flex-row lg:items-end lg:justify-between">
@@ -1069,7 +1065,7 @@ export default function AuthorsWorld() {
               ← Повернутися до Gathering Of The Fallen
             </Link>
             <p className="mt-5 font-mono text-[9px] uppercase tracking-[0.22em] text-[#ffad7f] sm:mt-6 sm:text-[10px] sm:tracking-[0.32em]">Інтерактивний архів // точка входу</p>
-            <h1 className="mt-2 font-creepster text-4xl tracking-[0.06em] text-[#00f0ff] drop-shadow-[0_0_18px_rgba(0,240,255,0.5)] sm:text-7xl sm:tracking-[0.08em]">
+            <h1 className="authors-world-title mt-2 font-creepster text-4xl tracking-[0.06em] text-[#00f0ff] sm:text-7xl sm:tracking-[0.08em]">
               Інший світ
             </h1>
             <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-white/65 sm:text-base">
@@ -1080,14 +1076,14 @@ export default function AuthorsWorld() {
             <button
               type="button"
               onClick={() => document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="inline-flex min-h-11 w-full items-center justify-center border border-[#8a2be2]/70 bg-[#8a2be2]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] transition-all hover:border-white hover:bg-[#8a2be2]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
+              className="authors-world-top-action inline-flex min-h-11 w-full items-center justify-center border border-[#8a2be2]/55 bg-[#8a2be2]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] transition-all hover:border-white/80 hover:bg-[#8a2be2]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2be2] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
               Загальний чат
             </button>
             <button
               type="button"
                onClick={openAuthorPortal}
-              className="inline-flex min-h-11 w-full items-center justify-center border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_18px_rgba(0,240,255,0.18)] transition-all hover:border-white hover:bg-[#00f0ff]/20 hover:text-white hover:shadow-[0_0_28px_rgba(0,240,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
+              className="authors-world-top-action inline-flex min-h-11 w-full items-center justify-center border border-[#00f0ff]/55 bg-[#00f0ff]/5 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_5px_rgba(0,240,255,0.1)] transition-all hover:border-white/80 hover:bg-[#00f0ff]/10 hover:text-white hover:shadow-[0_0_10px_rgba(0,240,255,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] sm:min-h-12 sm:w-auto sm:px-5 sm:text-xs sm:tracking-[0.18em]"
             >
               {!authLoaded ? "ПЕРЕВІРКА ДОСТУПУ..." : !isSignedIn ? "УВІЙТИ ДЛЯ ПОРТАЛУ" : myAuthor ? "РЕДАГУВАТИ МІЙ ПОРТАЛ" : "ЗАЛИШИТИСЯ У СПОГАДІ"}
             </button>
@@ -1180,29 +1176,30 @@ export default function AuthorsWorld() {
           onPointerUp={finishWorldPointerDrag}
           onPointerCancel={finishWorldPointerDrag}
           onWheelCapture={handleWorldWheel}
-          className={`relative h-[min(48dvh,420px)] min-h-[300px] overflow-hidden overscroll-none border border-[#00f0ff]/25 bg-[#020811]/70 shadow-[inset_0_0_80px_rgba(0,240,255,0.06),0_0_35px_rgba(0,0,0,0.35)] touch-none select-none sm:h-[min(70dvh,760px)] sm:min-h-[560px] ${
+          className={`authors-world-surface relative h-[min(48dvh,420px)] min-h-[300px] overflow-hidden overscroll-none touch-none select-none sm:h-[min(70dvh,760px)] sm:min-h-[560px] ${
             isWorldDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
           aria-label="Поле навігації світу авторів"
         >
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-80 [background-image:radial-gradient(circle_at_50%_20%,rgba(0,240,255,0.2),transparent_42%),radial-gradient(circle_at_80%_75%,rgba(138,43,226,0.2),transparent_38%)] [background-size:100%_100%,100%_100%]"
+            className="authors-world-surface-glow pointer-events-none absolute inset-0"
           />
-          <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#00f0ff]/20 shadow-[0_0_80px_rgba(0,240,255,0.12)]" />
+          <div aria-hidden="true" className="authors-world-orbit authors-world-orbit-middle pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full" />
 
           <div
             className="absolute left-0 top-0 will-change-transform"
             style={{ transform: `translate3d(${worldPan.x}px, ${worldPan.y}px, 0)` }}
           >
             <div
-              className="relative overflow-visible bg-[radial-gradient(circle_at_50%_36%,rgba(16,63,82,0.2),transparent_32%),linear-gradient(rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.07)_1px,transparent_1px),linear-gradient(145deg,rgba(3,13,22,0.94),rgba(9,4,24,0.96)] [background-size:100%_100%,42px_42px,42px_42px,100%_100%]"
+              className="authors-world-map relative overflow-visible"
               style={{ width: `${worldSize.width}px`, height: `${worldSize.height}px`, zoom: worldZoom }}
             >
               <div aria-hidden="true" className="absolute left-[12%] top-[27%] h-px w-[74%] rotate-[9deg] bg-gradient-to-r from-transparent via-[#00f0ff]/35 to-transparent" />
               <div aria-hidden="true" className="absolute left-[6%] top-[64%] h-px w-[84%] -rotate-[13deg] bg-gradient-to-r from-transparent via-[#8a2be2]/35 to-transparent" />
               <div aria-hidden="true" className="absolute left-[48%] top-[8%] h-[82%] w-px rotate-[18deg] bg-gradient-to-b from-transparent via-[#00f0ff]/20 to-transparent" />
-              <div aria-hidden="true" className="absolute left-1/2 top-[42%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#00f0ff]/15 shadow-[0_0_65px_rgba(0,240,255,0.12)]" />
+              <div aria-hidden="true" className="authors-world-orbit authors-world-orbit-inner absolute left-1/2 top-[42%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+              <div aria-hidden="true" className="authors-world-gotf-dots absolute inset-0" />
               <div className="pointer-events-none absolute inset-x-0 top-4 text-center font-mono text-[9px] uppercase tracking-[0.35em] text-[#00f0ff]/35">
                 Координати мережі // перетягни поле для навігації
               </div>
@@ -1249,16 +1246,16 @@ export default function AuthorsWorld() {
           </div>
 
           <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3 sm:p-4">
-            <div className="pointer-events-auto border border-[#00f0ff]/25 bg-[#020811]/80 px-3 py-2 backdrop-blur-sm">
+            <div className="pointer-events-auto border border-[#00f0ff]/25 bg-black/20 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[#b9f7ff]/75">
                 <Move size={13} aria-hidden="true" />
                 Перетягування // нескінченне поле
               </p>
               <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.14em] text-white/35">
-                Сітка авторів // {Math.round(worldZoom * 100)}%
+                GOTF // {Math.round(worldZoom * 100)}%
               </p>
             </div>
-            <div className="pointer-events-auto flex items-center gap-1 border border-[#00f0ff]/25 bg-[#020811]/85 p-1 backdrop-blur-sm">
+            <div className="pointer-events-auto flex items-center gap-1 border border-[#00f0ff]/25 bg-black/20 p-1 backdrop-blur-sm">
               <button
                 type="button"
                 aria-label="Зменшити масштаб поля"

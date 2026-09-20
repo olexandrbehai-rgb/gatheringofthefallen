@@ -365,6 +365,100 @@
     0 0 18px rgba(138, 43, 226, 0.5);
 }
 
+.authors-world-atmosphere {
+  background:
+    linear-gradient(180deg, rgba(2, 4, 10, 0.1) 0%, transparent 36%, rgba(2, 4, 10, 0.16) 100%),
+    radial-gradient(circle at 50% 14%, rgba(0, 240, 255, 0.07), transparent 34%),
+    radial-gradient(circle at 82% 58%, rgba(138, 43, 226, 0.06), transparent 38%);
+}
+
+.authors-world-readable h1.authors-world-title {
+  text-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.92),
+    0 0 5px rgba(0, 240, 255, 0.3);
+}
+
+.authors-world-readable .authors-world-top-action {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.96),
+    0 0 3px currentColor;
+}
+
+.authors-world-surface {
+  border: 1px solid rgba(0, 240, 255, 0.32);
+  background: rgba(2, 8, 17, 0.08);
+  box-shadow:
+    inset 0 0 24px rgba(0, 240, 255, 0.04),
+    0 0 14px rgba(0, 240, 255, 0.1);
+}
+
+.authors-world-surface-glow {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.07), transparent 38%),
+    radial-gradient(circle at 80% 75%, rgba(138, 43, 226, 0.06), transparent 36%);
+}
+
+.authors-world-map {
+  background-color: transparent;
+}
+
+.authors-world-orbit {
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  background: transparent;
+  box-shadow:
+    0 0 9px rgba(0, 240, 255, 0.17),
+    inset 0 0 8px rgba(0, 240, 255, 0.05);
+}
+
+.authors-world-orbit-outer {
+  opacity: 0.48;
+}
+
+.authors-world-orbit-middle {
+  border-color: rgba(0, 240, 255, 0.34);
+}
+
+.authors-world-orbit-inner {
+  border-color: rgba(138, 43, 226, 0.34);
+  box-shadow:
+    0 0 9px rgba(138, 43, 226, 0.16),
+    inset 0 0 8px rgba(138, 43, 226, 0.05);
+}
+
+.authors-world-gotf-dots {
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.34;
+  background-image: radial-gradient(circle, rgba(0, 240, 255, 0.28) 0 0.8px, transparent 1px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(to bottom, transparent, black 12%, black 88%, transparent);
+}
+
+.authors-world-gotf-dots::before {
+  content:
+    "GOTF  ·  GATHERING OF THE FALLEN  ·  GOTF  ·  GATHERING OF THE FALLEN\A"
+    "GATHERING OF THE FALLEN  ·  GOTF  ·  GATHERING OF THE FALLEN  ·  GOTF\A"
+    "GOTF  ·  GATHERING OF THE FALLEN  ·  GOTF  ·  GATHERING OF THE FALLEN\A"
+    "GATHERING OF THE FALLEN  ·  GOTF  ·  GATHERING OF THE FALLEN  ·  GOTF";
+  position: absolute;
+  left: 7%;
+  top: 17%;
+  white-space: pre;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 4.9;
+  letter-spacing: 0.28em;
+  color: transparent;
+  background-image: radial-gradient(circle, rgba(185, 247, 255, 0.72) 0 1px, transparent 1.35px);
+  background-size: 4px 4px;
+  background-clip: text;
+  -webkit-background-clip: text;
+  transform: rotate(-4deg);
+  transform-origin: center;
+  opacity: 0.4;
+}
+
 .author-portal-readable {
   text-shadow:
     0 2px 3px rgba(0, 0, 0, 1),
