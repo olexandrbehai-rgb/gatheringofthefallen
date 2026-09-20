@@ -13,14 +13,14 @@ export function LanguageSwitcher() {
             onClick={() => setLang(l.code as Lang)}
             aria-label={`Switch language to ${l.label}`}
             aria-pressed={active}
-            className={`px-2.5 py-1.5 transition-colors flex items-center gap-1 ${
+            className={`px-2 py-1.5 transition-colors flex items-center gap-1 sm:px-2.5 ${
               active
                 ? "bg-primary/20 text-primary"
                 : "text-muted-foreground hover:text-primary hover:bg-primary/10"
             }`}
           >
             <span aria-hidden="true">{l.flag}</span>
-            <span>{l.label}</span>
+            <span className="hidden sm:inline">{l.label}</span>
           </button>
         );
       })}

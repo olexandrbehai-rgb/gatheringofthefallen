@@ -7,6 +7,8 @@ import { SiBandcamp, SiInstagram, SiSuno, SiSpotify, SiSoundcloud, SiTiktok, SiY
 import { Link, useLocation } from "wouter";
 import { useT } from "@/i18n/LanguageContext";
 import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
+import authorGardenMist from "@/assets/author-garden-mist.mp4";
+import authorGardenMistPoster from "@/assets/author-garden-mist-poster.jpg";
 
 type AuthorLink = {
   label: string;
@@ -435,7 +437,8 @@ export default function AuthorsWorld() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [editingCreationId, setEditingCreationId] = useState<number | null>(null);
   const [locatingAuthorId, setLocatingAuthorId] = useState<string | null>(null);
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
+  const [isCompactViewport, setIsCompactViewport] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
   const [worldZoom, setWorldZoom] = useState(DEFAULT_WORLD_ZOOM);
   const [worldPan, setWorldPan] = useState({ x: 0, y: 0 });
   const [isWorldDragging, setIsWorldDragging] = useState(false);
@@ -658,10 +661,18 @@ export default function AuthorsWorld() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 639px)");
-    const updateViewport = () => setIsCompactViewport(mediaQuery.matches);
+    const mobileMediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => {
+      setIsCompactViewport(mediaQuery.matches);
+      setIsMobileViewport(mobileMediaQuery.matches);
+    };
     updateViewport();
     mediaQuery.addEventListener("change", updateViewport);
-    return () => mediaQuery.removeEventListener("change", updateViewport);
+    mobileMediaQuery.addEventListener("change", updateViewport);
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewport);
+      mobileMediaQuery.removeEventListener("change", updateViewport);
+    };
   }, []);
 
   useEffect(() => {
@@ -1188,6 +1199,26 @@ export default function AuthorsWorld() {
           }`}
           aria-label={copy.world.navigationAria}
         >
+          {isMobileViewport ? (
+            <img
+              aria-hidden="true"
+              src={authorGardenMistPoster}
+              className="authors-world-garden-poster pointer-events-none absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <video
+              aria-hidden="true"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster={authorGardenMistPoster}
+              className="authors-world-garden-video pointer-events-none absolute inset-0 h-full w-full object-cover"
+            >
+              <source src={authorGardenMist} type="video/mp4" />
+            </video>
+          )}
           <div
             aria-hidden="true"
             className="authors-world-surface-glow pointer-events-none absolute inset-0"

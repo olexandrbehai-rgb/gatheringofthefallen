@@ -169,7 +169,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
       <div aria-hidden="true" className="author-neon-orb author-neon-orb-lime pointer-events-none absolute -left-24 top-[52%] h-56 w-56 rounded-full" />
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Link href="/authors-world" className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 hover:text-[#00f0ff]">← Світ авторів</Link>
+          <Link href="/authors-world" className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 hover:text-[#00f0ff]">← Сад авторів</Link>
           {canEdit && (
             <button type="button" onClick={() => setLocation("/authors-world?edit=1")} className="inline-flex items-center gap-2 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
               <Pencil className="h-3.5 w-3.5" /> Редагувати мій портал

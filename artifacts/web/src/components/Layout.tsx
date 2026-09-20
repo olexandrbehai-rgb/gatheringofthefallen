@@ -55,6 +55,39 @@ function useDesktopHeroEnabled(): boolean {
   return enabled;
 }
 
+function AmbientMusicControls() {
+  const { enabled, playing, volume, setVolume, toggle } = useAmbientMusic();
+
+  return (
+    <div className="fixed left-[6.75rem] top-48 z-50 flex items-center gap-1.5 rounded-xl border border-primary/40 bg-black/75 p-1.5 shadow-[0_0_18px_rgba(0,240,255,0.22)] backdrop-blur-md md:left-32 md:top-24">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
+        title={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
+        className={`neon-control inline-flex h-8 shrink-0 items-center gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
+      >
+        {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
+        <span className="hidden sm:inline">Музика</span>
+      </button>
+      <label className="inline-flex h-8 shrink-0 items-center gap-1.5 px-1 text-[#b9f7ff]" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
+        <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className="sr-only">Гучність музики: {Math.round(volume * 100)}%</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={Math.round(volume * 100)}
+          onChange={(event) => setVolume(Number(event.target.value) / 100)}
+          aria-label="Гучність музики"
+          className="h-1.5 w-16 cursor-pointer accent-[#00f0ff] sm:w-20"
+        />
+      </label>
+    </div>
+  );
+}
+
 function AuthControls() {
   const { lang } = useT();
   const copy = AUTHORS_WORLD_COPY[lang].header;
@@ -68,7 +101,7 @@ function AuthControls() {
   if (!isSignedIn) {
     return (
       <Link href="/sign-in" className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#b9f7ff]">
-        <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> {copy.signIn}
+        <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> <span className="hidden sm:inline">{copy.signIn}</span>
       </Link>
     );
   }
@@ -76,10 +109,10 @@ function AuthControls() {
   return (
     <div className="flex items-center gap-2">
       <Link href="/authors-world?edit=1" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? copy.myPortal}>
-        <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {copy.myPortal}
+        <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> <span className="hidden sm:inline">{copy.myPortal}</span>
       </Link>
       <button type="button" onClick={() => void signOut({ redirectUrl: "/" })} className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184]">
-        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> {copy.signOut}
+        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> <span className="hidden sm:inline">{copy.signOut}</span>
       </button>
     </div>
   );
@@ -90,7 +123,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
   const { t, lang } = useT();
   const authorsWorldCopy = AUTHORS_WORLD_COPY[lang].header;
   const { count: cartCount, open: openCart } = useCart();
-  const { enabled, playing, volume, setVolume, toggle, setRouteMuted } = useAmbientMusic();
+  const { setRouteMuted } = useAmbientMusic();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
 
@@ -170,11 +203,14 @@ export function Layout({ children, authEnabled = true }: { children: React.React
           <span className="relative z-10 mt-1 font-creepster text-sm leading-none tracking-[0.12em] text-[#00f0ff] drop-shadow-[0_0_7px_#00f0ff]">
             {authorsWorldCopy.world}
           </span>
-          <span className="relative z-10 mt-2 border-t border-[#00f0ff]/40 pt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-white/70">
-            {authorsWorldCopy.authors}
-          </span>
+            {authorsWorldCopy.authors && (
+              <span className="relative z-10 mt-2 border-t border-[#00f0ff]/40 pt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-white/70">
+                {authorsWorldCopy.authors}
+              </span>
+            )}
         </motion.span>
       </Link>
+      {location !== "/game" && <AmbientMusicControls />}
       <Link
         href="/game"
         aria-label={t("nav.game")}
@@ -220,7 +256,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
             <Link href="/" className="glitch-text font-creepster text-lg tracking-[0.18em] text-primary transition-colors hover:text-white sm:text-xl md:text-2xl md:tracking-widest">
               GATHERING OF THE FALLEN
             </Link>
-            <nav className="order-3 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-mono uppercase tracking-[0.16em] sm:gap-4 sm:text-sm sm:tracking-widest md:order-none md:w-auto">
+            <nav className="order-3 flex w-full min-w-0 shrink-0 flex-nowrap items-center justify-center gap-x-2 overflow-x-auto whitespace-nowrap pb-0.5 text-[10px] font-mono uppercase tracking-[0.1em] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:text-sm sm:tracking-widest md:order-none md:w-auto md:overflow-visible md:pb-0">
               {links.map((link) => {
                 const isMerch = link.href === "/merch";
                 return (
@@ -240,7 +276,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 );
               })}
             </nav>
-            <div className="flex w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:w-auto">
+            <div className="flex w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5 md:w-auto md:overflow-visible md:pb-0">
               {location !== "/" && (
                 <button
                   type="button"
@@ -253,35 +289,11 @@ export function Layout({ children, authEnabled = true }: { children: React.React
               {authEnabled && <AuthControls />}
               <Link
                 href="/owner-analytics"
-                className="neon-control inline-flex items-center px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffb49a]"
+                className="neon-control inline-flex shrink-0 items-center px-2 py-2 font-mono text-[9px] uppercase tracking-[0.1em] text-[#ffb49a] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]"
                 style={{ borderRadius: "12px" }}
               >
                 {t("home.ownerStats")}
               </Link>
-              <button
-                type="button"
-                onClick={toggle}
-                aria-label={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
-                title={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
-                className={`neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
-              >
-                {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
-                <span className="hidden sm:inline">Музика</span>
-              </button>
-              <label className="neon-control inline-flex items-center gap-2 px-2.5 py-2 text-[#b9f7ff]" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
-                <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="sr-only">Гучність музики: {Math.round(volume * 100)}%</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={Math.round(volume * 100)}
-                  onChange={(event) => setVolume(Number(event.target.value) / 100)}
-                  aria-label="Гучність музики"
-                  className="h-1.5 w-16 cursor-pointer accent-[#00f0ff] sm:w-20"
-                />
-              </label>
               <button
                 type="button"
                 onClick={openCart}
@@ -290,7 +302,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 style={{ borderRadius: "12px", padding: "10px 14px" }}
               >
                 <ShoppingCart size={16} />
-                <span className="glitch-text font-mono text-xs uppercase tracking-[0.2em]">Кошик</span>
+                <span className="glitch-text hidden font-mono text-xs uppercase tracking-[0.2em] sm:inline">Кошик</span>
                 {cartCount > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#8a2be2] border border-[#a855f7] text-[10px] font-mono text-white shadow-[0_0_10px_rgba(138,43,226,0.7)]">
                     {cartCount}

@@ -526,7 +526,20 @@
     0 0 14px rgba(0, 240, 255, 0.1);
 }
 
+.authors-world-garden-video,
+.authors-world-garden-poster {
+  z-index: 0;
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  filter: saturate(0.82) contrast(1.08);
+}
+
+.authors-world-garden-poster {
+  opacity: 0.16;
+}
+
 .authors-world-surface-glow {
+  z-index: 1;
   background:
     radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.07), transparent 38%),
     radial-gradient(circle at 80% 75%, rgba(138, 43, 226, 0.06), transparent 36%);
