@@ -33,6 +33,7 @@ type Creation = {
 const PLATFORM_LABELS: Record<string, string> = {
   website: "Сайт",
   spotify: "Spotify",
+  suno: "Suno",
   "youtube-music": "YouTube Music",
   youtube: "YouTube",
   instagram: "Instagram",
@@ -45,6 +46,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 
 function platformForLink(link: PlatformLink) {
   const haystack = `${link.label} ${link.url}`.toLowerCase();
+  if (haystack.includes("suno.com") || haystack.includes("suno")) return "suno";
   if (haystack.includes("youtube music") || haystack.includes("music.youtube")) return "youtube-music";
   if (haystack.includes("youtube")) return "youtube";
   if (haystack.includes("spotify")) return "spotify";
