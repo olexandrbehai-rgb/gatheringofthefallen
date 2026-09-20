@@ -89,6 +89,7 @@ export default function Game() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [paused, setPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscapeFallback, setIsLandscapeFallback] = useState(false);
   const [restartSignal, setRestartSignal] = useState(0);
   const [hud, setHud] = useState(emptyHud);
 
@@ -106,11 +107,8 @@ export default function Game() {
     const onFullscreenChange = () => {
       const active = document.fullscreenElement === stageRef.current;
       setIsFullscreen(active);
-      if (active && (window.matchMedia("(max-width: 767px)").matches || window.matchMedia("(max-height: 767px)").matches)) {
-        const orientation = screen.orientation as ScreenOrientation & { lock?: (mode: string) => Promise<void> };
-        if (orientation.lock) {
-          void orientation.lock("landscape").catch(() => undefined);
-        }
+      if (!active) {
+        setIsLandscapeFallback(false);
       }
     };
     document.addEventListener("fullscreenchange", onFullscreenChange);
@@ -119,14 +117,46 @@ export default function Game() {
 
   const toggleFullscreen = async () => {
     if (!stageRef.current) return;
-    try {
+    const orientation = screen.orientation as (ScreenOrientation & {
+      lock?: (mode: "landscape") => Promise<void>;
+      unlock?: () => void;
+    }) | undefined;
+
+    if (document.fullscreenElement || isLandscapeFallback) {
+      setIsLandscapeFallback(false);
+      orientation?.unlock?.();
       if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await stageRef.current.requestFullscreen({ navigationUI: "hide" });
+        try {
+          await document.exitFullscreen();
+        } catch {
+          // The fallback mode is already cleared even if the browser refuses exit.
+        }
       }
+      return;
+    }
+
+    let fullscreenEntered = false;
+    try {
+      await stageRef.current.requestFullscreen({ navigationUI: "hide" });
+      fullscreenEntered = document.fullscreenElement === stageRef.current;
     } catch {
-      // Fullscreen can be denied by browser policy; the inline stage remains playable.
+      // iOS and embedded browsers can deny element fullscreen.
+    }
+
+    if (window.matchMedia("(max-width: 767px), (max-height: 767px)").matches) {
+      let landscapeLocked = false;
+      if (orientation?.lock) {
+        try {
+          await orientation.lock("landscape");
+          landscapeLocked = true;
+        } catch {
+          // Unsupported or denied: use the CSS landscape fallback below.
+        }
+      }
+
+      if (!landscapeLocked && (!fullscreenEntered || window.matchMedia("(orientation: portrait)").matches)) {
+        setIsLandscapeFallback(true);
+      }
     }
   };
 
@@ -164,6 +194,45 @@ export default function Game() {
         @media (orientation: portrait) and (max-width: 767px) {
           .game-stage-shell:fullscreen .game-portrait-warning { display: flex; }
           .game-stage-shell:not(:fullscreen) .game-portrait-warning { display: flex; }
+          .game-stage-shell.game-landscape-fallback {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 100;
+            width: 100dvh;
+            height: 100dvw;
+            overflow: hidden;
+            background: #080709;
+            transform: translate(-50%, -50%) rotate(90deg);
+          }
+          .game-stage-shell.game-landscape-fallback .game-stage {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            aspect-ratio: auto;
+            border-width: 0;
+          }
+          .game-stage-shell.game-landscape-fallback .game-portrait-warning {
+            display: none;
+          }
+        }
+        @media (orientation: landscape) and (max-height: 767px) {
+          .game-stage-shell.game-landscape-fallback {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            background: #080709;
+          }
+          .game-stage-shell.game-landscape-fallback .game-stage {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            aspect-ratio: auto;
+            border-width: 0;
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .game-ambient-motion { animation: none !important; }
@@ -190,7 +259,7 @@ export default function Game() {
           </div>
         </header>
 
-        <div ref={stageRef} className="game-stage-shell relative">
+        <div ref={stageRef} className={`game-stage-shell relative ${isLandscapeFallback ? "game-landscape-fallback" : ""}`}>
           <section className="game-stage relative aspect-video w-full overflow-hidden border border-[#9b6c50]/60 bg-[#0c0b0e] shadow-[0_18px_70px_rgba(0,0,0,0.65)]" aria-label="The Ashen Crossing game stage">
             <GameCanvas
               inputRef={inputRef}
@@ -243,8 +312,8 @@ export default function Game() {
                 <IconButton label={paused ? "Продовжити гру" : "Поставити гру на паузу"} pressed={paused} onClick={() => setPaused((value) => !value)}>
                   {paused ? <Play size={16} /> : <Pause size={16} />}
                 </IconButton>
-                <IconButton label={isFullscreen ? "Вийти з повного екрана" : "Повний екран"} pressed={isFullscreen} onClick={toggleFullscreen}>
-                  {isFullscreen ? <Expand size={16} /> : <Maximize2 size={16} />}
+                <IconButton label={isFullscreen || isLandscapeFallback ? "Вийти з повного екрана" : "Повний екран"} pressed={isFullscreen || isLandscapeFallback} onClick={toggleFullscreen}>
+                  {isFullscreen || isLandscapeFallback ? <Expand size={16} /> : <Maximize2 size={16} />}
                 </IconButton>
               </div>
             </div>
