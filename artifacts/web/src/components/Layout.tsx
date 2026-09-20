@@ -90,7 +90,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
   const { t, lang } = useT();
   const authorsWorldCopy = AUTHORS_WORLD_COPY[lang].header;
   const { count: cartCount, open: openCart } = useCart();
-  const { enabled, playing, toggle, setRouteMuted } = useAmbientMusic();
+  const { enabled, playing, volume, setVolume, toggle, setRouteMuted } = useAmbientMusic();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
 
@@ -265,9 +265,23 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 title={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
                 className={`neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
               >
-                {playing ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
+                {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
                 <span className="hidden sm:inline">Музика</span>
               </button>
+              <label className="neon-control inline-flex items-center gap-2 px-2.5 py-2 text-[#b9f7ff]" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
+                <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="sr-only">Гучність музики: {Math.round(volume * 100)}%</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(volume * 100)}
+                  onChange={(event) => setVolume(Number(event.target.value) / 100)}
+                  aria-label="Гучність музики"
+                  className="h-1.5 w-16 cursor-pointer accent-[#00f0ff] sm:w-20"
+                />
+              </label>
               <button
                 type="button"
                 onClick={openCart}
