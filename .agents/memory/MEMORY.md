@@ -11,5 +11,7 @@
 - [Ashen Crossing game](ashen-crossing-game.md) — the platformer is a 32-level canvas game with Web Audio, browser gamepad input, and responsive touch/fullscreen controls.
 - [Author portals](author-portals.md) — Clerk owns passwords; public profiles are read-only to visitors and platform work cards are owner-managed.
 - [Author image persistence](profile-avatar-persistence.md) — icons and wide profile backgrounds use bounded compressed data URLs on both Replit and Render.
+- [Author MP3 publishing](author-mp3-publishing.md) — keep audio bytes in App Storage, enforce MP3-only quotas server-side, and stream public tracks with Range support.
 - [Additive database schema changes](database-schema-push.md) — inspect legacy tables before Drizzle push; interactive rename suggestions may be unsafe.
 - [GitHub to Render sync](github-render-sync.md) — Render tracks GitHub main; shell push may lack auth, and oversized preview exports should stay out of deploy commits.
+- [Domovyk background placement](domovyk-background.md) — the companion belongs to the fixed author-world illustration layer, behind UI and portals, not inside the author coordinate grid.
