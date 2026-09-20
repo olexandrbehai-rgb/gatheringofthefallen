@@ -3,7 +3,7 @@ import { Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
 import type { IconType } from "react-icons";
-import { SiBandcamp, SiInstagram, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
+import { SiBandcamp, SiInstagram, SiSuno, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link, useLocation } from "wouter";
 
 type AuthorLink = {
@@ -11,7 +11,7 @@ type AuthorLink = {
   url: string;
 };
 
-type PlatformKey = "website" | "spotify" | "youtube-music" | "youtube" | "instagram" | "tiktok" | "bandcamp" | "soundcloud" | "audio" | "other";
+type PlatformKey = "website" | "spotify" | "suno" | "youtube-music" | "youtube" | "instagram" | "tiktok" | "bandcamp" | "soundcloud" | "audio" | "other";
 
 type PlatformLinkDraft = {
   platform: PlatformKey;
@@ -124,6 +124,7 @@ type PlatformOption = {
 const PLATFORM_OPTIONS: PlatformOption[] = [
   { value: "website", label: "Сайт / портфоліо", placeholder: "https://твій-сайт.com", icon: Globe2, color: "#b9f7ff" },
   { value: "spotify", label: "Spotify", placeholder: "https://open.spotify.com/artist/...", icon: SiSpotify, color: "#1ed760" },
+  { value: "suno", label: "Suno", placeholder: "https://suno.com/song/...", icon: SiSuno, color: "#ff6bba" },
   { value: "youtube-music", label: "YouTube Music", placeholder: "https://music.youtube.com/channel/...", icon: SiYoutubemusic, color: "#ff0033" },
   { value: "youtube", label: "YouTube", placeholder: "https://youtube.com/@твій-канал", icon: SiYoutube, color: "#ff0033" },
   { value: "instagram", label: "Instagram", placeholder: "https://instagram.com/твій-профіль", icon: SiInstagram, color: "#e4405f" },
@@ -176,6 +177,7 @@ function platformOptionFor(value: PlatformKey) {
 
 function platformKeyForLink(link: AuthorLink): PlatformKey {
   const haystack = `${link.label} ${link.url}`.toLowerCase();
+  if (haystack.includes("suno.com") || haystack.includes("suno")) return "suno";
   if (haystack.includes("spotify")) return "spotify";
   if (haystack.includes("youtube music") || haystack.includes("music.youtube")) return "youtube-music";
   if (haystack.includes("youtube")) return "youtube";
@@ -1821,7 +1823,7 @@ export default function AuthorsWorld() {
                    </div>
                    <label className="block">
                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Посилання на роботу (необов’язково)</span>
-                     <input type="url" value={creationDraft.contentUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder="https://youtube.com/watch?v=... або залиш порожнім для MP3" />
+                      <input type="url" value={creationDraft.contentUrl} onChange={(event) => setCreationDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-10 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]/70" placeholder={creationDraft.platform === "suno" ? "https://suno.com/song/..." : "https://youtube.com/watch?v=... або залиш порожнім для MP3"} />
                   </label>
                   <label className="block">
                     <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">Обкладинка (необов’язково)</span>
