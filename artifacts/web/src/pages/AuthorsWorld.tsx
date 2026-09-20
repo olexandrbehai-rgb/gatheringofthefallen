@@ -1300,9 +1300,9 @@ export default function AuthorsWorld() {
                     selectedAuthor.initials
                   )}
                 </div>
-                <div>
-                  <h2 className="font-creepster text-3xl tracking-[0.1em] text-white">{selectedAuthor.name}</h2>
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#ffad7f]">{selectedAuthor.role}</p>
+                 <div className="min-w-0 flex-1">
+                   <h2 className="break-words font-creepster text-2xl leading-tight tracking-[0.06em] text-white drop-shadow-[0_0_12px_rgba(255,45,149,0.55)] sm:text-3xl sm:tracking-[0.1em]">{selectedAuthor.name}</h2>
+                   <p className="mt-1 break-words font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffad7f] sm:tracking-[0.18em]">{selectedAuthor.role}</p>
                 </div>
               </div>
               <p className="mt-5 font-mono text-sm leading-relaxed text-white/70">“{selectedAuthor.memory}”</p>
@@ -1323,7 +1323,7 @@ export default function AuthorsWorld() {
               )}
               <Link
                 href={`/author/${selectedAuthor.slug}`}
-                className="mt-5 inline-flex min-h-11 items-center border border-[#00f0ff]/65 bg-[#00f0ff]/10 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff] transition-colors hover:bg-[#00f0ff]/20 hover:text-white"
+                className="mt-5 inline-flex min-h-11 max-w-full items-center justify-center border border-[#00f0ff]/65 bg-[#00f0ff]/10 px-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:bg-[#00f0ff]/20 hover:text-white sm:tracking-[0.16em]"
               >
                 Відкрити всі роботи автора
               </Link>
