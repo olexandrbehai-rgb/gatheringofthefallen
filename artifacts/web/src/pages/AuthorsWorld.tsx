@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Plus, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
+import { Bell, Check, CheckCheck, Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
 import type { IconType } from "react-icons";
@@ -52,13 +52,80 @@ type ChatMessage = {
   id: number;
   body: string;
   createdAt: string;
+  editedAt?: string | null;
+  mentions?: ChatMention[];
   author: {
     id: number;
+    slug: string;
     displayName: string;
     role: string;
     avatarUrl?: string | null;
   };
 };
+
+type ChatMention = {
+  id: number;
+  slug: string;
+  displayName: string;
+};
+
+type AuthorNotification = {
+  id: number;
+  kind: string;
+  body: string;
+  isRead: boolean;
+  chatMessageId: number;
+  createdAt: string;
+  actor: {
+    id: number;
+    slug: string;
+    displayName: string;
+    role: string;
+    avatarUrl?: string | null;
+  };
+};
+
+function ChatMessageBody({ message }: { message: ChatMessage }) {
+  const mentions = message.mentions ?? [];
+  if (mentions.length === 0) return <>{message.body}</>;
+
+  const mentionByToken = new Map(mentions.map((mention) => [`@${mention.slug.toLowerCase()}`, mention]));
+  const slugs = mentions
+    .map((mention) => mention.slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .sort((a, b) => b.length - a.length);
+  const parts = message.body.split(new RegExp(`(@(?:${slugs.join("|")}))`, "gi"));
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        const mention = mentionByToken.get(part.toLowerCase());
+        return mention ? (
+          <Link
+            key={`${mention.id}-${index}`}
+            href={`/author/${mention.slug}`}
+            className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/50 underline-offset-2 transition-colors hover:text-white"
+          >
+            {part}
+          </Link>
+        ) : (
+          <span key={`${part}-${index}`}>{part}</span>
+        );
+      })}
+    </>
+  );
+}
+
+function mentionContextFor(value: string, cursor: number) {
+  const beforeCursor = value.slice(0, cursor);
+  const match = beforeCursor.match(/(?:^|\s)@([a-z0-9-]*)$/i);
+  if (!match) return null;
+  const query = match[1] ?? "";
+  return {
+    start: beforeCursor.length - query.length - 1,
+    end: cursor,
+    query: query.toLowerCase(),
+  };
+}
 
 type AuthorDraft = {
   name: string;
@@ -562,6 +629,16 @@ export default function AuthorsWorld() {
   const [chatLoading, setChatLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
+  const [editingChatMessageId, setEditingChatMessageId] = useState<number | null>(null);
+  const [editingChatDraft, setEditingChatDraft] = useState("");
+  const [isUpdatingChat, setIsUpdatingChat] = useState(false);
+  const [notifications, setNotifications] = useState<AuthorNotification[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [chatCursorPosition, setChatCursorPosition] = useState(0);
+  const [mentionHighlightIndex, setMentionHighlightIndex] = useState(0);
   const [creations, setCreations] = useState<AuthorCreation[]>([]);
   const [creationDraft, setCreationDraft] = useState<CreationDraft>(EMPTY_CREATION_DRAFT);
   const [creationError, setCreationError] = useState<string | null>(null);
@@ -598,6 +675,59 @@ export default function AuthorsWorld() {
   const worldLayout = useMemo(() => worldLayoutFor(authors, isCompactViewport), [authors, isCompactViewport]);
   const worldSize = worldLayout;
   const accountEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? "";
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const mentionContext = useMemo(
+    () => mentionContextFor(chatDraft, chatCursorPosition),
+    [chatCursorPosition, chatDraft],
+  );
+  const mentionCandidates = useMemo(() => {
+    if (!mentionContext) return [];
+    const query = mentionContext.query;
+    return authors
+      .filter((author) => author.id !== myAuthor?.id)
+      .filter((author) => `${author.slug} ${author.name}`.toLowerCase().includes(query))
+      .slice(0, 6);
+  }, [authors, mentionContext, myAuthor?.id]);
+
+  const loadNotifications = useCallback(async () => {
+    if (!isSignedIn || !myAuthor) {
+      setNotifications([]);
+      setUnreadNotificationCount(0);
+      return;
+    }
+    setNotificationsLoading(true);
+    setNotificationsError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/notifications`, {
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        notifications?: AuthorNotification[];
+        unreadCount?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error ?? copy.notifications.failed);
+      setNotifications(Array.isArray(payload.notifications) ? payload.notifications : []);
+      setUnreadNotificationCount(Number(payload.unreadCount ?? 0));
+    } catch (error) {
+      setNotificationsError(error instanceof Error ? error.message : copy.notifications.failed);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [copy.notifications.failed, isSignedIn, myAuthor?.id]);
+
+  const selectMention = useCallback((author: Author) => {
+    if (!mentionContext) return;
+    const nextDraft = `${chatDraft.slice(0, mentionContext.start)}@${author.slug} ${chatDraft.slice(mentionContext.end)}`;
+    const nextCursor = mentionContext.start + author.slug.length + 2;
+    setChatDraft(nextDraft);
+    setChatCursorPosition(nextCursor);
+    setMentionHighlightIndex(0);
+    window.requestAnimationFrame(() => {
+      chatInputRef.current?.focus();
+      chatInputRef.current?.setSelectionRange(nextCursor, nextCursor);
+    });
+  }, [chatDraft, mentionContext]);
 
   const openAuthorPortal = () => {
     setFormError(null);
@@ -900,6 +1030,9 @@ export default function AuthorsWorld() {
           if (active && profileResponse.ok) {
             setCreations(Array.isArray(profilePayload.creations) ? profilePayload.creations : []);
           }
+        } else {
+          setMyAuthor(null);
+          setCreations([]);
         }
       } catch (error) {
         if (!active) return;
@@ -956,13 +1089,26 @@ export default function AuthorsWorld() {
     const stream = new EventSource(`${API_ROOT}/authors-world/chat/stream`);
     stream.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data) as ChatMessage;
+        const payload = JSON.parse(event.data) as ChatMessage | { type: "updated"; message: ChatMessage } | { type: "deleted"; id: number };
         if (!active) return;
+        if ("type" in payload && payload.type === "deleted") {
+          setChatMessages((current) => current.filter((item) => item.id !== payload.id));
+          if (editingChatMessageId === payload.id) setEditingChatMessageId(null);
+          return;
+        }
+        if ("type" in payload && payload.type === "updated") {
+          setChatMessages((current) => current.map((item) => item.id === payload.message.id ? payload.message : item));
+          return;
+        }
+        const message = payload;
         setChatMessages((current) =>
           current.some((item) => item.id === message.id)
             ? current
             : [...current, message].slice(-100),
         );
+        if (myAuthor && message.mentions?.some((mention) => mention.id === Number(myAuthor.id))) {
+          void loadNotifications();
+        }
       } catch {
         // Ignore malformed events and keep the connection alive.
       }
@@ -975,7 +1121,15 @@ export default function AuthorsWorld() {
       active = false;
       stream.close();
     };
-  }, []);
+  }, [copy.errors.chatUnavailable, copy.errors.connectChat, copy.errors.liveInterrupted, editingChatMessageId, loadNotifications, myAuthor]);
+
+  useEffect(() => {
+    void loadNotifications();
+    const refreshTimer = window.setInterval(() => {
+      void loadNotifications();
+    }, 30_000);
+    return () => window.clearInterval(refreshTimer);
+  }, [loadNotifications]);
 
   const visibleAuthors = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1372,6 +1526,89 @@ export default function AuthorsWorld() {
     }
   };
 
+  const handleEditChat = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const body = editingChatDraft.trim();
+    if (!editingChatMessageId || !body || isUpdatingChat) return;
+
+    setIsUpdatingChat(true);
+    setChatError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/chat/${editingChatMessageId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        message?: ChatMessage;
+        error?: string;
+      };
+      if (!response.ok || !payload.message) {
+        throw new Error(payload.error ?? copy.chat.editFailed);
+      }
+      setChatMessages((current) => current.map((item) =>
+        item.id === payload.message?.id ? payload.message as ChatMessage : item,
+      ));
+      setEditingChatMessageId(null);
+      setEditingChatDraft("");
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : copy.chat.editFailed);
+    } finally {
+      setIsUpdatingChat(false);
+    }
+  };
+
+  const handleDeleteChat = async (messageId: number) => {
+    if (!window.confirm(copy.chat.confirmDelete)) return;
+    setChatError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/chat/${messageId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? copy.chat.deleteFailed);
+      setChatMessages((current) => current.filter((item) => item.id !== messageId));
+      if (editingChatMessageId === messageId) {
+        setEditingChatMessageId(null);
+        setEditingChatDraft("");
+      }
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : copy.chat.deleteFailed);
+    }
+  };
+
+  const handleMarkNotificationRead = async (notificationId: number) => {
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/notifications/${notificationId}/read`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (!response.ok) return;
+      setNotifications((current) => current.map((notification) =>
+        notification.id === notificationId ? { ...notification, isRead: true } : notification,
+      ));
+      setUnreadNotificationCount((current) => Math.max(0, current - 1));
+    } catch {
+      // The next inbox refresh will restore the server state.
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/notifications/read-all`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) return;
+      setNotifications((current) => current.map((notification) => ({ ...notification, isRead: true })));
+      setUnreadNotificationCount(0);
+    } catch {
+      setNotificationsError(copy.notifications.failed);
+    }
+  };
+
   return (
     <main className="relative min-h-[calc(100dvh-82px)] overflow-hidden bg-transparent px-3 py-6 text-white sm:px-6 sm:py-10 lg:px-10">
       <div aria-hidden="true" className="authors-world-atmosphere pointer-events-none absolute inset-0" />
@@ -1458,6 +1695,86 @@ export default function AuthorsWorld() {
                )}
              </div>
            </div>
+           {isSignedIn && myAuthor && (
+             <section id="authors-world-notifications" className="authors-world-account-panel mt-3 border p-3 sm:mt-4">
+               <div className="flex flex-wrap items-center justify-between gap-2">
+                 <button
+                   type="button"
+                   onClick={() => setIsNotificationsOpen((current) => !current)}
+                   className="inline-flex min-h-10 items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:text-white"
+                   aria-expanded={isNotificationsOpen}
+                   aria-controls="authors-world-notification-list"
+                 >
+                   <Bell className="h-4 w-4" aria-hidden="true" />
+                   {copy.notifications.title}
+                   {unreadNotificationCount > 0 && (
+                     <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-[#ffad7f]/70 bg-[#ffad7f]/15 px-1.5 py-1 text-[9px] text-[#ffd0ba]">
+                       {unreadNotificationCount}
+                     </span>
+                   )}
+                 </button>
+                 {isNotificationsOpen && unreadNotificationCount > 0 && (
+                   <button
+                     type="button"
+                     onClick={() => void handleMarkAllNotificationsRead()}
+                     className="inline-flex min-h-9 items-center gap-1.5 border border-[#00f0ff]/30 px-2.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#8ceeff] transition-colors hover:border-[#00f0ff] hover:text-white"
+                   >
+                     <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.markAllRead}
+                   </button>
+                 )}
+               </div>
+               {isNotificationsOpen && (
+                 <div id="authors-world-notification-list" className="mt-3 border-t border-white/10 pt-3">
+                   {notificationsLoading ? (
+                     <p className="font-mono text-xs text-white/45">{copy.notifications.loading}</p>
+                   ) : notificationsError ? (
+                     <p className="font-mono text-xs text-[#ffb184]">{notificationsError}</p>
+                   ) : notifications.length === 0 ? (
+                     <p className="font-mono text-xs leading-relaxed text-white/45">{copy.notifications.empty}</p>
+                   ) : (
+                     <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                       {notifications.map((notification) => (
+                         <article
+                           key={notification.id}
+                           className={`border-l px-3 py-2 ${notification.isRead ? "border-white/15 bg-black/15" : "border-[#ffad7f]/80 bg-[#ffad7f]/8"}`}
+                         >
+                           <div className="flex items-start justify-between gap-3">
+                             <p className="min-w-0 font-mono text-xs leading-relaxed text-white/75">
+                               <Link
+                                 href={`/author/${notification.actor.slug}`}
+                                 onClick={() => {
+                                   if (!notification.isRead) void handleMarkNotificationRead(notification.id);
+                                 }}
+                                 className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/45 underline-offset-2 hover:text-white"
+                               >
+                                 {notification.actor.displayName}
+                               </Link>{" "}
+                               {copy.notifications.mentionedYou}
+                             </p>
+                             {!notification.isRead && (
+                               <button
+                                 type="button"
+                                 onClick={() => void handleMarkNotificationRead(notification.id)}
+                                 className="shrink-0 p-1 text-[#8ceeff] transition-colors hover:text-white"
+                                 aria-label={copy.notifications.markRead}
+                                 title={copy.notifications.markRead}
+                               >
+                                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                               </button>
+                             )}
+                           </div>
+                           <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/45">{notification.body}</p>
+                           <time className="mt-1 block font-mono text-[9px] text-white/25" dateTime={notification.createdAt}>
+                             {new Date(notification.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
+                           </time>
+                         </article>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               )}
+             </section>
+           )}
         </div>
 
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1753,18 +2070,91 @@ export default function AuthorsWorld() {
                      {copy.chat.empty}
                   </p>
                 ) : (
-                  chatMessages.map((message) => (
-                    <article key={message.id} className="border-l border-[#00f0ff]/35 pl-3">
-                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span className="font-mono text-xs font-bold text-[#8ceeff]">{message.author.displayName}</span>
-                        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffad7f]/70">{message.author.role}</span>
-                        <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
-                           {new Date(message.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
-                        </time>
-                      </div>
-                      <p className="mt-1 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-white/70">{message.body}</p>
-                    </article>
-                  ))
+                  chatMessages.map((message) => {
+                    const isOwnMessage = myAuthor?.id === String(message.author.id);
+                    const isEditing = editingChatMessageId === message.id;
+                    return (
+                      <article key={message.id} className="border-l border-[#00f0ff]/35 pl-3">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <Link
+                            href={`/author/${message.author.slug}`}
+                            className="font-mono text-xs font-bold text-[#8ceeff] transition-colors hover:text-white"
+                          >
+                            {message.author.displayName}
+                          </Link>
+                          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffad7f]/70">{message.author.role}</span>
+                          <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
+                            {new Date(message.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+                          </time>
+                          {message.editedAt && <span className="font-mono text-[9px] text-white/25">({copy.chat.edited})</span>}
+                          {isOwnMessage && !isEditing && (
+                            <span className="ml-auto flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingChatMessageId(message.id);
+                                  setEditingChatDraft(message.body);
+                                }}
+                                className="p-1 text-white/35 transition-colors hover:text-[#8ceeff]"
+                                aria-label={copy.chat.edit}
+                                title={copy.chat.edit}
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDeleteChat(message.id)}
+                                className="p-1 text-white/35 transition-colors hover:text-[#ffad7f]"
+                                aria-label={copy.chat.delete}
+                                title={copy.chat.delete}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                        {isEditing ? (
+                          <form onSubmit={handleEditChat} className="mt-2 flex flex-col gap-2 sm:flex-row">
+                            <input
+                              value={editingChatDraft}
+                              onChange={(event) => setEditingChatDraft(event.target.value)}
+                              maxLength={1000}
+                              autoFocus
+                              className="min-h-10 min-w-0 flex-1 border border-[#00f0ff]/40 bg-black/35 px-2 font-mono text-sm text-white outline-none focus:border-[#00f0ff]"
+                              aria-label={copy.chat.editInputLabel}
+                            />
+                            <span className="flex gap-2">
+                              <button
+                                type="submit"
+                                disabled={isUpdatingChat || !editingChatDraft.trim()}
+                                className="inline-flex min-h-10 items-center justify-center border border-[#00f0ff]/50 px-3 text-[#8ceeff] disabled:opacity-40"
+                                aria-label={copy.chat.saveEdit}
+                                title={copy.chat.saveEdit}
+                              >
+                                <Check className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingChatMessageId(null);
+                                  setEditingChatDraft("");
+                                }}
+                                className="inline-flex min-h-10 items-center justify-center border border-white/15 px-3 text-white/55 hover:text-white"
+                                aria-label={copy.chat.cancelEdit}
+                                title={copy.chat.cancelEdit}
+                              >
+                                <X className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                            </span>
+                          </form>
+                        ) : (
+                          <p className="mt-1 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-white/70">
+                            <ChatMessageBody message={message} />
+                          </p>
+                        )}
+                      </article>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -1784,14 +2174,57 @@ export default function AuthorsWorld() {
           {myAuthor ? (
             <form onSubmit={handleSendChat} className="mt-4 flex flex-col gap-3 sm:flex-row">
                <label className="sr-only" htmlFor="authors-world-chat-input">{copy.chat.inputLabel}</label>
-              <input
-                id="authors-world-chat-input"
-                value={chatDraft}
-                onChange={(event) => setChatDraft(event.target.value)}
-                maxLength={1000}
-                 placeholder={formatAuthorsWorldCopy(copy.chat.placeholder, { name: myAuthor.name })}
-                className="min-h-12 min-w-0 flex-1 border border-white/15 bg-black/35 px-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
-              />
+              <div className="relative min-w-0 flex-1">
+                <input
+                  ref={chatInputRef}
+                  id="authors-world-chat-input"
+                  value={chatDraft}
+                  onChange={(event) => {
+                    setChatDraft(event.target.value);
+                    setChatCursorPosition(event.target.selectionStart ?? event.target.value.length);
+                    setMentionHighlightIndex(0);
+                  }}
+                  onClick={(event) => setChatCursorPosition(event.currentTarget.selectionStart ?? 0)}
+                  onKeyUp={(event) => setChatCursorPosition(event.currentTarget.selectionStart ?? 0)}
+                  onKeyDown={(event) => {
+                    if (mentionCandidates.length === 0) return;
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setMentionHighlightIndex((current) => (current + 1) % mentionCandidates.length);
+                    } else if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setMentionHighlightIndex((current) => (current - 1 + mentionCandidates.length) % mentionCandidates.length);
+                    } else if (event.key === "Enter") {
+                      event.preventDefault();
+                      selectMention(mentionCandidates[mentionHighlightIndex] ?? mentionCandidates[0]);
+                    } else if (event.key === "Escape") {
+                      setChatCursorPosition(0);
+                    }
+                  }}
+                  maxLength={1000}
+                  placeholder={formatAuthorsWorldCopy(copy.chat.placeholder, { name: myAuthor.name })}
+                  className="min-h-12 w-full border border-white/15 bg-black/35 px-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
+                />
+                {mentionCandidates.length > 0 && mentionContext && (
+                  <div role="listbox" aria-label={copy.chat.mentionSuggestions} className="absolute inset-x-0 bottom-full z-30 mb-1 border border-[#00f0ff]/40 bg-[#06111a] p-1 shadow-[0_0_25px_rgba(0,240,255,0.16)]">
+                    <p className="px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">{copy.chat.mentionSuggestions}</p>
+                    {mentionCandidates.map((author, index) => (
+                      <button
+                        key={author.id}
+                        type="button"
+                        role="option"
+                        aria-selected={index === mentionHighlightIndex}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => selectMention(author)}
+                        className={`flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-mono text-xs ${index === mentionHighlightIndex ? "bg-[#00f0ff]/15 text-[#b9f7ff]" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
+                      >
+                        <span className="truncate">{author.name}</span>
+                        <span className="shrink-0 text-[9px] text-white/35">@{author.slug}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={isSendingChat || !chatDraft.trim()}

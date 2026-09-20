@@ -22,6 +22,11 @@ class AudioStorageError extends Error {
 }
 
 type PlatformLink = { label: string; url: string };
+type ChatMention = {
+  id: number;
+  slug: string;
+  displayName: string;
+};
 type AuthorCreation = {
   id: number;
   sortOrder: number;
@@ -117,7 +122,24 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         id SERIAL PRIMARY KEY,
         author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
         body TEXT NOT NULL,
+        mentions JSONB NOT NULL DEFAULT '[]'::jsonb,
+        edited_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      ALTER TABLE authors_world_chat_messages ADD COLUMN IF NOT EXISTS mentions JSONB NOT NULL DEFAULT '[]'::jsonb;
+      ALTER TABLE authors_world_chat_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS authors_world_notifications (
+        id SERIAL PRIMARY KEY,
+        recipient_author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        actor_author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        chat_message_id INTEGER NOT NULL REFERENCES authors_world_chat_messages(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL DEFAULT 'chat_mention',
+        body TEXT NOT NULL,
+        is_read BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (recipient_author_id, chat_message_id, kind)
       );
 
       CREATE TABLE IF NOT EXISTS author_creations (
@@ -171,6 +193,8 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         ON authors_world_chat_messages (created_at);
       CREATE INDEX IF NOT EXISTS authors_world_chat_author_id_idx
         ON authors_world_chat_messages (author_id);
+      CREATE INDEX IF NOT EXISTS authors_world_notifications_recipient_idx
+        ON authors_world_notifications (recipient_author_id, is_read, created_at DESC);
       CREATE INDEX IF NOT EXISTS author_creations_author_id_idx
         ON author_creations (author_id);
       CREATE INDEX IF NOT EXISTS author_creations_created_at_idx
@@ -247,6 +271,30 @@ function textField(value: unknown, maxLength?: number): string | null {
   const result = value.trim();
   if (!result) return null;
   return maxLength === undefined || result.length <= maxLength ? result : null;
+}
+
+function chatMentionSlugs(body: string): string[] {
+  const slugs = new Set<string>();
+  const pattern = /(^|[^\p{L}\p{N}_])@([a-z0-9]+(?:-[a-z0-9]+)*)\b/giu;
+  for (const match of body.matchAll(pattern)) {
+    const slug = match[2]?.toLowerCase();
+    if (slug) slugs.add(slug);
+  }
+  return [...slugs];
+}
+
+function serializeChatMentions(value: unknown): ChatMention[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const candidate = item as Record<string, unknown>;
+    const id = Number(candidate.id);
+    const slug = typeof candidate.slug === "string" ? candidate.slug : "";
+    const displayName = typeof candidate.displayName === "string" ? candidate.displayName : "";
+    return Number.isInteger(id) && slug && displayName
+      ? [{ id, slug, displayName }]
+      : [];
+  });
 }
 
 function isValidAvatarValue(value: string) {
@@ -508,6 +556,36 @@ function broadcastChatMessage(message: unknown) {
       chatSubscribers.delete(subscriber);
     }
   }
+}
+
+function serializeChatMessage(row: Record<string, unknown>) {
+  return {
+    id: Number(row.id),
+    body: row.body,
+    createdAt: row.created_at,
+    editedAt: row.edited_at ?? null,
+    mentions: serializeChatMentions(row.mentions),
+    author: {
+      id: Number(row.author_id),
+      slug: row.slug,
+      displayName: row.display_name,
+      role: row.role,
+      avatarUrl: row.avatar_url,
+    },
+  };
+}
+
+async function chatMessageById(id: number) {
+  const result = await pool.query(
+    `SELECT messages.id, messages.body, messages.created_at, messages.edited_at, messages.mentions,
+            authors.id AS author_id, authors.slug, authors.display_name, authors.role, authors.avatar_url
+     FROM authors_world_chat_messages messages
+     JOIN authors ON authors.id = messages.author_id
+     WHERE messages.id = $1
+     LIMIT 1`,
+    [id],
+  );
+  return result.rows[0] ? serializeChatMessage(result.rows[0]) : null;
 }
 
 router.get("/authors-world/authors", async (_req, res) => {
@@ -1077,7 +1155,10 @@ router.get("/authors-world/chat", async (req, res) => {
          messages.id,
          messages.body,
          messages.created_at,
+         messages.edited_at,
+         messages.mentions,
          authors.id AS author_id,
+         authors.slug,
          authors.display_name,
          authors.role,
          authors.avatar_url
@@ -1088,17 +1169,7 @@ router.get("/authors-world/chat", async (req, res) => {
       [limit],
     );
     res.json({
-      messages: result.rows.reverse().map((row) => ({
-        id: Number(row.id),
-        body: row.body,
-        createdAt: row.created_at,
-        author: {
-          id: Number(row.author_id),
-          displayName: row.display_name,
-          role: row.role,
-          avatarUrl: row.avatar_url,
-        },
-      })),
+      messages: result.rows.reverse().map(serializeChatMessage),
     });
   } catch (error) {
     logger.error({ msg: "Authors world chat load failed", error });
@@ -1139,44 +1210,313 @@ router.post("/authors-world/chat", async (req, res) => {
 
   try {
     await ensureAuthorsWorldSchema();
-    const result = await pool.query(
-      `INSERT INTO authors_world_chat_messages (author_id, body)
-       SELECT id, $2
-       FROM authors
-       WHERE user_id = $1
-       RETURNING id, body, created_at, author_id`,
-      [userId, body],
+    const ownAuthorResult = await pool.query(
+      `SELECT id FROM authors WHERE user_id = $1 LIMIT 1`,
+      [userId],
     );
-    const inserted = result.rows[0];
-    if (!inserted) {
+    const ownAuthorId = ownAuthorResult.rows[0] ? Number(ownAuthorResult.rows[0].id) : null;
+    if (!ownAuthorId) {
       res.status(403).json({ error: "Create your author portal before chatting" });
       return;
     }
 
-    const authorResult = await pool.query(
-      `SELECT id, display_name, role, avatar_url
-       FROM authors
-       WHERE id = $1
-       LIMIT 1`,
-      [inserted.author_id],
-    );
-    const author = authorResult.rows[0];
-    const message = {
-      id: Number(inserted.id),
-      body: inserted.body,
-      createdAt: inserted.created_at,
-      author: {
-        id: Number(author.id),
-        displayName: author.display_name,
-        role: author.role,
-        avatarUrl: author.avatar_url,
-      },
-    };
+    const slugs = chatMentionSlugs(body);
+    const mentionsResult = slugs.length > 0
+      ? await pool.query(
+        `SELECT id, slug, display_name
+         FROM authors
+         WHERE slug = ANY($1::text[])`,
+        [slugs],
+      )
+      : { rows: [] };
+    const mentions = mentionsResult.rows.map((row) => ({
+      id: Number(row.id),
+      slug: String(row.slug),
+      displayName: String(row.display_name),
+    })) satisfies ChatMention[];
+
+    const client = await pool.connect();
+    let insertedId: number;
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `INSERT INTO authors_world_chat_messages (author_id, body, mentions)
+         VALUES ($1, $2, $3::jsonb)
+         RETURNING id`,
+        [ownAuthorId, body, JSON.stringify(mentions)],
+      );
+      insertedId = Number(result.rows[0].id);
+      for (const mention of mentions) {
+        if (mention.id === ownAuthorId) continue;
+        await client.query(
+          `INSERT INTO authors_world_notifications
+             (recipient_author_id, actor_author_id, chat_message_id, kind, body)
+           VALUES ($1, $2, $3, 'chat_mention', $4)
+           ON CONFLICT (recipient_author_id, chat_message_id, kind) DO NOTHING`,
+          [mention.id, ownAuthorId, insertedId, body],
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const message = await chatMessageById(insertedId);
+    if (!message) {
+      res.status(500).json({ error: "The message was created but could not be loaded" });
+      return;
+    }
     broadcastChatMessage(message);
     res.status(201).json({ message });
   } catch (error) {
     logger.error({ msg: "Authors world chat send failed", error });
     res.status(500).json({ error: "Unable to send the message" });
+  }
+});
+
+router.patch("/authors-world/chat/:id", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to edit your message" });
+    return;
+  }
+
+  const messageId = Number(req.params.id);
+  const body = textField(req.body?.body, MAX_CHAT_MESSAGE_LENGTH);
+  if (!Number.isInteger(messageId) || messageId < 1 || !body) {
+    res.status(400).json({ error: "Message cannot be empty" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const ownerResult = await pool.query(
+      `SELECT messages.author_id
+       FROM authors_world_chat_messages messages
+       JOIN authors ON authors.id = messages.author_id
+       WHERE messages.id = $1 AND authors.user_id = $2
+       LIMIT 1`,
+      [messageId, userId],
+    );
+    if (!ownerResult.rows[0]) {
+      res.status(404).json({ error: "Message not found or not owned by you" });
+      return;
+    }
+
+    const ownAuthorId = Number(ownerResult.rows[0].author_id);
+    const slugs = chatMentionSlugs(body);
+    const mentionsResult = slugs.length > 0
+      ? await pool.query(
+        `SELECT id, slug, display_name
+         FROM authors
+         WHERE slug = ANY($1::text[])`,
+        [slugs],
+      )
+      : { rows: [] };
+    const mentions = mentionsResult.rows.map((row) => ({
+      id: Number(row.id),
+      slug: String(row.slug),
+      displayName: String(row.display_name),
+    })) satisfies ChatMention[];
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const updated = await client.query(
+        `UPDATE authors_world_chat_messages
+         SET body = $1, mentions = $2::jsonb, edited_at = NOW()
+         WHERE id = $3 AND author_id = $4
+         RETURNING id`,
+        [body, JSON.stringify(mentions), messageId, ownAuthorId],
+      );
+      if (!updated.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Message not found or not owned by you" });
+        return;
+      }
+      await client.query(
+        `DELETE FROM authors_world_notifications WHERE chat_message_id = $1`,
+        [messageId],
+      );
+      for (const mention of mentions) {
+        if (mention.id === ownAuthorId) continue;
+        await client.query(
+          `INSERT INTO authors_world_notifications
+             (recipient_author_id, actor_author_id, chat_message_id, kind, body)
+           VALUES ($1, $2, $3, 'chat_mention', $4)
+           ON CONFLICT (recipient_author_id, chat_message_id, kind) DO NOTHING`,
+          [mention.id, ownAuthorId, messageId, body],
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const message = await chatMessageById(messageId);
+    if (!message) {
+      res.status(500).json({ error: "The message was updated but could not be loaded" });
+      return;
+    }
+    broadcastChatMessage({ type: "updated", message });
+    res.json({ message });
+  } catch (error) {
+    logger.error({ msg: "Authors world chat edit failed", error });
+    res.status(500).json({ error: "Unable to edit the message" });
+  }
+});
+
+router.delete("/authors-world/chat/:id", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to delete your message" });
+    return;
+  }
+
+  const messageId = Number(req.params.id);
+  if (!Number.isInteger(messageId) || messageId < 1) {
+    res.status(400).json({ error: "Invalid message" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `DELETE FROM authors_world_chat_messages messages
+       USING authors
+       WHERE messages.id = $1 AND messages.author_id = authors.id AND authors.user_id = $2`,
+      [messageId, userId],
+    );
+    if (!result.rowCount) {
+      res.status(404).json({ error: "Message not found or not owned by you" });
+      return;
+    }
+    broadcastChatMessage({ type: "deleted", id: messageId });
+    res.status(204).send();
+  } catch (error) {
+    logger.error({ msg: "Authors world chat delete failed", error });
+    res.status(500).json({ error: "Unable to delete the message" });
+  }
+});
+
+router.get("/authors-world/notifications", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to view your notifications" });
+    return;
+  }
+  const requestedLimit = Number(req.query.limit);
+  const limit = Number.isInteger(requestedLimit)
+    ? Math.min(Math.max(requestedLimit, 1), 100)
+    : 50;
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const notificationsResult = await pool.query(
+      `SELECT notifications.id, notifications.kind, notifications.body, notifications.is_read,
+              notifications.chat_message_id, notifications.created_at,
+              actor.id AS actor_id, actor.slug AS actor_slug, actor.display_name AS actor_display_name,
+              actor.role AS actor_role, actor.avatar_url AS actor_avatar_url
+       FROM authors_world_notifications notifications
+       JOIN authors recipient ON recipient.id = notifications.recipient_author_id
+       JOIN authors actor ON actor.id = notifications.actor_author_id
+       WHERE recipient.user_id = $1
+       ORDER BY notifications.created_at DESC, notifications.id DESC
+       LIMIT $2`,
+      [userId, limit],
+    );
+    const unreadResult = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM authors_world_notifications notifications
+       JOIN authors recipient ON recipient.id = notifications.recipient_author_id
+       WHERE recipient.user_id = $1 AND notifications.is_read = FALSE`,
+      [userId],
+    );
+    res.json({
+      unreadCount: Number(unreadResult.rows[0]?.count ?? 0),
+      notifications: notificationsResult.rows.map((row) => ({
+        id: Number(row.id),
+        kind: row.kind,
+        body: row.body,
+        isRead: row.is_read === true,
+        chatMessageId: Number(row.chat_message_id),
+        createdAt: row.created_at,
+        actor: {
+          id: Number(row.actor_id),
+          slug: row.actor_slug,
+          displayName: row.actor_display_name,
+          role: row.actor_role,
+          avatarUrl: row.actor_avatar_url,
+        },
+      })),
+    });
+  } catch (error) {
+    logger.error({ msg: "Authors world notifications load failed", error });
+    res.status(500).json({ error: "Unable to load your notifications" });
+  }
+});
+
+router.patch("/authors-world/notifications/:id/read", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to update notifications" });
+    return;
+  }
+  const notificationId = Number(req.params.id);
+  if (!Number.isInteger(notificationId) || notificationId < 1) {
+    res.status(400).json({ error: "Invalid notification" });
+    return;
+  }
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `UPDATE authors_world_notifications notifications
+       SET is_read = TRUE
+       FROM authors recipient
+       WHERE notifications.id = $1
+         AND notifications.recipient_author_id = recipient.id
+         AND recipient.user_id = $2
+       RETURNING notifications.id`,
+      [notificationId, userId],
+    );
+    if (!result.rowCount) {
+      res.status(404).json({ error: "Notification not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    logger.error({ msg: "Authors world notification read failed", error });
+    res.status(500).json({ error: "Unable to update the notification" });
+  }
+});
+
+router.post("/authors-world/notifications/read-all", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to update notifications" });
+    return;
+  }
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `UPDATE authors_world_notifications notifications
+       SET is_read = TRUE
+       FROM authors recipient
+       WHERE notifications.recipient_author_id = recipient.id
+         AND recipient.user_id = $1
+         AND notifications.is_read = FALSE`,
+      [userId],
+    );
+    res.json({ ok: true, updated: result.rowCount ?? 0 });
+  } catch (error) {
+    logger.error({ msg: "Authors world notifications read-all failed", error });
+    res.status(500).json({ error: "Unable to update your notifications" });
   }
 });
 
