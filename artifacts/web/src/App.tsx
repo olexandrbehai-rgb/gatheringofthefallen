@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ClerkProvider, SignIn, SignUp } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, useUser } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from "wouter";
@@ -33,6 +33,7 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+const API_ROOT = `${basePath}/api`;
 
 const clerkAppearance = {
   theme: "simple" as const,
@@ -52,6 +53,16 @@ const clerkAppearance = {
     colorNeutral: "#542873",
     fontFamily: "'Share Tech Mono', monospace",
     borderRadius: "0.75rem",
+  },
+  elements: {
+    socialButtonsBlockButton: "border-[#542873] bg-[#160d22] text-[#f4e9ff] hover:bg-[#271236]",
+    socialButtonsBlockButtonText: "text-[#f4e9ff]",
+    dividerText: "text-[#b5a6c6]",
+    formFieldLabel: "text-[#f4e9ff]",
+    formFieldInput: "bg-[#160d22] text-white",
+    formButtonPrimary: "bg-[#ff4500] text-white hover:bg-[#ff5c1a]",
+    footerActionText: "text-[#b5a6c6]",
+    footerActionLink: "text-[#ffb184]",
   },
 };
 
@@ -85,6 +96,41 @@ function SignUpPage() {
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} appearance={clerkAppearance} />
     </div>
   );
+}
+
+function AuthorPresence() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    let active = true;
+
+    const reportPresence = () => {
+      if (!active) return;
+      void fetch(`${API_ROOT}/authors-world/presence`, {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+      }).catch(() => {
+        // Presence is best effort and must not interrupt the current page.
+      });
+    };
+
+    reportPresence();
+    const interval = window.setInterval(reportPresence, 20_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") reportPresence();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isLoaded, isSignedIn]);
+
+  return null;
 }
 
 function OwnerAnalyticsRoute() {
@@ -147,7 +193,7 @@ function AuthenticatedApp() {
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
-      proxyUrl={import.meta.env.PROD ? clerkProxyUrl : undefined}
+      proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
@@ -168,6 +214,7 @@ function AuthenticatedApp() {
         },
       }}
     >
+      <AuthorPresence />
       <SiteRouter />
     </ClerkProvider>
   );

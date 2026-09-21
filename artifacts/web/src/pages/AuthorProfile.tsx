@@ -19,6 +19,7 @@ type Author = {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
   helperEnabled?: boolean;
+  isOnline?: boolean;
   platformLinks: PlatformLink[];
   slug: string;
 };
@@ -156,6 +157,32 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
       });
     return () => {
       active = false;
+    };
+  }, [params.slug]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadPresence = async () => {
+      try {
+        const response = await fetch(`${API_ROOT}/authors-world/presence`, { credentials: "include" });
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => ({})) as { onlineAuthorIds?: unknown };
+        if (!active || !Array.isArray(payload.onlineAuthorIds)) return;
+        const onlineIds = new Set(payload.onlineAuthorIds.map((id) => String(id)));
+        setAuthor((current) => current
+          ? { ...current, isOnline: onlineIds.has(String(current.id)) }
+          : current);
+      } catch {
+        // The profile remains usable when presence is unavailable.
+      }
+    };
+
+    void loadPresence();
+    const interval = window.setInterval(() => void loadPresence(), 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
     };
   }, [params.slug]);
 
@@ -351,33 +378,6 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     }
   };
 
-  const helperThoughts = lang === "ua"
-    ? [
-        "Що тут сьогодні змінилося?",
-        "О, нова робота!",
-        "Цікаво, що автор хотів сказати...",
-        "Треба це запам’ятати.",
-        "Записую у свою маленьку пам’ять.",
-        "Здається, я знайшов ідею!",
-      ]
-    : lang === "fr"
-      ? [
-          "Qu’est-ce qui a changé ici ?",
-          "Oh, une nouvelle œuvre !",
-          "Je me demande ce que l’auteur voulait dire...",
-          "Je dois m’en souvenir.",
-          "Je note cette idée.",
-          "J’ai trouvé quelque chose !",
-        ]
-      : [
-          "What changed here today?",
-          "Oh, a new work!",
-          "I wonder what the author meant...",
-          "I should remember this.",
-          "Writing this little idea down.",
-          "I think I found something!",
-        ];
-
   if (loading) {
     return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">{t("ui.loadingPortal")}</main>;
   }
@@ -430,8 +430,9 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           )}
         </div>
         <header className="author-portal-hero mt-7 grid min-w-0 gap-5 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:gap-6 sm:p-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
-          <div className="author-neon-avatar author-avatar-glow mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
+           <div className="author-neon-avatar author-avatar-glow relative mx-auto flex h-24 w-24 items-center justify-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
             {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
+             {author.isOnline && <span className="authors-world-presence-dot" title="Автор зараз на сайті" aria-label="Автор зараз на сайті" />}
           </div>
           <div className="min-w-0 text-center md:text-left">
             <p className="break-all font-mono text-[9px] uppercase tracking-[0.16em] text-[#ffad7f] sm:text-[10px] sm:tracking-[0.28em]">Авторський портал // {author.slug}</p>
@@ -619,7 +620,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
 
           <section className="author-neon-panel relative mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
            {author.helperEnabled && (
-             <PortalHelper thoughts={helperThoughts} />
+             <PortalHelper language={lang} />
            )}
           <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">

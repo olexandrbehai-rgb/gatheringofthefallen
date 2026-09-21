@@ -120,6 +120,11 @@ function ensureAuthorsWorldSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS authors_display_name_idx ON authors (display_name);
       CREATE INDEX IF NOT EXISTS authors_created_at_idx ON authors (created_at);
 
+      CREATE TABLE IF NOT EXISTS authors_world_presence (
+        author_id INTEGER PRIMARY KEY REFERENCES authors(id) ON DELETE CASCADE,
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS authors_world_chat_messages (
         id SERIAL PRIMARY KEY,
         author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
@@ -385,6 +390,7 @@ function serializeAuthor(row: Record<string, unknown>) {
     avatarUrl: row.avatar_url,
     backgroundUrl: row.background_url,
     helperEnabled: row.helper_enabled === true,
+    isOnline: row.is_online === true,
     platformLinks: Array.isArray(row.platform_links) ? row.platform_links : [],
     slug: typeof row.slug === "string" && row.slug ? row.slug : `author-${Number(row.id)}`,
     position: {
@@ -649,7 +655,8 @@ router.get("/authors-world/authors", async (_req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(`
-       SELECT id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top, created_at,
+       SELECT authors.id, authors.display_name, authors.role, authors.bio, authors.avatar_url, authors.background_url, authors.helper_enabled, authors.platform_links, authors.slug, authors.world_left, authors.world_top, authors.created_at,
+              presence.author_id IS NOT NULL AS is_online,
              COALESCE((
                SELECT json_agg(json_build_object(
                  'id', memories.id,
@@ -663,13 +670,57 @@ router.get("/authors-world/authors", async (_req, res) => {
                FROM author_creations memories
                 WHERE memories.author_id = authors.id AND memories.kind = 'memory' AND memories.is_hidden = FALSE
              ), '[]'::json) AS memory_nodes
-      FROM authors
-      ORDER BY created_at ASC, id ASC
+       FROM authors
+       LEFT JOIN authors_world_presence presence
+         ON presence.author_id = authors.id
+        AND presence.last_seen_at > NOW() - INTERVAL '45 seconds'
+       ORDER BY authors.created_at ASC, authors.id ASC
     `);
     res.json({ authors: result.rows.map(serializeAuthor) });
   } catch (error) {
     logger.error({ msg: "Authors world list failed", error });
     res.status(500).json({ error: "Unable to load authors" });
+  }
+});
+
+router.get("/authors-world/presence", async (_req, res) => {
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `SELECT author_id
+       FROM authors_world_presence
+       WHERE last_seen_at > NOW() - INTERVAL '45 seconds'`,
+    );
+    res.json({ onlineAuthorIds: result.rows.map((row) => Number(row.author_id)) });
+  } catch (error) {
+    logger.error({ msg: "Authors world presence query failed", error });
+    res.status(500).json({ error: "Unable to load author presence" });
+  }
+});
+
+router.post("/authors-world/presence", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to report author presence" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `INSERT INTO authors_world_presence (author_id, last_seen_at)
+       SELECT id, NOW()
+       FROM authors
+       WHERE user_id = $1
+       ON CONFLICT (author_id)
+       DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at
+       RETURNING author_id`,
+      [userId],
+    );
+    res.json({ tracked: result.rowCount === 1 });
+  } catch (error) {
+    logger.error({ msg: "Author presence update failed", error });
+    res.status(500).json({ error: "Unable to update author presence" });
   }
 });
 
@@ -683,7 +734,8 @@ router.get("/authors-world/me", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-       `SELECT id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top, created_at,
+       `SELECT authors.id, authors.display_name, authors.role, authors.bio, authors.avatar_url, authors.background_url, authors.helper_enabled, authors.platform_links, authors.slug, authors.world_left, authors.world_top, authors.created_at,
+              presence.author_id IS NOT NULL AS is_online,
               COALESCE((
                 SELECT json_agg(json_build_object(
                   'id', memories.id,
@@ -697,8 +749,11 @@ router.get("/authors-world/me", async (req, res) => {
                 FROM author_creations memories
                 WHERE memories.author_id = authors.id AND memories.kind = 'memory' AND memories.is_hidden = FALSE
               ), '[]'::json) AS memory_nodes
-       FROM authors
-       WHERE user_id = $1
+        FROM authors
+        LEFT JOIN authors_world_presence presence
+          ON presence.author_id = authors.id
+         AND presence.last_seen_at > NOW() - INTERVAL '45 seconds'
+        WHERE authors.user_id = $1
        LIMIT 1`,
       [userId],
     );
@@ -968,8 +1023,9 @@ router.get("/authors-world/author/:slug", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-       `SELECT id, user_id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links,
+       `SELECT authors.id, authors.user_id, authors.display_name, authors.role, authors.bio, authors.avatar_url, authors.background_url, authors.helper_enabled, authors.platform_links,
              slug, world_left, world_top, created_at,
+              presence.author_id IS NOT NULL AS is_online,
              COALESCE((
                SELECT json_agg(json_build_object(
                  'id', memories.id,
@@ -983,8 +1039,11 @@ router.get("/authors-world/author/:slug", async (req, res) => {
                FROM author_creations memories
                 WHERE memories.author_id = authors.id AND memories.kind = 'memory' AND memories.is_hidden = FALSE
              ), '[]'::json) AS memory_nodes
-       FROM authors
-       WHERE slug = $1
+        FROM authors
+        LEFT JOIN authors_world_presence presence
+          ON presence.author_id = authors.id
+         AND presence.last_seen_at > NOW() - INTERVAL '45 seconds'
+        WHERE authors.slug = $1
        LIMIT 1`,
       [req.params.slug],
     );

@@ -109,28 +109,17 @@ function buildThoughts(language: HelperLanguage) {
   });
 }
 
-const RACKET_COPY: Record<HelperLanguage, { idle: string; active: string }> = {
-  ua: { idle: "Взяти ракетку й пограти", active: "Зупинити гру" },
-  en: { idle: "Pick up the racket and play", active: "Stop the game" },
-  fr: { idle: "Prendre la raquette et jouer", active: "Arrêter le jeu" },
-};
-
 const HELPER_HALF_SIZE = { x: 47, y: 43 };
-const RACKET_HIT_DISTANCE = 78;
 
 export function PortalHelper({ language }: { language: HelperLanguage }) {
   const safeLanguage: HelperLanguage = language === "en" || language === "fr" ? language : "ua";
   const [sceneIndex, setSceneIndex] = useState(0);
   const [position, setPosition] = useState<Point>({ x: 180, y: 220 });
-  const [racketPosition, setRacketPosition] = useState<Point>({ x: 0, y: 0 });
   const [isPhysicsActive, setIsPhysicsActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isGameActive, setIsGameActive] = useState(false);
-  const [isHit, setIsHit] = useState(false);
   const thoughts = useMemo(() => buildThoughts(safeLanguage), [safeLanguage]);
   const helperRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef(position);
-  const racketPositionRef = useRef(racketPosition);
   const velocityRef = useRef<Velocity>({ x: 0, y: 0 });
   const dragRef = useRef<{
     pointerId: number;
@@ -139,8 +128,6 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
     lastTime: number;
   } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastRacketHitRef = useRef(0);
-  const hitTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -154,10 +141,6 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
   }, [position]);
 
   useEffect(() => {
-    racketPositionRef.current = racketPosition;
-  }, [racketPosition]);
-
-  useEffect(() => {
     if (!isPhysicsActive || isDragging) return;
 
     let lastTime = performance.now();
@@ -169,10 +152,13 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
         x: positionRef.current.x + velocityRef.current.x * delta,
         y: positionRef.current.y + velocityRef.current.y * delta,
       };
-      const minX = HELPER_HALF_SIZE.x + 8;
-      const minY = HELPER_HALF_SIZE.y + 8;
-      const maxX = Math.max(minX, window.innerWidth - HELPER_HALF_SIZE.x - 8);
-      const maxY = Math.max(minY, window.innerHeight - HELPER_HALF_SIZE.y - 8);
+      const viewport = window.visualViewport;
+      const viewportWidth = viewport?.width ?? window.innerWidth;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const minX = HELPER_HALF_SIZE.x;
+      const minY = HELPER_HALF_SIZE.y;
+      const maxX = Math.max(minX, viewportWidth - HELPER_HALF_SIZE.x);
+      const maxY = Math.max(minY, viewportHeight - HELPER_HALF_SIZE.y);
 
       if (next.x <= minX || next.x >= maxX) {
         next.x = Math.max(minX, Math.min(maxX, next.x));
@@ -181,26 +167,6 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
       if (next.y <= minY || next.y >= maxY) {
         next.y = Math.max(minY, Math.min(maxY, next.y));
         velocityRef.current.y *= -0.92;
-      }
-
-      if (isGameActive && time - lastRacketHitRef.current > 180) {
-        const dx = next.x - racketPositionRef.current.x;
-        const dy = next.y - racketPositionRef.current.y;
-        const distance = Math.hypot(dx, dy);
-        if (distance < RACKET_HIT_DISTANCE) {
-          const length = distance || 1;
-          const speed = Math.max(390, Math.hypot(velocityRef.current.x, velocityRef.current.y) * 1.04);
-          velocityRef.current = {
-            x: (dx / length) * speed,
-            y: (dy / length) * speed,
-          };
-          next.x = racketPositionRef.current.x + (dx / length) * (RACKET_HIT_DISTANCE + 4);
-          next.y = racketPositionRef.current.y + (dy / length) * (RACKET_HIT_DISTANCE + 4);
-          lastRacketHitRef.current = time;
-          setIsHit(true);
-          if (hitTimerRef.current !== null) window.clearTimeout(hitTimerRef.current);
-          hitTimerRef.current = window.setTimeout(() => setIsHit(false), 260);
-        }
       }
 
       positionRef.current = next;
@@ -213,32 +179,10 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
       if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     };
-  }, [isDragging, isGameActive, isPhysicsActive]);
-
-  useEffect(() => {
-    if (!isGameActive) return;
-    const handlePointerMove = (event: PointerEvent) => {
-      const next = { x: event.clientX, y: event.clientY };
-      racketPositionRef.current = next;
-      setRacketPosition(next);
-    };
-    const handleContextMenu = (event: MouseEvent) => {
-      event.preventDefault();
-      setIsGameActive(false);
-      setIsPhysicsActive(false);
-      setIsHit(false);
-    };
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("contextmenu", handleContextMenu);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, [isGameActive]);
+  }, [isDragging, isPhysicsActive]);
 
   useEffect(() => {
     return () => {
-      if (hitTimerRef.current !== null) window.clearTimeout(hitTimerRef.current);
       if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
@@ -300,27 +244,6 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
     };
   };
 
-  const handleRacketClick = () => {
-    if (isGameActive) {
-      setIsGameActive(false);
-      setIsPhysicsActive(false);
-      setIsHit(false);
-      return;
-    }
-    const center = readHelperCenter();
-    const nextRacketPosition = {
-      x: Math.min(window.innerWidth - 52, Math.max(52, center.x + 150)),
-      y: Math.min(window.innerHeight - 70, Math.max(70, center.y + 30)),
-    };
-    positionRef.current = center;
-    setPosition(center);
-    racketPositionRef.current = nextRacketPosition;
-    setRacketPosition(nextRacketPosition);
-    velocityRef.current = { x: 250, y: -180 };
-    setIsPhysicsActive(true);
-    setIsGameActive(true);
-  };
-
   const scene = SCENES[sceneIndex];
   const waypoint = WAYPOINTS[sceneIndex];
   const thought = thoughts[sceneIndex % thoughts.length];
@@ -329,19 +252,11 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
     top: isPhysicsActive ? `${position.y}px` : `${waypoint.top}%`,
     "--helper-tilt": `${waypoint.tilt}deg`,
   } as CSSProperties;
-  const racketStyle = isGameActive
-    ? {
-        left: `${racketPosition.x}px`,
-        top: `${racketPosition.y}px`,
-        "--racket-angle": `${Math.atan2(velocityRef.current.y, velocityRef.current.x) * (180 / Math.PI) + 90}deg`,
-      } as CSSProperties
-    : undefined;
-
   return (
     <div className="authors-world-portal-helper-layer pointer-events-none fixed inset-0">
       <div
         ref={helperRef}
-        className={`authors-world-portal-helper authors-world-portal-helper-phase-${scene.phase} ${isPhysicsActive ? "authors-world-portal-helper-interactive" : ""} ${isDragging ? "is-dragging" : ""} ${isHit ? "is-hit" : ""}`}
+        className={`authors-world-portal-helper authors-world-portal-helper-phase-${scene.phase} ${isPhysicsActive ? "authors-world-portal-helper-interactive" : ""} ${isDragging ? "is-dragging" : ""}`}
         style={actorStyle}
         data-helper-scene={scene.phase}
         data-helper-side={waypoint.left > 60 ? "left" : "right"}
@@ -384,21 +299,6 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
         <span className="authors-world-portal-helper-orbit authors-world-portal-helper-orbit-one">·</span>
         <span className="authors-world-portal-helper-orbit authors-world-portal-helper-orbit-two">✦</span>
       </div>
-      <button
-        type="button"
-        className={`authors-world-portal-racket ${isGameActive ? "is-active" : ""}`}
-        style={racketStyle}
-        onClick={handleRacketClick}
-        onContextMenu={(event) => event.preventDefault()}
-        aria-pressed={isGameActive}
-        aria-label={isGameActive ? RACKET_COPY[safeLanguage].active : RACKET_COPY[safeLanguage].idle}
-        title={isGameActive ? RACKET_COPY[safeLanguage].active : RACKET_COPY[safeLanguage].idle}
-      >
-        <span className="authors-world-portal-racket-art" aria-hidden="true">
-          <span className="authors-world-portal-racket-head"><span /></span>
-          <span className="authors-world-portal-racket-handle" />
-        </span>
-      </button>
     </div>
   );
 }

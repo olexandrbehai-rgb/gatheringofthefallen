@@ -41,6 +41,7 @@ type Author = {
   links: AuthorLink[];
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
+  isOnline: boolean;
   position: { left: number; top: number };
   memories: AuthorMemory[];
 };
@@ -491,6 +492,7 @@ function mapApiAuthor(
     bio: string;
     avatarUrl?: string | null;
     backgroundUrl?: string | null;
+    isOnline?: boolean;
     platformLinks?: AuthorLink[];
     slug: string;
     position?: { left: number; top: number };
@@ -507,6 +509,7 @@ function mapApiAuthor(
     links: Array.isArray(value.platformLinks) ? value.platformLinks : [],
     avatarUrl: value.avatarUrl,
     backgroundUrl: value.backgroundUrl,
+    isOnline: value.isOnline === true,
     position: value.position ?? worldPositionFor(index),
     memories: Array.isArray((value as { memories?: AuthorMemory[] }).memories)
       ? (value as unknown as { memories: Array<AuthorMemory & { poem?: unknown; links?: unknown }> }).memories.map((memory) => ({
@@ -584,6 +587,13 @@ function AuthorNode({
           ) : (
             <Plus className="relative h-7 w-7 text-[#00f0ff]/80" aria-hidden="true" />
           )}
+           {author.isOnline && (
+             <span
+               className="authors-world-presence-dot"
+               title="Автор зараз на сайті"
+               aria-label="Автор зараз на сайті"
+             />
+           )}
         </span>
         <span className="relative z-20 hidden min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
            <span className="truncate font-creepster text-2xl tracking-[0.08em] text-[#00f0ff] antialiased">{author.name}</span>
@@ -1238,6 +1248,37 @@ export default function AuthorsWorld() {
       active = false;
     };
   }, [authLoaded, copy.errors.loadWorld, isSignedIn]);
+
+  useEffect(() => {
+    if (!authLoaded) return;
+    let active = true;
+
+    const loadPresence = async () => {
+      try {
+        const response = await fetch(`${API_ROOT}/authors-world/presence`, { credentials: "include" });
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => ({})) as { onlineAuthorIds?: unknown };
+        if (!active || !Array.isArray(payload.onlineAuthorIds)) return;
+        const onlineIds = new Set(payload.onlineAuthorIds.map((id) => String(id)));
+        setAuthors((current) => current.map((author) => ({
+          ...author,
+          isOnline: onlineIds.has(author.id),
+        })));
+        setMyAuthor((current) => current
+          ? { ...current, isOnline: onlineIds.has(current.id) }
+          : current);
+      } catch {
+        // The initial author payload remains usable when presence is unavailable.
+      }
+    };
+
+    void loadPresence();
+    const interval = window.setInterval(() => void loadPresence(), 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [authLoaded]);
 
   useEffect(() => {
     if (myAuthor && new URLSearchParams(location.split("?")[1] ?? "").get("edit") === "1") {
