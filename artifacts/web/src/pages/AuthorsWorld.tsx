@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { BarChart3, Bell, Check, CheckCheck, ImagePlus, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, BarChart3, Bell, Check, CheckCheck, ImagePlus, LocateFixed, LogIn, LogOut, Mail, MessageCircle, Minus, Move, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
 import { Link, useLocation } from "wouter";
@@ -658,7 +658,7 @@ export default function AuthorsWorld() {
   const [directThread, setDirectThread] = useState<DirectThread | null>(null);
   const [directDraft, setDirectDraft] = useState("");
   const [isSendingDirect, setIsSendingDirect] = useState(false);
-  const [inboxView, setInboxView] = useState<"mentions" | "direct">("mentions");
+  const [inboxView, setInboxView] = useState<"mentions" | "direct" | "general">("mentions");
   const [chatCursorPosition, setChatCursorPosition] = useState(0);
   const [mentionHighlightIndex, setMentionHighlightIndex] = useState(0);
   const [creations, setCreations] = useState<AuthorCreation[]>([]);
@@ -1292,6 +1292,19 @@ export default function AuthorsWorld() {
     return () => window.clearInterval(refreshTimer);
   }, [loadDirectConversations, loadNotifications]);
 
+  useEffect(() => {
+    if (!isNotificationsOpen || !isMobileViewport) return;
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousOverscrollBehavior = body.style.overscrollBehavior;
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [isMobileViewport, isNotificationsOpen]);
+
   const visibleAuthors = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return authors;
@@ -1877,13 +1890,31 @@ export default function AuthorsWorld() {
                )}
              </div>
            </div>
-           {isSignedIn && myAuthor && (
-             <section id="authors-world-notifications" className="authors-world-account-panel mt-3 border p-3 sm:mt-4">
-               <div className="flex flex-wrap items-center justify-between gap-2">
+            {isSignedIn && myAuthor && (
+              <section
+                id="authors-world-notifications"
+                data-open={isNotificationsOpen ? "true" : "false"}
+                onMouseEnter={() => {
+                  if (!isMobileViewport) setIsNotificationsOpen(true);
+                }}
+                className={`authors-world-inbox-shell authors-world-account-panel mt-3 border p-3 sm:mt-4 ${isNotificationsOpen ? "authors-world-inbox-open" : ""}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    {isNotificationsOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="inline-flex min-h-10 shrink-0 items-center gap-1.5 border border-white/15 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-white/65 transition-colors hover:border-[#00f0ff]/60 hover:text-white md:hidden"
+                        aria-label={copy.directMessages.back}
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.back}
+                      </button>
+                    )}
                  <button
                    type="button"
                    onClick={() => setIsNotificationsOpen((current) => !current)}
-                   className="inline-flex min-h-10 items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:text-white"
+                    className="inline-flex min-h-10 min-w-0 items-center gap-2 text-left font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-colors hover:text-white"
                    aria-expanded={isNotificationsOpen}
                    aria-controls="authors-world-notification-list"
                  >
@@ -1895,6 +1926,17 @@ export default function AuthorsWorld() {
                      </span>
                    )}
                  </button>
+                  </div>
+                  {isNotificationsOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setIsNotificationsOpen(false)}
+                      className="inline-flex min-h-10 items-center gap-1.5 border border-white/15 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-white/55 transition-colors hover:border-[#00f0ff]/60 hover:text-white md:hidden"
+                      aria-label={copy.notifications.close}
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.close}
+                    </button>
+                  )}
                   {isNotificationsOpen && inboxView === "mentions" && unreadNotificationCount > 0 && (
                    <button
                      type="button"
@@ -1906,7 +1948,7 @@ export default function AuthorsWorld() {
                  )}
                </div>
                {isNotificationsOpen && (
-                 <div id="authors-world-notification-list" className="mt-3 border-t border-white/10 pt-3">
+                  <div id="authors-world-notification-list" className="authors-world-inbox-content mt-3 border-t border-white/10 pt-3">
                     <div className="mb-3 flex flex-wrap gap-2">
                       <button
                         type="button"
@@ -1924,6 +1966,13 @@ export default function AuthorsWorld() {
                         <Mail className="mr-1.5 inline h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.title}
                         {directUnreadCount > 0 && <span className="ml-1.5 text-[#ffad7f]">({directUnreadCount})</span>}
                       </button>
+                       <button
+                         type="button"
+                         onClick={() => setInboxView("general")}
+                         className={`min-h-9 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] transition-colors ${inboxView === "general" ? "border-[#8a2be2]/70 bg-[#8a2be2]/15 text-[#d7b6ff]" : "border-white/15 text-white/45 hover:border-white/35 hover:text-white"}`}
+                       >
+                         <MessageCircle className="mr-1.5 inline h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.generalChat}
+                       </button>
                     </div>
                     {inboxView === "mentions" ? (
                       notificationsLoading ? (
@@ -1933,7 +1982,7 @@ export default function AuthorsWorld() {
                       ) : notifications.length === 0 ? (
                         <p className="font-mono text-xs leading-relaxed text-white/45">{copy.notifications.empty}</p>
                       ) : (
-                        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                        <div className="authors-world-message-scroll max-h-72 space-y-2 overflow-y-auto pr-1 sm:max-h-[52vh]">
                           {notifications.map((notification) => (
                             <article
                               key={notification.id}
@@ -1975,24 +2024,69 @@ export default function AuthorsWorld() {
                           ))}
                         </div>
                       )
+                    ) : inboxView === "general" ? (
+                      <div className="authors-world-thread flex min-h-0 flex-1 flex-col">
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 pb-3">
+                          <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#d7b6ff]">{copy.notifications.generalChat}</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsNotificationsOpen(false);
+                              window.requestAnimationFrame(() => document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+                            }}
+                            className="inline-flex min-h-9 items-center gap-1.5 border border-[#8a2be2]/45 px-2.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#d7b6ff] transition-colors hover:border-[#00f0ff]/70 hover:text-white"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.openGeneralChat}
+                          </button>
+                        </div>
+                        <div className="authors-world-message-scroll mt-3 min-h-0 max-h-72 flex-1 space-y-3 overflow-y-auto pr-1 sm:max-h-[52vh]">
+                          {chatLoading ? (
+                            <p className="font-mono text-xs text-white/45">{copy.chat.loading}</p>
+                          ) : chatError ? (
+                            <p className="font-mono text-xs text-[#ffb184]">{chatError}</p>
+                          ) : chatMessages.length === 0 ? (
+                            <p className="py-4 text-center font-mono text-xs text-white/45">{copy.chat.empty}</p>
+                          ) : chatMessages.map((message) => (
+                            <article key={message.id} className="border-l border-[#8a2be2]/45 pl-3">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <button
+                                  type="button"
+                                  onClick={() => addressAuthor(message.author)}
+                                  className="font-mono text-xs font-bold text-[#8ceeff] transition-colors hover:text-white"
+                                  aria-label={formatAuthorsWorldCopy(copy.chat.replyTo, { name: message.author.displayName })}
+                                >
+                                  {message.author.displayName}
+                                </button>
+                                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffad7f]/70">{message.author.role}</span>
+                                <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
+                                  {new Date(message.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
+                                </time>
+                              </div>
+                              <p className="mt-1 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-white/75">
+                                <ChatMessageBody message={message} />
+                              </p>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
                     ) : directThread ? (
-                      <div>
-                        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                      <div className="authors-world-thread flex min-h-0 flex-1 flex-col">
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 pb-3">
                           <button
                             type="button"
                             onClick={() => {
                               setDirectThread(null);
                               setSelectedDirectSlug(null);
                             }}
-                            className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#8ceeff] hover:text-white"
+                            className="inline-flex min-h-9 items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#8ceeff] hover:text-white"
                           >
-                            ← {copy.directMessages.back}
+                            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.back}
                           </button>
                           <p className="min-w-0 truncate text-right font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffcf9e]">
                             {copy.directMessages.privateLabel} // {directThread.author.displayName}
                           </p>
                         </div>
-                        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+                        <div className="authors-world-message-scroll mt-3 min-h-0 max-h-72 flex-1 space-y-2 overflow-y-auto pr-1 sm:max-h-[52vh]">
                           {directThread.messages.length === 0 ? (
                             <p className="py-4 text-center font-mono text-xs text-white/45">{copy.directMessages.empty}</p>
                           ) : directThread.messages.map((message) => {
@@ -2012,7 +2106,7 @@ export default function AuthorsWorld() {
                             );
                           })}
                         </div>
-                        <form onSubmit={sendDirectReply} className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <form onSubmit={sendDirectReply} className="mt-3 flex shrink-0 flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row">
                           <label className="min-w-0 flex-1">
                             <span className="sr-only">{copy.directMessages.placeholder}</span>
                             <textarea
@@ -2041,7 +2135,7 @@ export default function AuthorsWorld() {
                     ) : directConversations.length === 0 ? (
                       <p className="font-mono text-xs leading-relaxed text-white/45">{copy.directMessages.empty}</p>
                     ) : (
-                      <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                      <div className="authors-world-message-scroll max-h-72 space-y-2 overflow-y-auto pr-1 sm:max-h-[52vh]">
                         {directConversations.map((conversation) => (
                           <button
                             key={conversation.id}
