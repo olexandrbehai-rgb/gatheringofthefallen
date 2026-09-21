@@ -423,76 +423,78 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                      { name: author.displayName },
                    )}
                 </p>
-                {authLoaded && isSignedIn ? (
-                  <form onSubmit={handleSendAuthorMessage} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-                     <fieldset className="grid shrink-0 gap-2 sm:w-56">
-                       <legend className="sr-only">{copy.directMessage.title}</legend>
-                       <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "public" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
-                         <input
-                           type="radio"
-                           name="author-message-mode"
-                           value="public"
-                           checked={messageMode === "public"}
-                           onChange={() => {
-                             setMessageMode("public");
-                             setMessageSent(false);
-                             setMessageError(null);
-                           }}
-                           className="accent-[#00f0ff]"
-                         />
-                         {copy.directMessage.modePublic}
-                       </label>
-                       <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "private" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
-                         <input
-                           type="radio"
-                           name="author-message-mode"
-                           value="private"
-                           checked={messageMode === "private"}
-                           onChange={() => {
-                             setMessageMode("private");
-                             setMessageSent(false);
-                             setMessageError(null);
-                           }}
-                           className="accent-[#ffad7f]"
-                         />
-                         {copy.directMessage.modePrivate}
-                       </label>
-                     </fieldset>
-                    <label className="min-w-0 flex-1">
-                      <span className="sr-only">
-                        {formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
-                      </span>
-                      <textarea
-                        value={messageDraft}
-                        onChange={(event) => {
-                          setMessageDraft(event.target.value);
-                          setMessageError(null);
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <fieldset className="grid shrink-0 gap-2 sm:w-56">
+                    <legend className="sr-only">{copy.directMessage.title}</legend>
+                    <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "public" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                      <input
+                        type="radio"
+                        name="author-message-mode"
+                        value="public"
+                        checked={messageMode === "public"}
+                        onChange={() => {
+                          setMessageMode("public");
                           setMessageSent(false);
+                          setMessageError(null);
                         }}
-                        maxLength={1000}
-                        rows={3}
-                        placeholder={formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
-                        className="min-h-24 w-full resize-y border border-white/15 bg-black/35 px-3 py-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
+                        className="accent-[#00f0ff]"
                       />
+                      {copy.directMessage.modePublic}
                     </label>
-                    <button
-                      type="submit"
-                      disabled={isSendingMessage || !messageDraft.trim()}
-                      className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                       {isSendingMessage
-                         ? copy.directMessage.sending
-                         : messageMode === "private" ? copy.directMessage.sendPrivate : copy.directMessage.sendPublic}
-                    </button>
-                  </form>
-                ) : (
-                  <p className="mt-4 border border-white/10 bg-black/20 px-3 py-3 font-mono text-xs leading-relaxed text-white/55">
-                    {copy.directMessage.signIn}{" "}
-                    <Link href="/sign-in" className="text-[#8ceeff] underline decoration-[#00f0ff]/50 underline-offset-4 hover:text-white">
-                      {copy.directMessage.signInAction}
-                    </Link>
-                  </p>
-                )}
+                    <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "private" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                      <input
+                        type="radio"
+                        name="author-message-mode"
+                        value="private"
+                        checked={messageMode === "private"}
+                        onChange={() => {
+                          setMessageMode("private");
+                          setMessageSent(false);
+                          setMessageError(null);
+                        }}
+                        className="accent-[#ffad7f]"
+                      />
+                      {copy.directMessage.modePrivate}
+                    </label>
+                  </fieldset>
+                  {authLoaded && isSignedIn ? (
+                    <form onSubmit={handleSendAuthorMessage} className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-end">
+                      <label className="min-w-0 flex-1">
+                        <span className="sr-only">
+                          {formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
+                        </span>
+                        <textarea
+                          value={messageDraft}
+                          onChange={(event) => {
+                            setMessageDraft(event.target.value);
+                            setMessageError(null);
+                            setMessageSent(false);
+                          }}
+                          maxLength={1000}
+                          rows={3}
+                          placeholder={formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
+                          className="min-h-24 w-full resize-y border border-white/15 bg-black/35 px-3 py-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={isSendingMessage || !messageDraft.trim()}
+                        className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isSendingMessage
+                          ? copy.directMessage.sending
+                          : messageMode === "private" ? copy.directMessage.sendPrivate : copy.directMessage.sendPublic}
+                      </button>
+                    </form>
+                  ) : (
+                    <p className="min-w-0 flex-1 border border-white/10 bg-black/20 px-3 py-3 font-mono text-xs leading-relaxed text-white/55">
+                      {copy.directMessage.signIn}{" "}
+                      <Link href="/sign-in" className="text-[#8ceeff] underline decoration-[#00f0ff]/50 underline-offset-4 hover:text-white">
+                        {copy.directMessage.signInAction}
+                      </Link>
+                    </p>
+                  )}
+                </div>
                 {messageSent && (
                   <p role="status" className="mt-3 border border-[#8effa0]/35 bg-[#8effa0]/10 px-3 py-2 font-mono text-xs text-[#c7ffd0]">
                      {messageMode === "private" ? copy.directMessage.privateSuccess : copy.directMessage.success}
