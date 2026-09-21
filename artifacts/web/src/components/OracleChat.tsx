@@ -5,12 +5,37 @@ import oracleAvatar from "@/assets/oracle-avatar.png";
 import oracleAvatarListening from "@/assets/oracle-avatar-listening.png";
 import oracleAvatarSpeaking from "@/assets/oracle-avatar-speaking-soft.png";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n/LanguageContext";
 
 type MessageRole = "user" | "oracle";
 interface Message {
   role: MessageRole;
   content: string;
 }
+
+type OracleCopy = {
+  name: string;
+  title: string;
+  alt: string;
+  open: string;
+  close: string;
+  chat: string;
+  speaking: string;
+  thinking: string;
+  connected: string;
+  dictating: string;
+  searching: string;
+  livingArtifact: string;
+  seeker: string;
+  ask: string;
+  send: string;
+  sendAria: string;
+  newLine: string;
+  looking: string;
+  welcome: string;
+  error: string;
+  mysticError: string;
+};
 
 const STORAGE_KEY = "gotf_oracle_chat_history";
 const MAX_MESSAGES = 12;
@@ -72,9 +97,11 @@ function TypewriterText({
 function OraclePortrait({
   isSpeaking,
   isThinking,
+  copy,
 }: {
   isSpeaking: boolean;
   isThinking: boolean;
+  copy: OracleCopy;
 }) {
   const [mouthOpen, setMouthOpen] = useState(false);
 
@@ -106,7 +133,7 @@ function OraclePortrait({
     <div className="relative h-40 shrink-0 overflow-hidden border-b border-primary/30 bg-[#09030d] sm:h-48">
       <img
         src={oracleAvatarListening}
-        alt="Оракул"
+        alt={copy.alt}
         className="absolute inset-0 h-full w-full object-cover object-[50%_20%]"
       />
       <img
@@ -122,18 +149,18 @@ function OraclePortrait({
       <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3">
         <div>
           <div className="font-creepster text-2xl tracking-[0.18em] text-primary drop-shadow-[0_0_8px_#00f0ff]">
-            ОРАКУЛ
+            {copy.title}
           </div>
           <div className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-secondary">
             {isSpeaking
-              ? "Диктує послання..."
+              ? copy.dictating
               : isThinking
-                ? "Шукає відповідь..."
-                : "Живий артефакт"}
+                ? copy.searching
+                : copy.livingArtifact}
           </div>
         </div>
         <div className="rounded border border-black/60 bg-black/65 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-white/80 backdrop-blur-sm">
-          {isSpeaking ? "Говорить" : isThinking ? "Думає" : "На зв’язку"}
+          {isSpeaking ? copy.speaking : isThinking ? copy.thinking : copy.connected}
         </div>
       </div>
     </div>
@@ -141,6 +168,8 @@ function OraclePortrait({
 }
 
 export function OracleChat() {
+  const { tObj } = useT();
+  const copy = tObj<OracleCopy>("oracle");
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -163,12 +192,12 @@ export function OracleChat() {
       if (saved) {
         setMessages(JSON.parse(saved));
       } else {
-        setMessages([{ role: "oracle", content: "А що ЯКЩО?" }]);
+        setMessages([{ role: "oracle", content: copy.welcome }]);
       }
     } catch (e) {
-      setMessages([{ role: "oracle", content: "А що ЯКЩО?" }]);
+      setMessages([{ role: "oracle", content: copy.welcome }]);
     }
-  }, []);
+  }, [copy.welcome]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -302,14 +331,14 @@ export function OracleChat() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || "Mystic interference disrupted the connection.");
+        throw new Error(copy.mysticError);
       }
       
       setSpeakingMessageIndex(newMessages.length);
       setIsOracleSpeaking(true);
       setMessages((prev) => [...prev, { role: "oracle", content: data.answer }]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Не вдалося зв'язатися з Оракулом.");
+      setError(err instanceof Error ? err.message : copy.error);
       setIsOracleSpeaking(false);
     } finally {
       setIsTyping(false);
@@ -346,18 +375,18 @@ export function OracleChat() {
             style={{ transformOrigin: "top left" }}
             onClick={() => setIsOpen(true)}
             className="fixed top-48 left-4 md:top-24 md:left-8 z-50 h-24 w-20 md:h-32 md:w-24 rounded-[18px] overflow-hidden border-2 border-secondary shadow-[0_0_15px_rgba(138,43,226,0.5)] hover:shadow-[0_0_30px_rgba(0,240,255,0.7)] hover:border-primary transition-colors duration-500 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
-            aria-label="Відкрити чат з Оракулом"
+            aria-label={copy.open}
             data-testid="button-open-oracle"
           >
             <div className="absolute inset-0 bg-primary/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
             <img
               src={oracleAvatar}
-              alt="Оракул"
+              alt={copy.alt}
               className="w-full h-full object-cover object-[50%_12%] transition-transform duration-700 group-hover:scale-110"
             />
             <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/80 to-transparent px-1 pb-2 pt-7 text-center">
               <span className="font-creepster text-sm tracking-[0.14em] text-primary drop-shadow-[0_0_6px_#00f0ff]">
-                ОРАКУЛ
+                {copy.title}
               </span>
             </div>
             <div className="absolute inset-0 rounded-[16px] border border-white/10 group-hover:border-white/30 z-20 pointer-events-none"></div>
@@ -377,17 +406,18 @@ export function OracleChat() {
               keyboardInset === 0 && "md:inset-x-auto md:bottom-auto md:left-8 md:top-24 md:h-[550px] md:max-h-[calc(100dvh-120px)] md:w-[400px]",
             )}
             role="dialog"
-            aria-label="Чат з Оракулом"
+            aria-label={copy.chat}
           >
             <div className={cn("relative shrink-0", keyboardInset > 0 && "hidden")}>
               <OraclePortrait
                 isSpeaking={isOracleSpeaking}
                 isThinking={isTyping}
+                copy={copy}
               />
               <button
                 onClick={() => setIsOpen(false)}
                 className="absolute right-3 top-3 rounded-md border border-white/20 bg-black/65 p-1.5 text-white/70 backdrop-blur-sm transition-colors hover:border-primary/70 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Закрити чат з Оракулом"
+                aria-label={copy.close}
                 data-testid="button-close-oracle"
               >
                 <X size={20} />
@@ -423,7 +453,7 @@ export function OracleChat() {
                     />
                   </div>
                   <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">
-                    {msg.role === "user" ? "Шукач" : "Оракул"}
+                    {msg.role === "user" ? copy.seeker : copy.name}
                   </div>
                 </div>
               ))}
@@ -432,9 +462,9 @@ export function OracleChat() {
                   <div className="bg-secondary/10 border border-secondary/30 text-primary p-3 rounded-lg rounded-tl-sm flex items-center gap-2 max-w-[85%] shadow-[0_0_15px_rgba(138,43,226,0.15)] relative">
                     <span className="absolute -left-1 -top-1 w-2 h-2 bg-primary rounded-full shadow-[0_0_5px_#00f0ff]" />
                     <Sparkles className="w-4 h-4 animate-pulse" />
-                    <span className="animate-pulse opacity-80 text-xs">Шукаю відповідь...</span>
+                    <span className="animate-pulse opacity-80 text-xs">{copy.looking}</span>
                   </div>
-                  <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">Оракул</div>
+                  <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">{copy.name}</div>
                 </div>
               )}
               {error && (
@@ -457,7 +487,7 @@ export function OracleChat() {
                   onFocus={handleInputFocus}
                   onKeyDown={handleKeyDown}
                   enterKeyHint="send"
-                  placeholder="Запитайте Оракула..."
+                  placeholder={copy.ask}
                   className="min-w-0 flex-1 bg-transparent py-2 pl-2 text-white/90 placeholder:text-white/30 focus:outline-none resize-none font-mono text-sm"
                   style={{ height: "48px" }}
                   disabled={isTyping}
@@ -468,14 +498,14 @@ export function OracleChat() {
                   onClick={handleSend}
                   disabled={!inputValue.trim() || isTyping}
                   className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded border border-primary/70 bg-primary/15 px-3 text-primary shadow-[0_0_12px_rgba(0,240,255,0.18)] transition-colors hover:bg-primary/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-primary/15 focus:outline-none focus:ring-2 focus:ring-primary sm:mb-0.5 sm:h-10 sm:w-auto sm:gap-1 sm:px-2"
-                  aria-label="Надіслати повідомлення"
+                  aria-label={copy.sendAria}
                   data-testid="button-send-oracle"
                 >
                   <Send size={16} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Надіслати</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider">{copy.send}</span>
                 </button>
               </div>
-              <div className="text-[9px] text-white/30 text-right mt-1.5 uppercase tracking-widest">Shift+Enter — новий рядок</div>
+              <div className="text-[9px] text-white/30 text-right mt-1.5 uppercase tracking-widest">{copy.newLine}</div>
             </div>
           </motion.div>
         )}

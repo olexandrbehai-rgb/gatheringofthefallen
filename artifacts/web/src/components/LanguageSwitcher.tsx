@@ -2,18 +2,18 @@ import { useT } from "@/i18n/LanguageContext";
 import { LANGS, type Lang } from "@/i18n/translations";
 
 export function LanguageSwitcher() {
-  const { lang, setLang } = useT();
+  const { lang, setLang, t } = useT();
   return (
     <div className="shrink-0 font-mono text-xs">
       <label className="relative flex shrink-0 items-center sm:hidden">
-        <span className="sr-only">Мова сайту</span>
+        <span className="sr-only">{t("ui.siteLanguage")}</span>
         <span aria-hidden="true" className="pointer-events-none absolute left-2 z-10 text-sm">
           {LANGS.find((language) => language.code === lang)?.flag}
         </span>
         <select
           value={lang}
           onChange={(event) => setLang(event.target.value as Lang)}
-          aria-label="Мова сайту"
+          aria-label={t("ui.siteLanguage")}
           className="h-9 min-w-[4.4rem] appearance-none rounded-xl border border-primary/45 bg-black/75 py-1.5 pl-8 pr-6 text-[10px] font-mono uppercase tracking-[0.12em] text-primary outline-none backdrop-blur-sm focus:border-primary focus:ring-2 focus:ring-primary/35"
         >
           {LANGS.map((language) => (

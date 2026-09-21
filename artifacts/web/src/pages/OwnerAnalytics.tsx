@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Redirect } from "wouter";
 import { useClerk, useUser } from "@clerk/react";
 import { GlitchButton } from "@/components/GlitchButton";
+import { useT } from "@/i18n/LanguageContext";
 
 type Stats = {
   rangeDays: number;
@@ -40,22 +41,6 @@ type AccessError = {
   status: number;
 };
 
-const eventLabels: Record<string, string> = {
-  page_viewed: "Перегляди сторінок",
-  product_viewed: "Перегляди товарів",
-  cart_item_added: "Додавання в кошик",
-  cart_item_removed: "Видалення з кошика",
-  checkout_started: "Початок оформлення",
-  payment_redirect_created: "Переходи до оплати",
-  checkout_failed: "Невдалі оплати",
-  external_link_clicked: "Зовнішні посилання",
-};
-
-const deviceSecurityEventLabels: Record<string, string> = {
-  registered: "Реєстрація довіреного пристрою",
-  replaced: "Заміна довіреного пристрою",
-};
-
 function StatCard({ label, value, accent }: { label: string; value: number; accent: string }) {
   return (
     <div className={`apoc-card border bg-black/50 p-5 ${accent}`}>
@@ -84,6 +69,22 @@ function referrerLabel(value: string): string {
 }
 
 export default function OwnerAnalytics() {
+  const { t } = useT();
+  const owner = (key: string) => t(`ownerUi.${key}`);
+  const eventLabels: Record<string, string> = {
+    page_viewed: owner("pageViews"),
+    product_viewed: owner("productViews"),
+    cart_item_added: owner("cartAdded"),
+    cart_item_removed: owner("cartRemoved"),
+    checkout_started: owner("checkoutStarted"),
+    payment_redirect_created: owner("paymentRedirect"),
+    checkout_failed: owner("checkoutFailed"),
+    external_link_clicked: owner("externalLinks"),
+  };
+  const deviceSecurityEventLabels: Record<string, string> = {
+    registered: owner("deviceRegistered"),
+    replaced: owner("deviceReplaced"),
+  };
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -148,7 +149,7 @@ export default function OwnerAnalytics() {
   );
 
   if (!isLoaded) {
-    return <div className="min-h-screen bg-[#050208] p-8 text-center font-mono text-primary">ПЕРЕВІРКА ДОСТУПУ...</div>;
+    return <div className="min-h-screen bg-[#050208] p-8 text-center font-mono text-primary">{owner("checking")}</div>;
   }
   if (!isSignedIn) return <Redirect to="/sign-in" />;
 
@@ -157,35 +158,34 @@ export default function OwnerAnalytics() {
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-col gap-4 border-b border-primary/20 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="mb-2 font-mono text-xs uppercase tracking-[0.3em] text-secondary">OWNER TRANSMISSION</div>
-            <h1 className="glitch-text font-creepster text-4xl text-primary md:text-6xl">АКТИВНІСТЬ САЙТУ</h1>
+            <div className="mb-2 font-mono text-xs uppercase tracking-[0.3em] text-secondary">{owner("transmission")}</div>
+            <h1 className="glitch-text font-creepster text-4xl text-primary md:text-6xl">{owner("title")}</h1>
             <p className="mt-3 font-mono text-sm text-white/60">
               Останні 30 днів · {user?.primaryEmailAddress?.emailAddress ?? "власник"}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:min-w-48">
             <Link href="/">
-              <GlitchButton className="w-full text-sm">Повернутися на сайт</GlitchButton>
+              <GlitchButton className="w-full text-sm">{owner("backToSite")}</GlitchButton>
             </Link>
             <button
               type="button"
               className="w-full border border-white/25 px-4 py-2 font-mono text-xs uppercase tracking-widest text-white/70 transition hover:border-primary/70 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               onClick={() => void signOut()}
             >
-              Вийти з акаунта
+              {owner("signOut")}
             </button>
           </div>
         </header>
 
         {error ? (
           <div className="apoc-card border border-red-500/60 bg-red-950/30 p-6 font-mono text-red-200">
-            <div className="mb-2 text-lg font-bold">ДОСТУП ЗАБОРОНЕНО</div>
+            <div className="mb-2 text-lg font-bold">{owner("accessDenied")}</div>
             <p>{error.message}</p>
             {error.status === 403 && error.message === "Trusted device required" ? (
               <div className="mt-5 border-t border-red-300/20 pt-5">
                 <p className="text-sm text-white/70">
-                  Якщо довірений пристрій втрачено, власник може відкликати його та зареєструвати цей пристрій.
-                  Старий пристрій одразу втратить доступ.
+                   {owner("trustedDeviceLost")}
                 </p>
                 {recoveryStep === "idle" ? (
                   <GlitchButton
@@ -193,7 +193,7 @@ export default function OwnerAnalytics() {
                     className="mt-4 border-red-400/70 text-red-200 hover:bg-red-500/20"
                     onClick={() => setRecoveryStep("confirming")}
                   >
-                    Почати відновлення
+                     {owner("startRecovery")}
                   </GlitchButton>
                 ) : recoveryStep === "confirming" ? (
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -202,7 +202,7 @@ export default function OwnerAnalytics() {
                       className="border border-red-400 bg-red-950/60 px-5 py-2 text-xs uppercase tracking-widest text-red-100 transition hover:bg-red-500/30"
                       onClick={() => void recoverDevice()}
                     >
-                      Підтвердити відкликання
+                       {owner("confirmRevocation")}
                     </button>
                     <button
                       type="button"
@@ -212,24 +212,24 @@ export default function OwnerAnalytics() {
                         setRecoveryError(null);
                       }}
                     >
-                      Скасувати
+                       {owner("cancel")}
                     </button>
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-primary">ЗАМІНА ДОВІРЕНОГО ПРИСТРОЮ...</p>
+                   <p className="mt-4 text-sm text-primary">{owner("replacing")}</p>
                 )}
                 {recoveryError && <p className="mt-3 text-sm text-red-300">{recoveryError}</p>}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-white/60">Панель доступна лише для власника, вказаного під час налаштування.</p>
+               <p className="mt-3 text-sm text-white/60">{owner("ownerOnly")}</p>
             )}
           </div>
         ) : !stats ? (
-          <div className="apoc-card p-8 text-center font-mono text-primary">ЗАВАНТАЖЕННЯ ДАНИХ...</div>
+          <div className="apoc-card p-8 text-center font-mono text-primary">{owner("loading")}</div>
         ) : (
           <>
             <section className="apoc-card mb-6 border border-secondary/40 bg-secondary/[0.06] p-5 font-mono md:p-6">
-              <div className="text-xs uppercase tracking-[0.2em] text-secondary">Довірений пристрій</div>
+               <div className="text-xs uppercase tracking-[0.2em] text-secondary">{owner("trustedDevice")}</div>
               <div className="mt-2 text-lg text-white">
                 {stats.trustedDevice.registeredAt
                   ? `Зареєстровано або замінено: ${new Date(stats.trustedDevice.registeredAt).toLocaleString("uk-UA", {
@@ -239,10 +239,10 @@ export default function OwnerAnalytics() {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}`
-                  : "Час реєстрації недоступний"}
+                   : owner("unavailable")}
               </div>
               <p className="mt-2 text-xs leading-relaxed text-white/60">
-                Заміна довіреного пристрою анулює cookie попереднього пристрою та одразу забирає його доступ.
+                 {owner("replacementWarning")}
               </p>
               {stats.trustedDevice.replacementBurst.warning && (
                 <div
@@ -250,7 +250,7 @@ export default function OwnerAnalytics() {
                   className="mt-4 border border-red-400/70 bg-red-950/50 p-4 text-red-100"
                 >
                   <div className="text-xs font-bold uppercase tracking-[0.2em] text-red-300">
-                    Попередження безпеки
+                     {owner("securityWarning")}
                   </div>
                   <p className="mt-2 text-sm leading-relaxed">
                     За останні {stats.trustedDevice.replacementBurst.windowHours} годин зафіксовано{" "}
@@ -258,13 +258,13 @@ export default function OwnerAnalytics() {
                     Це може свідчити про підозрілу активність.
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-red-200/80">
-                    Якщо ви не виконували всі ці заміни, негайно захистіть обліковий запис і зверніться до підтримки.
+                     {owner("protectAccount")}
                   </p>
                 </div>
               )}
               <div className="mt-5 border-t border-secondary/20 pt-4">
                 <div className="mb-3 text-[10px] uppercase tracking-[0.2em] text-white/50">
-                  Історія безпеки
+                   {owner("securityHistory")}
                 </div>
                 <div className="space-y-2">
                   {stats.trustedDevice.recentEvents.map((event, index) => (
@@ -288,21 +288,21 @@ export default function OwnerAnalytics() {
                     </div>
                   ))}
                   {!stats.trustedDevice.recentEvents.length && (
-                    <p className="text-xs text-white/50">Подій безпеки ще немає.</p>
+                     <p className="text-xs text-white/50">{owner("noSecurityEvents")}</p>
                   )}
                 </div>
               </div>
             </section>
 
             <section className="grid gap-4 md:grid-cols-3">
-              <StatCard label="Перегляди сторінок" value={stats.summary.page_views} accent="border-primary/50" />
-              <StatCard label="Унікальні пристрої" value={stats.summary.unique_visitors} accent="border-secondary/60" />
-              <StatCard label="Усі події" value={stats.summary.total_events} accent="border-[#ff6b35]/60" />
+               <StatCard label={owner("pageViews")} value={stats.summary.page_views} accent="border-primary/50" />
+               <StatCard label={owner("uniqueDevices")} value={stats.summary.unique_visitors} accent="border-secondary/60" />
+               <StatCard label={owner("allEvents")} value={stats.summary.total_events} accent="border-[#ff6b35]/60" />
             </section>
 
             <section className="mt-8 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
               <div className="apoc-card bg-black/40 p-5 md:p-6">
-                <h2 className="mb-6 font-creepster text-3xl text-primary">ДИНАМІКА ВІДВІДУВАНЬ</h2>
+                 <h2 className="mb-6 font-creepster text-3xl text-primary">{owner("visits")}</h2>
                 <div className="flex h-56 items-end gap-1 border-b border-white/10 pb-2">
                   {stats.daily.map((item) => (
                     <div key={item.day} className="group flex h-full flex-1 flex-col justify-end">
@@ -321,7 +321,7 @@ export default function OwnerAnalytics() {
               </div>
 
               <div className="apoc-card bg-black/40 p-5 md:p-6">
-                <h2 className="mb-6 font-creepster text-3xl text-secondary">ПОДІЇ</h2>
+                 <h2 className="mb-6 font-creepster text-3xl text-secondary">{owner("events")}</h2>
                 <div className="space-y-3">
                   {stats.events.map((event) => (
                     <div key={event.event_name} className="flex items-center justify-between gap-4 border-b border-white/10 pb-2 font-mono text-xs">
@@ -329,36 +329,36 @@ export default function OwnerAnalytics() {
                       <strong className="text-primary">{event.count.toLocaleString("uk-UA")}</strong>
                     </div>
                   ))}
-                  {!stats.events.length && <p className="font-mono text-sm text-white/50">Подій ще немає.</p>}
+                   {!stats.events.length && <p className="font-mono text-sm text-white/50">{owner("noEvents")}</p>}
                 </div>
               </div>
             </section>
 
             <section className="apoc-card mt-6 bg-black/40 p-5 md:p-6">
-              <h2 className="mb-5 font-creepster text-3xl text-[#ff9b71]">НАЙПОПУЛЯРНІШІ СТОРІНКИ</h2>
+               <h2 className="mb-5 font-creepster text-3xl text-[#ff9b71]">{owner("popularPages")}</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {stats.topPages.map((page) => (
                   <div key={page.path} className="border border-white/10 bg-white/[0.03] p-4 font-mono">
                     <div className="truncate text-sm text-white/80">{page.path}</div>
                     <div className="mt-2 text-2xl text-[#ff9b71]">{page.count.toLocaleString("uk-UA")}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-white/40">переглядів</div>
+                     <div className="text-[10px] uppercase tracking-widest text-white/40">{owner("views")}</div>
                   </div>
                 ))}
-                {!stats.topPages.length && <p className="font-mono text-sm text-white/50">Сторінок ще не переглядали.</p>}
+                 {!stats.topPages.length && <p className="font-mono text-sm text-white/50">{owner("noPages")}</p>}
               </div>
             </section>
 
             <section className="apoc-card mt-6 overflow-hidden bg-black/40 p-5 md:p-6">
-              <h2 className="mb-5 font-creepster text-3xl text-primary">ОСТАННЯ АКТИВНІСТЬ</h2>
+               <h2 className="mb-5 font-creepster text-3xl text-primary">{owner("recentActivity")}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] border-collapse font-mono text-xs">
                   <thead>
                     <tr className="border-b border-primary/30 text-left uppercase tracking-wider text-white/50">
-                      <th className="px-3 py-3">Час</th>
-                      <th className="px-3 py-3">Дія</th>
-                      <th className="px-3 py-3">Сторінка</th>
-                      <th className="px-3 py-3">Країна</th>
-                      <th className="px-3 py-3">Звідки прийшли</th>
+                       <th className="px-3 py-3">{owner("time")}</th>
+                       <th className="px-3 py-3">{owner("action")}</th>
+                       <th className="px-3 py-3">{owner("page")}</th>
+                       <th className="px-3 py-3">{owner("country")}</th>
+                       <th className="px-3 py-3">{owner("referrer")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -382,7 +382,7 @@ export default function OwnerAnalytics() {
                     ))}
                     {!stats.recentEvents.length && (
                       <tr>
-                        <td colSpan={5} className="px-3 py-8 text-center text-white/50">Подій ще немає.</td>
+                       <td colSpan={5} className="px-3 py-8 text-center text-white/50">{owner("noEvents")}</td>
                       </tr>
                     )}
                   </tbody>

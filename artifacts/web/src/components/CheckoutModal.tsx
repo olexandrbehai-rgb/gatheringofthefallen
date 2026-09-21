@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useCurrency, CURRENCIES } from "@/hooks/useCurrency";
 import { priceOf } from "@/lib/pricing";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/i18n/LanguageContext";
 
 interface Props {
   open: boolean;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function CheckoutModal({ open, onClose }: Props) {
+  const { t } = useT();
   const { items, total, clear } = useCart();
   const { currency, countryCode, setCountry, format, formatIn } = useCurrency();
   const [name, setName] = useState("");
@@ -131,11 +133,11 @@ export function CheckoutModal({ open, onClose }: Props) {
       >
         <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/95 backdrop-blur">
           <h2 className="font-creepster text-2xl text-white tracking-wide">
-            {success ? "ЗАМОВЛЕННЯ ПРИЙНЯТО" : "ОФОРМЛЕННЯ ЗАМОВЛЕННЯ"}
+            {success ? t("ui.orderAccepted") : t("ui.checkoutTitle")}
           </h2>
           <button
             onClick={onClose}
-            aria-label="Закрити"
+             aria-label={t("ui.close")}
             className="w-9 h-9 flex items-center justify-center rounded-full border border-white/15 text-white/70 hover:text-white hover:border-[#00f0ff] transition-colors"
           >
             <X size={16} />
@@ -145,28 +147,29 @@ export function CheckoutModal({ open, onClose }: Props) {
         {success ? (
           <div className="p-8 text-center space-y-5">
             <CheckCircle size={64} className="mx-auto text-[#00f0ff]" />
-            <h3 className="font-creepster text-3xl text-white">Дякуємо!</h3>
+             <h3 className="font-creepster text-3xl text-white">{t("ui.thankYou")}</h3>
             <p className="font-mono text-sm text-white/70">
-              Ми отримали ваше замовлення і зв'яжемось з вами на <span className="text-[#00f0ff]">{email}</span> або
-              за телефоном для уточнення деталей доставки та оплати.
+               {t("ui.orderReceived").split("{email}")[0]}
+               <span className="text-[#00f0ff]">{email}</span>
+               {t("ui.orderReceived").split("{email}")[1]}
             </p>
             <button
               onClick={onClose}
               className="mt-4 inline-flex rounded border border-[#8a2be2]/70 bg-black px-6 py-3 font-mono text-sm uppercase tracking-[0.3em] text-[#00f0ff] hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_22px_rgba(0,240,255,0.55)] transition-all"
             >
-              Закрити
+               {t("ui.close")}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <section>
               <h3 className="font-mono text-xs uppercase tracking-[0.3em] text-[#8a2be2] mb-3">
-                Ваше замовлення
+                 {t("ui.yourOrder")}
               </h3>
               <ul className="space-y-2 rounded border border-white/10 bg-black/50 p-3">
                 {items.length === 0 ? (
                   <li className="font-mono text-sm text-white/50 text-center py-3">
-                    Кошик порожній
+                     {t("ui.emptyOrder")}
                   </li>
                 ) : (
                   items.map((line) => {
@@ -176,7 +179,7 @@ export function CheckoutModal({ open, onClose }: Props) {
                         <div className="min-w-0 flex-1">
                           <div className="text-white truncate">{line.name}</div>
                           <div className="text-white/45 text-[11px] uppercase tracking-[0.2em]">
-                            {line.size ? `Розмір ${line.size} · ` : ""}× {line.qty}
+                             {line.size ? `${t("ui.size")} ${line.size} · ` : ""}× {line.qty}
                           </div>
                         </div>
                         <div className="text-[#00f0ff]">{format(lineTotal)}</div>
@@ -186,7 +189,7 @@ export function CheckoutModal({ open, onClose }: Props) {
                 )}
               </ul>
               <div className="mt-3 flex items-center justify-between font-mono">
-                <span className="text-xs uppercase tracking-[0.3em] text-white/55">Разом</span>
+                 <span className="text-xs uppercase tracking-[0.3em] text-white/55">{t("ui.total")}</span>
                 <div className="text-right">
                   <div className="text-2xl text-[#00f0ff]">{format(total)}</div>
                   {currency !== "CAD" && (
@@ -200,11 +203,11 @@ export function CheckoutModal({ open, onClose }: Props) {
 
             <section className="space-y-3">
               <h3 className="font-mono text-xs uppercase tracking-[0.3em] text-[#8a2be2]">
-                Контактні дані
+                 {t("ui.contactDetails")}
               </h3>
               <input
                 type="text"
-                placeholder="Ім'я та прізвище *"
+                 placeholder={t("ui.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -212,7 +215,7 @@ export function CheckoutModal({ open, onClose }: Props) {
               />
               <input
                 type="email"
-                placeholder="Email *"
+                 placeholder={`${t("ui.email")} *`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -220,7 +223,7 @@ export function CheckoutModal({ open, onClose }: Props) {
               />
               <input
                 type="tel"
-                placeholder="Номер телефону *"
+                 placeholder={t("ui.phonePlaceholder")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
@@ -230,11 +233,11 @@ export function CheckoutModal({ open, onClose }: Props) {
 
             <section className="space-y-3">
               <h3 className="font-mono text-xs uppercase tracking-[0.3em] text-[#8a2be2]">
-                Адреса доставки
+                 {t("ui.deliveryAddress")}
               </h3>
               <div>
                 <label className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/50 block mb-2">
-                  Країна (визначає валюту)
+                   {t("ui.countryCurrency")}
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {CURRENCIES.map((c) => {
@@ -255,7 +258,7 @@ export function CheckoutModal({ open, onClose }: Props) {
               </div>
               <input
                 type="text"
-                placeholder="Місто *"
+                 placeholder={t("ui.cityPlaceholder")}
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 required
@@ -263,7 +266,7 @@ export function CheckoutModal({ open, onClose }: Props) {
               />
               <input
                 type="text"
-                placeholder="Вулиця, будинок, квартира *"
+                 placeholder={t("ui.streetPlaceholder")}
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
                 required
@@ -271,7 +274,7 @@ export function CheckoutModal({ open, onClose }: Props) {
               />
               <input
                 type="text"
-                placeholder="Поштовий індекс *"
+                 placeholder={t("ui.postalCodePlaceholder")}
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
                 required
@@ -293,10 +296,10 @@ export function CheckoutModal({ open, onClose }: Props) {
               {submitting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Перехід на оплату...
+                   {t("ui.redirectingToPayment")}
                 </>
               ) : (
-                <>Перейти до оплати 💳</>
+                 <>{t("ui.continueToPayment")}</>
               )}
             </button>
           </form>

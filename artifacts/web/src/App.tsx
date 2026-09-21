@@ -20,6 +20,7 @@ import Game from "@/pages/Game";
 import AuthorsWorld from "@/pages/AuthorsWorld";
 import AuthorProfile from "@/pages/AuthorProfile";
 import AuthorMemoryPage from "@/pages/AuthorMemoryPage";
+import MyPortal from "@/pages/MyPortal";
 import AuthorAvatarPreview from "@/pages/AuthorAvatarPreview";
 import OwnerAnalytics from "@/pages/OwnerAnalytics";
 import AuthorAnalytics from "@/pages/AuthorAnalytics";
@@ -125,6 +126,7 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
             <Route path="/merch" component={Merch} />
             <Route path="/contacts" component={Contacts} />
             <Route path="/authors-world" component={AuthorsWorld} />
+            <Route path="/my-portal" component={MyPortal} />
             <Route path="/author/:slug/memory/:memoryId" component={AuthorMemoryPage} />
             <Route path="/author/:slug" component={AuthorProfile} />
             <Route component={NotFound} />

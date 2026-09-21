@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/i18n/LanguageContext";
 
 type Gaze = { x: number; y: number };
 
@@ -6,7 +7,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function DomovykFigure({ gaze }: { gaze: Gaze }) {
+function DomovykFigure({ gaze, alt }: { gaze: Gaze; alt: string }) {
   const headTilt = gaze.x * 6 + gaze.y * 1.5;
   const leftPupilX = 72 + gaze.x * 5.5;
   const rightPupilX = 108 + gaze.x * 5.5;
@@ -18,7 +19,7 @@ function DomovykFigure({ gaze }: { gaze: Gaze }) {
       <div className="domovyk-body-bob">
         <div className="domovyk-head-sway">
           <div className="domovyk-head" style={{ transform: `rotate(${headTilt.toFixed(2)}deg)` }}>
-            <svg viewBox="0 0 180 280" role="img" aria-label="Милий домовичок стежить за відвідувачем" className="h-full w-full overflow-visible">
+            <svg viewBox="0 0 180 280" role="img" aria-label={alt} className="h-full w-full overflow-visible">
               <defs>
                 <linearGradient id="domovyk-hood" x1="0" x2="1" y1="0" y2="1">
                   <stop offset="0" stopColor="#d9a86c" />
@@ -83,6 +84,7 @@ function DomovykFigure({ gaze }: { gaze: Gaze }) {
 }
 
 export function Domovyk({ compact = false }: { compact?: boolean }) {
+  const { t } = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   const pointerFrameRef = useRef<number | null>(null);
   const pointerRef = useRef({ clientX: 0, clientY: 0 });
@@ -117,7 +119,7 @@ export function Domovyk({ compact = false }: { compact?: boolean }) {
   return (
     <div aria-hidden="true" className={`domovyk-layer ${compact ? "domovyk-layer-compact" : ""}`}>
       <div ref={rootRef} className={`domovyk-patrol ${compact ? "domovyk-patrol-compact" : ""}`}>
-        <DomovykFigure gaze={gaze} />
+          <DomovykFigure gaze={gaze} alt={t("ui.domovykAlt")} />
       </div>
     </div>
   );

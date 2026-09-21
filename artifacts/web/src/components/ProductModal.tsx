@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ProductType } from "@/lib/pricing";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/i18n/LanguageContext";
 
 export interface ModalProduct {
   id: string;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function ProductModal({ product, onClose }: Props) {
+  const { t } = useT();
   const { addItem, open: openCart } = useCart();
   const { priceFor, format } = useCurrency();
   const [size, setSize] = useState<string | undefined>(undefined);
@@ -82,7 +84,7 @@ export function ProductModal({ product, onClose }: Props) {
       >
         <button
           onClick={onClose}
-          aria-label="Закрити"
+           aria-label={t("ui.close")}
           className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full border border-white/15 bg-black/70 text-white/70 hover:text-white hover:border-[#00f0ff] transition-colors"
         >
           <X size={16} />
@@ -134,7 +136,7 @@ export function ProductModal({ product, onClose }: Props) {
                         background:
                           "radial-gradient(ellipse at 50% 45%, #2a1240 0%, #0a0414 100%)",
                       }}
-                      aria-label={`Фото ${i + 1}`}
+                       aria-label={t("merchUi.photo").replace("{number}", String(i + 1))}
                     >
                       <img
                         src={src}
@@ -160,7 +162,7 @@ export function ProductModal({ product, onClose }: Props) {
 
             <div>
               <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/55 mb-3">
-                Розмір {size && <span className="text-white/80">— {size}</span>}
+                 {t("ui.size")} {size && <span className="text-white/80">— {size}</span>}
               </div>
               <div className="flex flex-wrap gap-2">
                 {product.sizes.map((s) => {
@@ -179,12 +181,12 @@ export function ProductModal({ product, onClose }: Props) {
             </div>
 
             <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/55 mb-3">Кількість</div>
+               <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/55 mb-3">{t("ui.quantity")}</div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   className="w-10 h-10 border border-white/15 flex items-center justify-center text-white/60 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-all"
-                  aria-label="Менше"
+                   aria-label={t("ui.less")}
                 >
                   <Minus size={16} />
                 </button>
@@ -192,7 +194,7 @@ export function ProductModal({ product, onClose }: Props) {
                 <button
                   onClick={() => setQty((q) => q + 1)}
                   className="w-10 h-10 border border-white/15 flex items-center justify-center text-white/60 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-all"
-                  aria-label="Більше"
+                   aria-label={t("ui.more")}
                 >
                   <Plus size={16} />
                 </button>
@@ -201,7 +203,7 @@ export function ProductModal({ product, onClose }: Props) {
 
             <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between gap-4">
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/45">Разом</div>
+                 <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-white/45">{t("ui.total")}</div>
                 <div className="font-mono text-2xl text-[#00f0ff]">{format(unitPrice * qty)}</div>
               </div>
               <button
@@ -210,7 +212,7 @@ export function ProductModal({ product, onClose }: Props) {
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <ShoppingCart size={16} />
-                  У кошик
+                   {t("ui.addToCart")}
                 </span>
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle,rgba(138,43,226,0.4)_0%,transparent_70%)]" />
               </button>

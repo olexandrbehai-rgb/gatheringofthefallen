@@ -730,6 +730,18 @@ export default function AuthorsWorld() {
     setIsRegistering(true);
   };
 
+  const openMyPortalWorld = () => {
+    if (!authLoaded || !isSignedIn) {
+      setLocation("/sign-in");
+      return;
+    }
+    if (!myAuthor) {
+      openAuthorPortal();
+      return;
+    }
+    setLocation(`/author/${encodeURIComponent(myAuthor.slug)}`);
+  };
+
   const handleAuthorSignOut = async () => {
     await signOut({ redirectUrl: "/authors-world" });
   };
@@ -1055,6 +1067,24 @@ export default function AuthorsWorld() {
       setSelectedAuthorId(authors[0].id);
     }
   }, [authors, selectedAuthorId]);
+
+  useEffect(() => {
+    const focus = new URLSearchParams(location.split("?")[1] ?? "").get("focus");
+    if (focus !== "me" || !myAuthor || authors.length === 0) return;
+
+    const authorIndex = authors.findIndex((author) => author.id === myAuthor.id);
+    if (authorIndex < 0) return;
+
+    setSelectedAuthorId(myAuthor.id);
+    const frame = window.requestAnimationFrame(() => {
+      centerWorldOn(
+        worldLayout.positions[authorIndex] ?? worldPositionFor(authorIndex, isCompactViewport),
+        DEFAULT_WORLD_ZOOM,
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [authors, centerWorldOn, isCompactViewport, location, myAuthor, worldLayout.positions]);
 
   useEffect(() => {
     let active = true;
@@ -1676,7 +1706,7 @@ export default function AuthorsWorld() {
                  <>
                    <button
                      type="button"
-                     onClick={openAuthorPortal}
+                      onClick={openMyPortalWorld}
                      className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
                    >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.myPortal}

@@ -56,6 +56,7 @@ function useDesktopHeroEnabled(): boolean {
 }
 
 function AmbientMusicControls() {
+  const { t } = useT();
   const { enabled, playing, volume, setVolume, toggle } = useAmbientMusic();
   const [volumeOpen, setVolumeOpen] = useState(false);
 
@@ -64,17 +65,17 @@ function AmbientMusicControls() {
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
-        title={playing ? "Вимкнути фонову музику" : "Увімкнути фонову музику"}
+        aria-label={playing ? t("ui.muteMusic") : t("ui.unmuteMusic")}
+        title={playing ? t("ui.muteMusic") : t("ui.unmuteMusic")}
         className={`neon-control inline-flex h-8 shrink-0 items-center gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
       >
         {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
-        <span className="hidden sm:inline">Музика</span>
+        <span className="hidden sm:inline">{t("ui.music")}</span>
       </button>
       <button
         type="button"
         onClick={() => setVolumeOpen((open) => !open)}
-        aria-label={`Відкрити гучність музики: ${Math.round(volume * 100)}%`}
+        aria-label={`${t("ui.openVolume")}: ${Math.round(volume * 100)}%`}
         aria-expanded={volumeOpen}
         aria-controls="ambient-volume-inline"
         className="neon-control inline-flex h-8 shrink-0 items-center gap-1 px-2 text-[#b9f7ff] sm:hidden"
@@ -82,9 +83,9 @@ function AmbientMusicControls() {
         <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="font-mono text-[9px]">{Math.round(volume * 100)}%</span>
       </button>
-      <label className="hidden h-8 shrink-0 items-center gap-1.5 px-1 text-[#b9f7ff] sm:inline-flex" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
+      <label className="hidden h-8 shrink-0 items-center gap-1.5 px-1 text-[#b9f7ff] sm:inline-flex" title={`${t("ui.musicVolume")}: ${Math.round(volume * 100)}%`}>
         <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="sr-only">Гучність музики: {Math.round(volume * 100)}%</span>
+        <span className="sr-only">{t("ui.musicVolume")}: {Math.round(volume * 100)}%</span>
         <input
           type="range"
           min="0"
@@ -92,7 +93,7 @@ function AmbientMusicControls() {
           step="1"
           value={Math.round(volume * 100)}
           onChange={(event) => setVolume(Number(event.target.value) / 100)}
-          aria-label="Гучність музики"
+          aria-label={t("ui.musicVolume")}
           className="h-1.5 w-16 cursor-pointer accent-[#00f0ff] sm:w-20"
         />
       </label>
@@ -100,7 +101,7 @@ function AmbientMusicControls() {
         <div
           id="ambient-volume-inline"
           role="dialog"
-          aria-label="Гучність музики"
+          aria-label={t("ui.musicVolume")}
           className="inline-flex h-8 w-36 shrink-0 items-center gap-2 rounded-lg border border-primary/50 bg-[#050912]/95 px-2 shadow-[0_0_18px_rgba(0,240,255,0.24)] sm:hidden"
         >
           <VolumeX className="h-3.5 w-3.5 shrink-0 text-white/55" aria-hidden="true" />
@@ -111,7 +112,7 @@ function AmbientMusicControls() {
             step="1"
             value={Math.round(volume * 100)}
             onChange={(event) => setVolume(Number(event.target.value) / 100)}
-            aria-label="Гучність музики"
+            aria-label={t("ui.musicVolume")}
             className="h-1.5 min-w-0 flex-1 cursor-pointer touch-pan-y accent-[#00f0ff]"
           />
           <Volume2 className="h-3.5 w-3.5 shrink-0 text-[#b9f7ff]" aria-hidden="true" />
@@ -142,7 +143,7 @@ function AuthControls() {
 
   return (
     <div className="flex items-center gap-2">
-      <Link href="/authors-world?edit=1" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? copy.myPortal}>
+       <Link href="/my-portal" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ?? copy.myPortal}>
         <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> <span className="hidden sm:inline">{copy.myPortal}</span>
       </Link>
       <button type="button" onClick={() => void signOut({ redirectUrl: "/" })} className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#ffb184]">
@@ -158,13 +159,14 @@ export function Layout({ children, authEnabled = true }: { children: React.React
   const authorsWorldCopy = AUTHORS_WORLD_COPY[lang].header;
   const { count: cartCount, open: openCart } = useCart();
   const { setRouteMuted } = useAmbientMusic();
-  const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
+  const pathname = location.split("?")[0];
+  const bg = PAGE_BACKGROUNDS[pathname] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
-  const isHome = location === "/";
+  const isHome = pathname === "/";
 
   useEffect(() => {
-    setRouteMuted(location === "/game");
-  }, [location, setRouteMuted]);
+    setRouteMuted(pathname === "/game");
+  }, [pathname, setRouteMuted]);
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -193,12 +195,12 @@ export function Layout({ children, authEnabled = true }: { children: React.React
             'radial-gradient(ellipse at 50% 38%, rgba(5,5,12,0.12) 0%, rgba(8,5,20,0.4) 70%, rgba(4,4,10,0.66) 100%)',
         }}
       />
-      {location === "/authors-world" && <Domovyk compact={typeof window !== "undefined" && window.innerWidth <= 640} />}
+      {pathname === "/authors-world" && <Domovyk compact={typeof window !== "undefined" && window.innerWidth <= 640} />}
 
-      {location === "/" && heroEnabled && (
+      {pathname === "/" && heroEnabled && (
         <HeroSequence className="pointer-events-none fixed inset-x-0 top-0 z-[1] h-svh" />
       )}
-      {location === "/authors-world" && (
+      {pathname === "/authors-world" && (
         <AmbientCreature
           staticOnMobile={!heroEnabled}
           className="bottom-[2vh] right-[2vw] z-[1] h-[min(54vw,290px)] w-[min(54vw,290px)] sm:bottom-[3vh] sm:right-[4vw] sm:h-[min(34vw,440px)] sm:w-[min(34vw,440px)]"
@@ -310,10 +312,10 @@ export function Layout({ children, authEnabled = true }: { children: React.React
             <div className="flex w-full min-w-0 flex-nowrap items-center justify-start gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5 md:w-auto md:justify-center md:overflow-visible md:pb-0">
               <LanguageSwitcher />
               {isHome && <AmbientMusicControls />}
-              {location !== "/" && (
+              {pathname !== "/" && (
                 <button
                   type="button"
-                  onClick={() => setLocation(location.startsWith("/author/") ? "/authors-world" : "/")}
+                  onClick={() => setLocation(pathname.startsWith("/author/") ? "/authors-world" : "/")}
                   className="neon-control inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/80"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Назад
@@ -335,7 +337,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 style={{ borderRadius: "12px", padding: "10px 14px" }}
               >
                 <ShoppingCart size={16} />
-                <span className="glitch-text hidden font-mono text-xs uppercase tracking-[0.2em] sm:inline">Кошик</span>
+                <span className="glitch-text hidden font-mono text-xs uppercase tracking-[0.2em] sm:inline">{t("ui.cart")}</span>
                 {cartCount > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#8a2be2] border border-[#a855f7] text-[10px] font-mono text-white shadow-[0_0_10px_rgba(138,43,226,0.7)]">
                     {cartCount}

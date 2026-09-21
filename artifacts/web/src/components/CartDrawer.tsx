@@ -4,8 +4,10 @@ import { useCart } from "@/hooks/useCart";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CheckoutModal } from "./CheckoutModal";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/i18n/LanguageContext";
 
 export function CartDrawer() {
+  const { t } = useT();
   const { items, count, total, isOpen, close, removeItem, updateQty, clear } = useCart();
   const { currency, priceFor, format } = useCurrency();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -35,17 +37,17 @@ export function CartDrawer() {
         className={`fixed top-0 right-0 z-[56] h-full w-full sm:w-[420px] bg-black border-l border-[#8a2be2]/40 shadow-[0_0_40px_rgba(138,43,226,0.45)] transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
         role="dialog"
         aria-modal="true"
-        aria-label="Кошик"
+         aria-label={t("ui.cart")}
       >
         <header className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <ShoppingBag size={20} className="text-[#00f0ff]" />
-            <h2 className="font-creepster text-2xl text-white tracking-wide">КОШИК</h2>
+             <h2 className="font-creepster text-2xl text-white tracking-wide">{t("ui.cart")}</h2>
             <span className="font-mono text-xs text-white/55">({count})</span>
           </div>
           <button
             onClick={close}
-            aria-label="Закрити"
+             aria-label={t("ui.close")}
             className="w-9 h-9 flex items-center justify-center rounded-full border border-white/15 text-white/70 hover:text-white hover:border-[#00f0ff] transition-colors"
           >
             <X size={16} />
@@ -56,8 +58,8 @@ export function CartDrawer() {
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center gap-3 text-white/45">
               <ShoppingBag size={56} strokeWidth={1} className="text-[#8a2be2]/60" />
-              <p className="font-mono text-sm">Кошик поки порожній.</p>
-              <p className="font-mono text-xs text-white/40">Додавай мерч, щоб тут з’явились товари.</p>
+               <p className="font-mono text-sm">{t("ui.emptyCart")}</p>
+               <p className="font-mono text-xs text-white/40">{t("ui.emptyCartHint")}</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -75,7 +77,7 @@ export function CartDrawer() {
                     <button
                       onClick={() => removeItem(line.key)}
                       className="text-white/45 hover:text-[#ff5a5a] transition-colors"
-                      aria-label="Видалити"
+                       aria-label={t("ui.remove")}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -85,7 +87,7 @@ export function CartDrawer() {
                       <button
                         onClick={() => updateQty(line.key, line.qty - 1)}
                         className="w-8 h-8 border border-white/15 flex items-center justify-center text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-all"
-                        aria-label="Менше"
+                         aria-label={t("ui.less")}
                       >
                         <Minus size={14} />
                       </button>
@@ -93,7 +95,7 @@ export function CartDrawer() {
                       <button
                         onClick={() => updateQty(line.key, line.qty + 1)}
                         className="w-8 h-8 border border-white/15 flex items-center justify-center text-white/70 hover:text-[#00f0ff] hover:border-[#00f0ff]/60 transition-all"
-                        aria-label="Більше"
+                         aria-label={t("ui.more")}
                       >
                         <Plus size={14} />
                       </button>
@@ -108,7 +110,7 @@ export function CartDrawer() {
 
         <footer className="border-t border-white/10 px-5 py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs uppercase tracking-[0.3em] text-white/55">Разом</span>
+             <span className="font-mono text-xs uppercase tracking-[0.3em] text-white/55">{t("ui.total")}</span>
             <span className="font-mono text-2xl text-[#00f0ff]">{format(total)}</span>
           </div>
           <button
@@ -124,14 +126,14 @@ export function CartDrawer() {
             }}
             className="w-full rounded border border-[#8a2be2]/70 bg-black px-5 py-3 font-mono text-sm uppercase tracking-[0.3em] text-[#00f0ff] hover:border-[#00f0ff] hover:text-white hover:shadow-[0_0_22px_rgba(0,240,255,0.55)] transition-all disabled:opacity-40 disabled:pointer-events-none"
           >
-            Оформити замовлення
+             {t("ui.checkout")}
           </button>
           {items.length > 0 && (
             <button
               onClick={clear}
               className="w-full font-mono text-[11px] uppercase tracking-[0.3em] text-white/45 hover:text-white/80 transition-colors"
             >
-              Очистити кошик
+               {t("ui.clearCart")}
             </button>
           )}
         </footer>

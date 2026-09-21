@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OwnerAnalytics from "./OwnerAnalytics";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 
 const useClerk = vi.hoisted(() => vi.fn());
 const useUser = vi.hoisted(() => vi.fn());
@@ -45,6 +46,14 @@ const stats = {
   },
 };
 
+function renderOwnerAnalytics() {
+  return render(
+    <LanguageProvider>
+      <OwnerAnalytics />
+    </LanguageProvider>,
+  );
+}
+
 function response(status: number, body?: unknown) {
   return {
     ok: status >= 200 && status < 300,
@@ -74,7 +83,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
       .mockResolvedValueOnce(response(204))
       .mockResolvedValueOnce(response(200, stats));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     const startRecovery = await screen.findByRole("button", { name: "Почати відновлення" });
     await userEvent.click(startRecovery);
@@ -105,7 +114,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
       .mockResolvedValueOnce(response(204))
       .mockResolvedValueOnce(response(200, stats));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     await userEvent.click(await screen.findByRole("button", { name: "Почати відновлення" }));
     await userEvent.click(screen.getByRole("button", { name: "Підтвердити відкликання" }));
@@ -130,7 +139,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(response(403, { error: "Owner access required" }));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     await screen.findByText("Owner access required");
     await waitFor(() => {
@@ -142,7 +151,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
   it("shows when the trusted device was registered and explains replacement", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(200, stats));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     expect(await screen.findByText(/Зареєстровано або замінено:/)).toBeTruthy();
     expect(screen.getByText(/анулює cookie попереднього пристрою/)).toBeTruthy();
@@ -155,7 +164,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
     useClerk.mockReturnValue({ signOut });
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(200, stats));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     await screen.findByText("Перегляди сторінок");
     await userEvent.click(screen.getByRole("button", { name: "Вийти з акаунта" }));
@@ -177,7 +186,7 @@ describe("OwnerAnalytics trusted-device recovery", () => {
       },
     }));
 
-    render(<OwnerAnalytics />);
+    renderOwnerAnalytics();
 
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByText(/зафіксовано 3 заміни довіреного пристрою/)).toBeTruthy();

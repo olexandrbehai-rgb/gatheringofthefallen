@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ExternalLink, Pencil, Play, Plus, X } from "lucide-react";
+import { useUser } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { Mp3Player } from "@/components/Mp3Player";
 import { useT } from "@/i18n/LanguageContext";
-import { AUTHORS_WORLD_COPY } from "@/i18n/authorsWorld";
+import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
 import { PLATFORM_OPTIONS, type PlatformKey } from "@/lib/authorPlatforms";
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
@@ -101,7 +102,8 @@ function initialsFor(name: string) {
 
 export default function AuthorProfile({ params }: { params: { slug: string } }) {
   const [, setLocation] = useLocation();
-  const { lang } = useT();
+  const { lang, t } = useT();
+  const { isLoaded: authLoaded, isSignedIn } = useUser();
   const copy = AUTHORS_WORLD_COPY[lang];
   const [author, setAuthor] = useState<Author | null>(null);
   const [creations, setCreations] = useState<Creation[]>([]);
@@ -118,6 +120,11 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   const [inlineUploading, setInlineUploading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [inlineSavedNotice, setInlineSavedNotice] = useState<string | null>(null);
+  const [messageDraft, setMessageDraft] = useState("");
+  const [isMessageComposerOpen, setIsMessageComposerOpen] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
+  const [messageSent, setMessageSent] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -279,14 +286,44 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     }
   };
 
+  const handleSendAuthorMessage = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = messageDraft.trim();
+    if (!author || !text || isSendingMessage) return;
+
+    setMessageError(null);
+    setMessageSent(false);
+    setIsSendingMessage(true);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/chat`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: `@${author.slug} ${text}` }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        if (response.status === 401) throw new Error(copy.directMessage.signIn);
+        if (response.status === 403) throw new Error(copy.directMessage.portalRequired);
+        throw new Error(payload.error ?? copy.directMessage.failed);
+      }
+      setMessageDraft("");
+      setMessageSent(true);
+    } catch (sendError) {
+      setMessageError(sendError instanceof Error ? sendError.message : copy.directMessage.failed);
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   if (loading) {
-    return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">ПІДКЛЮЧЕННЯ ДО ПОРТАЛУ...</main>;
+    return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">{t("ui.loadingPortal")}</main>;
   }
   if (error || !author) {
     return (
       <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center text-white">
         <p className="font-mono text-sm text-[#ffb184]">{error ?? "Портал не знайдено."}</p>
-        <Link href="/authors-world" className="mt-6 inline-flex border border-[#00f0ff]/60 px-4 py-3 font-mono text-xs text-[#b9f7ff]">Повернутися до світу авторів</Link>
+        <Link href="/authors-world" className="mt-6 inline-flex border border-[#00f0ff]/60 px-4 py-3 font-mono text-xs text-[#b9f7ff]">{t("ui.backToAuthorsWorld")}</Link>
       </main>
     );
   }
@@ -327,7 +364,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         </header>
 
           <div className="author-neon-panel mt-6 flex max-w-full flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 backdrop-blur-md sm:mt-8">
-          <button type="button" onClick={() => setActivePlatform("all")} className={`min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>Усі роботи</button>
+          <button type="button" onClick={() => setActivePlatform("all")} className={`min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>{t("ui.allWorks")}</button>
            {tabs.map(([platform, label, url]) => (
              url ? (
                <a
@@ -359,14 +396,88 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         )}
 
+          <section className="author-neon-panel mt-6 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:p-5">
+            <button
+              type="button"
+              onClick={() => setIsMessageComposerOpen((open) => !open)}
+              className="inline-flex min-h-12 items-center border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
+              aria-expanded={isMessageComposerOpen}
+            >
+              {copy.directMessage.title}
+            </button>
+            {isMessageComposerOpen && (
+              <>
+                <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-[#00f0ff]">
+                  {formatAuthorsWorldCopy(copy.directMessage.eyebrow, { name: author.displayName })}
+                </p>
+                <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-white/55">
+                  {copy.directMessage.description}
+                </p>
+                {authLoaded && isSignedIn ? (
+                  <form onSubmit={handleSendAuthorMessage} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <label className="min-w-0 flex-1">
+                      <span className="sr-only">
+                        {formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
+                      </span>
+                      <textarea
+                        value={messageDraft}
+                        onChange={(event) => {
+                          setMessageDraft(event.target.value);
+                          setMessageError(null);
+                          setMessageSent(false);
+                        }}
+                        maxLength={1000}
+                        rows={3}
+                        placeholder={formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
+                        className="min-h-24 w-full resize-y border border-white/15 bg-black/35 px-3 py-3 font-mono text-sm text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={isSendingMessage || !messageDraft.trim()}
+                      className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {isSendingMessage ? copy.directMessage.sending : copy.directMessage.send}
+                    </button>
+                  </form>
+                ) : (
+                  <p className="mt-4 border border-white/10 bg-black/20 px-3 py-3 font-mono text-xs leading-relaxed text-white/55">
+                    {copy.directMessage.signIn}{" "}
+                    <Link href="/sign-in" className="text-[#8ceeff] underline decoration-[#00f0ff]/50 underline-offset-4 hover:text-white">
+                      {copy.directMessage.signInAction}
+                    </Link>
+                  </p>
+                )}
+                {messageSent && (
+                  <p role="status" className="mt-3 border border-[#8effa0]/35 bg-[#8effa0]/10 px-3 py-2 font-mono text-xs text-[#c7ffd0]">
+                    {copy.directMessage.success}
+                  </p>
+                )}
+                {messageError && (
+                  <p role="alert" className="mt-3 border border-[#ff7043]/35 bg-[#ff7043]/5 px-3 py-2 font-mono text-xs text-[#ffb184]">
+                    {messageError}
+                    {messageError === copy.directMessage.portalRequired && (
+                      <>
+                        {" "}
+                        <Link href="/authors-world?edit=1" className="text-[#b9f7ff] underline underline-offset-4">
+                          {copy.directMessage.portalAction}
+                        </Link>
+                      </>
+                    )}
+                  </p>
+                )}
+              </>
+            )}
+          </section>
+
          {memories.length > 0 && (
            <section className="author-memory-panel mt-8 min-w-0 rounded border border-[#ffcf9e]/40 bg-[#160e16]/82 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
              <div className="flex items-end justify-between gap-3 border-b border-[#ffcf9e]/15 pb-3">
                <div>
                  <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffcf9e]">Кристалічна сітка // {memories.length}</p>
-                 <h2 className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#ffcf9e] sm:text-4xl">Спогади автора</h2>
+                 <h2 className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#ffcf9e] sm:text-4xl">{t("ui.authorMemories")}</h2>
                </div>
-               <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">MEMORY TREE</span>
+               <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">{t("ui.memoryTree")}</span>
              </div>
              <div className="relative mt-5 flex flex-wrap items-center justify-center gap-5 py-3 sm:gap-8">
                <div className="author-memory-root relative z-10 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-xs font-bold tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_28px_rgba(0,240,255,0.25)]">
@@ -392,13 +503,13 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>
-              <h2 className="author-section-title mt-2 break-words font-creepster text-3xl tracking-[0.07em] sm:text-4xl sm:tracking-[0.1em]">Авторські роботи</h2>
+              <h2 className="author-section-title mt-2 break-words font-creepster text-3xl tracking-[0.07em] sm:text-4xl sm:tracking-[0.1em]">{t("ui.authorWorks")}</h2>
        </div>
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{searchedCreations.length} карток</span>
           </div>
           <label className="mt-4 flex min-h-11 max-w-xl items-center border border-white/15 bg-black/20 px-3 focus-within:border-[#00f0ff]/60">
-            <span className="mr-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">Пошук</span>
-            <input value={creationSearch} onChange={(event) => setCreationSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25" placeholder="назва або опис роботи" aria-label="Пошук авторських робіт" />
+            <span className="mr-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">{t("ui.search")}</span>
+            <input value={creationSearch} onChange={(event) => setCreationSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25" placeholder={t("ui.workSearchPlaceholder")} aria-label={t("ui.searchWork")} />
           </label>
            {inlineSavedNotice && <p role="status" className="mt-4 border border-[#8effa0]/35 bg-[#8effa0]/10 px-3 py-2 font-mono text-xs text-[#c7ffd0]">{inlineSavedNotice}</p>}
            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -426,7 +537,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                     <div className="p-4">
                       <h3 className="font-creepster text-2xl tracking-[0.08em] text-white">{creation.title}</h3>
                       {creation.description && <p className="mt-2 line-clamp-3 font-mono text-xs leading-relaxed text-white/55">{creation.description}</p>}
-                      {creation.contentUrl && <span className="mt-4 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">Відкрити роботу <ArrowUpRight className="h-3.5 w-3.5" /></span>}
+                      {creation.contentUrl && <span className="mt-4 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">{t("ui.openWork")} <ArrowUpRight className="h-3.5 w-3.5" /></span>}
                     </div>
                   </>
                 );
@@ -438,7 +549,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                       </div>
                       <div className="px-4 pb-4">
                         {creation.description && <p className="font-mono text-xs leading-relaxed text-white/65">{creation.description}</p>}
-                        {creation.contentUrl && <a href={creation.contentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">Відкрити додаткове посилання <ArrowUpRight className="h-3.5 w-3.5" /></a>}
+                        {creation.contentUrl && <a href={creation.contentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8ceeff]">{t("ui.openExtraLink")} <ArrowUpRight className="h-3.5 w-3.5" /></a>}
                       </div>
                     </article>
                   );
