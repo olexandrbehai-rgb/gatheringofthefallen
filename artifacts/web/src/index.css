@@ -468,12 +468,42 @@
     0 3px 0 rgba(0, 0, 0, 0.58);
 }
 
+.authors-world-header-email {
+  max-width: min(38vw, 30rem);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(104, 246, 166, 0.6) transparent;
+}
+
+.authors-world-header-email::-webkit-scrollbar,
+.authors-world-session-identity::-webkit-scrollbar {
+  height: 4px;
+}
+
+.authors-world-header-email::-webkit-scrollbar-thumb,
+.authors-world-session-identity::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(104, 246, 166, 0.6);
+}
+
 .authors-world-session-status {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 0.55rem;
   color: rgba(255, 255, 255, 0.78);
+}
+
+.authors-world-session-identity {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(104, 246, 166, 0.6) transparent;
+}
+
+.authors-world-action-button {
+  flex: 0 0 auto;
+  border-radius: 0.75rem;
+  white-space: nowrap;
 }
 
 .authors-world-session-status.is-active {
@@ -834,13 +864,13 @@
   }
 
   .authors-world-session-status {
-    align-items: flex-start;
-    flex-wrap: wrap;
+    min-width: 0;
   }
 
   .authors-world-session-status > span:last-child {
-    width: 100%;
-    margin-left: 1.1rem;
+    max-width: 42vw;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
 

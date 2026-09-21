@@ -1872,15 +1872,17 @@ export default function AuthorsWorld() {
                   aria-live="polite"
                 >
                   <span className="authors-world-session-dot" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="font-mono text-[10px] font-bold uppercase tracking-[0.12em]">
-                      {!authLoaded ? copy.account.sessionChecking : isSignedIn ? copy.account.signedInAs : copy.account.signedOut}
+                  <div className="authors-world-session-identity min-w-0 overflow-x-auto">
+                    <p className="flex min-w-max items-baseline gap-2 whitespace-nowrap font-mono">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
+                        {!authLoaded ? copy.account.sessionChecking : isSignedIn ? copy.account.signedInAs : copy.account.signedOut}
+                      </span>
+                      {isSignedIn && (
+                        <span className="text-xs font-semibold text-white">
+                          {accountEmail || copy.account.verified}
+                        </span>
+                      )}
                     </p>
-                    {isSignedIn && (
-                      <p className="mt-0.5 truncate font-mono text-xs font-semibold text-white">
-                        {accountEmail || copy.account.verified}
-                      </p>
-                    )}
                   </div>
                   <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.1em]">
                     {!authLoaded ? copy.account.loading : isSignedIn ? (myAuthor ? copy.account.portalReady : copy.account.portalNeeded) : copy.account.description}
@@ -1895,14 +1897,14 @@ export default function AuthorsWorld() {
                    <button
                      type="button"
                       onClick={openMyPortalWorld}
-                     className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
+                     className="authors-world-action-button authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all"
                    >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.myPortal}
                    </button>
                    <button
                      type="button"
                      onClick={() => void handleAuthorSignOut()}
-                     className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all sm:flex-none"
+                     className="authors-world-action-button authors-world-compact-action authors-world-control-orange inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all"
                    >
                       <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signOut}
                    </button>
@@ -1911,13 +1913,13 @@ export default function AuthorsWorld() {
                  <>
                    <Link
                      href="/sign-in"
-                      className="authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all sm:flex-none"
+                      className="authors-world-action-button authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all"
                    >
                       <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signIn}
                    </Link>
                    <Link
                      href="/sign-up"
-                      className="authors-world-compact-action authors-world-control-orange inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffe0c0] transition-all sm:flex-none"
+                      className="authors-world-action-button authors-world-compact-action authors-world-control-orange inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffe0c0] transition-all"
                    >
                       <Mail className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signUp}
                    </Link>
@@ -2145,14 +2147,14 @@ export default function AuthorsWorld() {
                                   <MessagingAvatar name={conversation.author.displayName} avatarUrl={conversation.author.avatarUrl} size="lg" />
                                   <span className="min-w-0 flex-1 text-left">
                                     <span className="flex items-center justify-between gap-2">
-                                      <span className="truncate font-mono text-xs font-bold text-[#d9fbff]">{conversation.author.displayName}</span>
+                                      <span className="whitespace-nowrap font-mono text-xs font-bold text-[#d9fbff]">{conversation.author.displayName}</span>
                                       {conversation.lastMessage && (
                                         <time className="shrink-0 font-mono text-[9px] text-white/30" dateTime={conversation.lastMessage.createdAt}>
                                           {new Date(conversation.lastMessage.createdAt).toLocaleDateString(locale)}
                                         </time>
                                       )}
                                     </span>
-                                    <span className="mt-1 block truncate font-mono text-[10px] text-white/45">
+                                    <span className="mt-1 block whitespace-normal break-words font-mono text-[10px] leading-relaxed text-white/45">
                                       {conversation.lastMessage?.body ?? copy.directMessages.empty}
                                     </span>
                                   </span>
@@ -2179,7 +2181,7 @@ export default function AuthorsWorld() {
                               </button>
                               <MessagingAvatar name={directThread.author.displayName} avatarUrl={directThread.author.avatarUrl} size="sm" />
                               <div className="min-w-0">
-                                <p className="truncate font-mono text-xs font-bold text-[#d9fbff]">{directThread.author.displayName}</p>
+                                <p className="whitespace-nowrap font-mono text-xs font-bold text-[#d9fbff]">{directThread.author.displayName}</p>
                                 <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffcf9e]">{copy.directMessages.privateLabel}</p>
                               </div>
                             </div>

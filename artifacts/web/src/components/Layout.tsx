@@ -144,11 +144,11 @@ function AuthControls() {
   return (
     <div className="flex items-center gap-2">
        <span
-         className="hidden max-w-56 items-center gap-1.5 truncate rounded-full border border-[#68f6a6]/30 bg-[#68f6a6]/[0.06] px-2.5 py-1.5 font-mono text-[9px] text-[#b9f7ff] lg:inline-flex"
+         className="authors-world-header-email hidden min-w-0 items-center gap-1.5 rounded-full border border-[#68f6a6]/30 bg-[#68f6a6]/[0.06] px-2.5 py-1.5 font-mono text-[9px] text-[#b9f7ff] lg:inline-flex"
          title={`${copy.signedInAs}: ${user?.primaryEmailAddress?.emailAddress ?? ""}`}
        >
          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#68f6a6] shadow-[0_0_8px_rgba(104,246,166,0.9)]" aria-hidden="true" />
-         <span className="truncate">{user?.primaryEmailAddress?.emailAddress ?? copy.signedInAs}</span>
+         <span className="whitespace-nowrap">{user?.primaryEmailAddress?.emailAddress ?? copy.signedInAs}</span>
        </span>
        <Link href="/authors-world?focus=me" className="neon-control inline-flex max-w-40 items-center gap-1.5 truncate px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#b9f7ff]" title={user?.primaryEmailAddress?.emailAddress ? `${copy.signedInAs}: ${user.primaryEmailAddress.emailAddress}` : copy.myPortal}>
         <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> <span className="hidden sm:inline">{copy.myPortal}</span>
