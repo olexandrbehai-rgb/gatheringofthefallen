@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, ExternalLink, Pencil, Play } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Pencil, Play, Plus, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Mp3Player } from "@/components/Mp3Player";
+import { useT } from "@/i18n/LanguageContext";
+import { AUTHORS_WORLD_COPY } from "@/i18n/authorsWorld";
+import { PLATFORM_OPTIONS, type PlatformKey } from "@/lib/authorPlatforms";
 
 const API_ROOT = `${import.meta.env.BASE_URL}api`;
 
@@ -31,6 +34,24 @@ type Creation = {
   audioSizeBytes?: number | null;
   audioDurationSeconds?: number | null;
   createdAt?: string;
+};
+
+type InlineCreationDraft = {
+  platform: PlatformKey;
+  kind: "card" | "banner" | "creation";
+  title: string;
+  description: string;
+  imageUrl: string;
+  contentUrl: string;
+};
+
+const EMPTY_INLINE_CREATION: InlineCreationDraft = {
+  platform: "youtube",
+  kind: "banner",
+  title: "",
+  description: "",
+  imageUrl: "",
+  contentUrl: "",
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -80,6 +101,8 @@ function initialsFor(name: string) {
 
 export default function AuthorProfile({ params }: { params: { slug: string } }) {
   const [, setLocation] = useLocation();
+  const { lang } = useT();
+  const copy = AUTHORS_WORLD_COPY[lang];
   const [author, setAuthor] = useState<Author | null>(null);
   const [creations, setCreations] = useState<Creation[]>([]);
   const [canEdit, setCanEdit] = useState(false);
@@ -88,6 +111,13 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   const [visibleCount, setVisibleCount] = useState(24);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [inlineDraft, setInlineDraft] = useState<InlineCreationDraft>(EMPTY_INLINE_CREATION);
+  const [inlineAudioFile, setInlineAudioFile] = useState<File | null>(null);
+  const [inlineSaving, setInlineSaving] = useState(false);
+  const [inlineUploading, setInlineUploading] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [inlineSavedNotice, setInlineSavedNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -145,6 +175,109 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   useEffect(() => {
     setVisibleCount(24);
   }, [activePlatform, creationSearch]);
+
+  const openInlineComposer = () => {
+    setInlineError(null);
+    setInlineSavedNotice(null);
+    setInlineDraft(EMPTY_INLINE_CREATION);
+    setInlineAudioFile(null);
+    setIsComposerOpen(true);
+  };
+
+  const closeInlineComposer = () => {
+    if (inlineSaving || inlineUploading) return;
+    setIsComposerOpen(false);
+    setInlineError(null);
+    setInlineAudioFile(null);
+  };
+
+  const handleInlineCreationSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = inlineDraft.title.trim();
+    const contentUrl = inlineDraft.contentUrl.trim();
+    if (!title || inlineSaving || inlineUploading) return;
+    if (!contentUrl && !inlineAudioFile) {
+      setInlineError(copy.errors.needWork);
+      return;
+    }
+
+    setInlineError(null);
+    setInlineSavedNotice(null);
+    setInlineSaving(true);
+    try {
+      let audioObjectPath: string | null = null;
+      if (inlineAudioFile) {
+        if (inlineAudioFile.type !== "audio/mpeg" && !inlineAudioFile.name.toLowerCase().endsWith(".mp3")) {
+          throw new Error(copy.errors.mp3Type);
+        }
+        if (inlineAudioFile.size > 20 * 1024 * 1024) {
+          throw new Error(copy.errors.mp3Size);
+        }
+        setInlineUploading(true);
+        const uploadUrlResponse = await fetch(`${API_ROOT}/authors-world/me/audio/upload-url`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: inlineAudioFile.name,
+            size: inlineAudioFile.size,
+            contentType: "audio/mpeg",
+          }),
+        });
+        const uploadPayload = await uploadUrlResponse.json().catch(() => ({})) as {
+          uploadURL?: string;
+          objectPath?: string;
+          error?: string;
+        };
+        if (!uploadUrlResponse.ok || !uploadPayload.uploadURL || !uploadPayload.objectPath) {
+          throw new Error(uploadPayload.error ?? copy.errors.prepareUpload);
+        }
+        const uploadResponse = await fetch(uploadPayload.uploadURL, {
+          method: "PUT",
+          headers: { "Content-Type": "audio/mpeg" },
+          body: inlineAudioFile,
+        });
+        if (!uploadResponse.ok) throw new Error(copy.errors.uploadMp3);
+        audioObjectPath = uploadPayload.objectPath;
+      }
+
+      const response = await fetch(`${API_ROOT}/authors-world/me/creations`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...inlineDraft,
+          title,
+          description: inlineDraft.description.trim(),
+          imageUrl: inlineDraft.imageUrl.trim(),
+          contentUrl,
+          audioObjectPath,
+          audioDurationSeconds: null,
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        creation?: Creation;
+        error?: string;
+      };
+      if (!response.ok || !payload.creation) {
+        throw new Error(payload.error ?? copy.errors.saveWork);
+      }
+
+      setCreations((current) => [...current, payload.creation as Creation]);
+      setActivePlatform(payload.creation.platform);
+      setCreationSearch("");
+      setVisibleCount(24);
+      setInlineDraft(EMPTY_INLINE_CREATION);
+      setInlineAudioFile(null);
+      setIsComposerOpen(false);
+      setInlineSavedNotice(copy.notices.workSaved);
+    } catch (saveError) {
+      setInlineError(saveError instanceof Error ? saveError.message : copy.errors.saveWork);
+    } finally {
+      setInlineUploading(false);
+      setInlineSaving(false);
+    }
+  };
 
   if (loading) {
     return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">ПІДКЛЮЧЕННЯ ДО ПОРТАЛУ...</main>;
@@ -267,13 +400,20 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
             <span className="mr-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">Пошук</span>
             <input value={creationSearch} onChange={(event) => setCreationSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-white/25" placeholder="назва або опис роботи" aria-label="Пошук авторських робіт" />
           </label>
-          {searchedCreations.length === 0 ? (
-            <div className="mt-6 border border-dashed border-white/15 bg-black/20 p-8 text-center font-mono text-sm leading-relaxed text-white/45">
-              Тут ще немає опублікованих робіт у цьому розділі.
-            </div>
-          ) : (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {pagedCreations.map((creation) => {
+           {inlineSavedNotice && <p role="status" className="mt-4 border border-[#8effa0]/35 bg-[#8effa0]/10 px-3 py-2 font-mono text-xs text-[#c7ffd0]">{inlineSavedNotice}</p>}
+           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+             {canEdit && (
+               <button type="button" onClick={openInlineComposer} className="group flex min-h-[230px] flex-col items-center justify-center gap-3 border border-dashed border-[#00f0ff]/60 bg-[#00f0ff]/[0.04] px-5 text-center transition-colors hover:border-[#ff2d95] hover:bg-[#ff2d95]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]">
+                 <span className="flex h-14 w-14 items-center justify-center rounded-full border border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff] shadow-[0_0_24px_rgba(0,240,255,0.18)] transition-transform group-hover:scale-110"><Plus className="h-7 w-7" /></span>
+                 <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff]">{copy.creations.addWork}</span>
+                 <span className="font-mono text-[10px] leading-relaxed text-white/40">{copy.creations.help}</span>
+               </button>
+             )}
+             {searchedCreations.length === 0 ? (
+               <div className="border border-dashed border-white/15 bg-black/20 p-8 text-center font-mono text-sm leading-relaxed text-white/45 sm:col-span-2 lg:col-span-3">
+                 Тут ще немає опублікованих робіт у цьому розділі.
+               </div>
+             ) : pagedCreations.map((creation) => {
                 const videoId = creation.contentUrl ? youtubeId(creation.contentUrl) : null;
                 const preview = creation.imageUrl ?? (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null);
                 const cardContent = (
@@ -308,9 +448,63 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                     {cardContent}
                   </a>
                 );
-              })}
-            </div>
-          )}
+               })}
+           </div>
+           {isComposerOpen && (
+             <form onSubmit={handleInlineCreationSubmit} className="mt-6 border border-[#00f0ff]/45 bg-[#020811]/90 p-4 shadow-[0_0_26px_rgba(0,240,255,0.08)] sm:p-5">
+               <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
+                 <div>
+                   <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffad7f]">{copy.creations.eyebrow}</p>
+                   <h3 className="mt-2 font-creepster text-3xl tracking-[0.08em] text-white">{copy.creations.addWork}</h3>
+                 </div>
+                 <button type="button" onClick={closeInlineComposer} className="inline-flex h-10 w-10 items-center justify-center border border-white/15 text-white/55 hover:border-[#ff2d95] hover:text-white" aria-label={copy.creations.cancel}><X className="h-4 w-4" /></button>
+               </div>
+               <div className="mt-4 grid gap-3 md:grid-cols-2">
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">
+                   {copy.creations.platform}
+                   <select value={inlineDraft.platform} onChange={(event) => setInlineDraft((current) => ({ ...current, platform: event.target.value as PlatformKey }))} className="mt-2 min-h-11 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70">
+                     {PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value} className="bg-[#06111a]">{copy.platformLabels[option.value] ?? option.label}</option>)}
+                   </select>
+                 </label>
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">
+                   {copy.creations.format}
+                   <select value={inlineDraft.kind} onChange={(event) => setInlineDraft((current) => ({ ...current, kind: event.target.value as InlineCreationDraft["kind"] }))} className="mt-2 min-h-11 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70">
+                     <option value="banner" className="bg-[#06111a]">{copy.creations.banner}</option>
+                     <option value="card" className="bg-[#06111a]">{copy.creations.card}</option>
+                     <option value="creation" className="bg-[#06111a]">{copy.creations.creation}</option>
+                   </select>
+                 </label>
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45 md:col-span-2">
+                   {copy.creations.titleLabel}
+                   <input required value={inlineDraft.title} onChange={(event) => setInlineDraft((current) => ({ ...current, title: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70" placeholder={copy.creations.titlePlaceholder} />
+                 </label>
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45 md:col-span-2">
+                   {copy.creations.description}
+                   <textarea value={inlineDraft.description} onChange={(event) => setInlineDraft((current) => ({ ...current, description: event.target.value }))} className="mt-2 min-h-20 w-full resize-y border border-white/15 bg-[#06111a] px-3 py-2 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70" placeholder={copy.creations.descriptionPlaceholder} />
+                 </label>
+                 {inlineDraft.platform === "audio" && (
+                   <label className="border border-[#8a2be2]/40 bg-[#8a2be2]/10 p-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#d7b6ff] md:col-span-2">
+                     {copy.creations.uploadMp3}
+                     <input type="file" accept=".mp3,audio/mpeg" onChange={(event) => setInlineAudioFile(event.target.files?.[0] ?? null)} className="mt-2 block w-full text-xs normal-case tracking-normal text-white file:mr-3 file:border-0 file:bg-[#8a2be2]/30 file:px-3 file:py-2 file:font-mono file:text-[10px] file:uppercase file:text-[#d7b6ff]" />
+                     <span className="mt-2 block normal-case tracking-normal text-white/45">{copy.creations.mp3Help}</span>
+                   </label>
+                 )}
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45 md:col-span-2">
+                   {copy.creations.contentLink}
+                   <input type="url" value={inlineDraft.contentUrl} onChange={(event) => setInlineDraft((current) => ({ ...current, contentUrl: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70" placeholder={copy.creations.contentPlaceholder} />
+                 </label>
+                 <label className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45 md:col-span-2">
+                   {copy.creations.cover}
+                   <input type="url" value={inlineDraft.imageUrl} onChange={(event) => setInlineDraft((current) => ({ ...current, imageUrl: event.target.value }))} className="mt-2 min-h-11 w-full border border-white/15 bg-[#06111a] px-3 font-mono text-xs normal-case tracking-normal text-white outline-none focus:border-[#00f0ff]/70" placeholder="https://.../cover.jpg" />
+                 </label>
+               </div>
+               {inlineError && <p role="alert" className="mt-4 border border-[#ff6b7a]/40 bg-[#ff6b7a]/10 px-3 py-2 font-mono text-xs text-[#ffb8c0]">{inlineError}</p>}
+               <div className="mt-4 flex flex-wrap gap-2">
+                 <button type="submit" disabled={inlineSaving || inlineUploading} className="min-h-11 border border-[#8a2be2]/70 bg-[#8a2be2]/15 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] hover:border-[#00f0ff] hover:text-white disabled:opacity-50">{inlineUploading ? copy.creations.uploading : inlineSaving ? copy.creations.saving : copy.creations.addWork}</button>
+                 <button type="button" onClick={closeInlineComposer} disabled={inlineSaving || inlineUploading} className="min-h-11 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white disabled:opacity-50">{copy.creations.cancel}</button>
+               </div>
+             </form>
+           )}
           {pagedCreations.length < searchedCreations.length && (
             <button type="button" onClick={() => setVisibleCount((count) => count + 24)} className="mt-6 min-h-11 border border-[#00f0ff]/55 bg-[#00f0ff]/10 px-5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
               Показати ще {Math.min(24, searchedCreations.length - pagedCreations.length)} робіт

@@ -15,8 +15,12 @@ const LanguageContext = createContext<Ctx | null>(null);
 
 function readInitial(): Lang {
   if (typeof window === "undefined") return "ua";
-  const saved = window.localStorage.getItem(STORAGE_KEY);
-  if (saved === "ua" || saved === "en" || saved === "fr") return saved;
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved === "ua" || saved === "en" || saved === "fr") return saved;
+  } catch {
+    // Some mobile browsers disable storage in private or restricted modes.
+  }
   return "ua";
 }
 

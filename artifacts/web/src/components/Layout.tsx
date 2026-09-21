@@ -57,9 +57,10 @@ function useDesktopHeroEnabled(): boolean {
 
 function AmbientMusicControls() {
   const { enabled, playing, volume, setVolume, toggle } = useAmbientMusic();
+  const [volumeOpen, setVolumeOpen] = useState(false);
 
   return (
-    <div className="fixed left-[6.75rem] top-48 z-50 flex items-center gap-1.5 rounded-xl border border-primary/40 bg-black/75 p-1.5 shadow-[0_0_18px_rgba(0,240,255,0.22)] backdrop-blur-md md:left-32 md:top-24">
+    <div className="flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-black/75 p-1.5 shadow-[0_0_18px_rgba(0,240,255,0.22)] backdrop-blur-md">
       <button
         type="button"
         onClick={toggle}
@@ -70,7 +71,18 @@ function AmbientMusicControls() {
         {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
         <span className="hidden sm:inline">Музика</span>
       </button>
-      <label className="inline-flex h-8 shrink-0 items-center gap-1.5 px-1 text-[#b9f7ff]" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
+      <button
+        type="button"
+        onClick={() => setVolumeOpen((open) => !open)}
+        aria-label={`Відкрити гучність музики: ${Math.round(volume * 100)}%`}
+        aria-expanded={volumeOpen}
+        aria-controls="ambient-volume-inline"
+        className="neon-control inline-flex h-8 shrink-0 items-center gap-1 px-2 text-[#b9f7ff] sm:hidden"
+      >
+        <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className="font-mono text-[9px]">{Math.round(volume * 100)}%</span>
+      </button>
+      <label className="hidden h-8 shrink-0 items-center gap-1.5 px-1 text-[#b9f7ff] sm:inline-flex" title={`Гучність музики: ${Math.round(volume * 100)}%`}>
         <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="sr-only">Гучність музики: {Math.round(volume * 100)}%</span>
         <input
@@ -84,6 +96,28 @@ function AmbientMusicControls() {
           className="h-1.5 w-16 cursor-pointer accent-[#00f0ff] sm:w-20"
         />
       </label>
+      {volumeOpen && (
+        <div
+          id="ambient-volume-inline"
+          role="dialog"
+          aria-label="Гучність музики"
+          className="inline-flex h-8 w-36 shrink-0 items-center gap-2 rounded-lg border border-primary/50 bg-[#050912]/95 px-2 shadow-[0_0_18px_rgba(0,240,255,0.24)] sm:hidden"
+        >
+          <VolumeX className="h-3.5 w-3.5 shrink-0 text-white/55" aria-hidden="true" />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={Math.round(volume * 100)}
+            onChange={(event) => setVolume(Number(event.target.value) / 100)}
+            aria-label="Гучність музики"
+            className="h-1.5 min-w-0 flex-1 cursor-pointer touch-pan-y accent-[#00f0ff]"
+          />
+          <Volume2 className="h-3.5 w-3.5 shrink-0 text-[#b9f7ff]" aria-hidden="true" />
+          <span className="w-7 shrink-0 text-right font-mono text-[9px] text-[#b9f7ff]">{Math.round(volume * 100)}%</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -126,6 +160,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
   const { setRouteMuted } = useAmbientMusic();
   const bg = PAGE_BACKGROUNDS[location] ?? bgHome;
   const heroEnabled = useDesktopHeroEnabled();
+  const isHome = location === "/";
 
   useEffect(() => {
     setRouteMuted(location === "/game");
@@ -165,90 +200,86 @@ export function Layout({ children, authEnabled = true }: { children: React.React
       )}
       {location === "/authors-world" && (
         <AmbientCreature
+          staticOnMobile={!heroEnabled}
           className="bottom-[2vh] right-[2vw] z-[1] h-[min(54vw,290px)] w-[min(54vw,290px)] sm:bottom-[3vh] sm:right-[4vw] sm:h-[min(34vw,440px)] sm:w-[min(34vw,440px)]"
         />
       )}
 
       <FallingAsh />
       <SecretLevel />
-      <Link
-        href="/authors-world"
-        aria-label={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
-        title={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
-         className={`fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-24 md:h-32 md:w-24 ${location === "/game" ? "hidden" : location === "/authors-world" ? "hidden md:block" : "block"}`}
-      >
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-           whileHover={{ scale: 1.08 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          style={{ transformOrigin: "top right" }}
-          className={`group relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[18px] border-2 px-1 text-center transition-colors duration-500 ${
-            location === "/authors-world"
-              ? "border-[#00f0ff] bg-[#081c26]/90 text-white shadow-[0_0_28px_rgba(0,240,255,0.65)]"
-              : "border-[#00f0ff]/60 bg-[#07131b]/90 text-[#8ceeff] shadow-[0_0_15px_rgba(0,240,255,0.38)] hover:border-white hover:bg-[#0b2833] hover:text-white hover:shadow-[0_0_30px_rgba(0,240,255,0.7)]"
-          }`}
-        >
-          <span aria-hidden="true" className="pointer-events-none absolute inset-2 border border-[#00f0ff]/30" />
-          <img
-            src={authorsWorldButtonBackground}
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-75 transition-transform duration-700 group-hover:scale-110"
-          />
-          <span aria-hidden="true" className="pointer-events-none absolute -inset-8 bg-[radial-gradient(circle,rgba(0,240,255,0.2),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-          <span className="relative z-10 font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff]">
-            {authorsWorldCopy.other}
-          </span>
-          <span className="relative z-10 mt-1 font-creepster text-sm leading-none tracking-[0.12em] text-[#00f0ff] drop-shadow-[0_0_7px_#00f0ff]">
-            {authorsWorldCopy.world}
-          </span>
-            {authorsWorldCopy.authors && (
-              <span className="relative z-10 mt-2 border-t border-[#00f0ff]/40 pt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-white/70">
-                {authorsWorldCopy.authors}
+      {isHome && (
+        <>
+          <Link
+            href="/authors-world"
+            aria-label={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
+            title={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
+            className="fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-24 md:h-32 md:w-24"
+          >
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              style={{ transformOrigin: "top right" }}
+              className="group relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[18px] border-2 border-[#00f0ff]/60 bg-[#07131b]/90 px-1 text-center text-[#8ceeff] shadow-[0_0_15px_rgba(0,240,255,0.38)] transition-colors duration-500 hover:border-white hover:bg-[#0b2833] hover:text-white hover:shadow-[0_0_30px_rgba(0,240,255,0.7)]"
+            >
+              <span aria-hidden="true" className="pointer-events-none absolute inset-2 border border-[#00f0ff]/30" />
+              <img
+                src={authorsWorldButtonBackground}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-75 transition-transform duration-700 group-hover:scale-110"
+              />
+              <span aria-hidden="true" className="pointer-events-none absolute -inset-8 bg-[radial-gradient(circle,rgba(0,240,255,0.2),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <span className="relative z-10 font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9f7ff]">
+                {authorsWorldCopy.other}
               </span>
-            )}
-        </motion.span>
-      </Link>
-      {location !== "/game" && <AmbientMusicControls />}
-      <Link
-        href="/game"
-        aria-label={t("nav.game")}
-        title={t("nav.game")}
-        className={`fixed right-4 top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-24 md:h-32 md:w-24 ${location === "/game" ? "hidden" : location === "/authors-world" ? "hidden md:block" : "block"}`}
-      >
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-           whileHover={{ scale: 1.08 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          style={{ transformOrigin: "top right" }}
-          className={`group relative block h-full w-full overflow-hidden rounded-[18px] border-2 transition-colors duration-500 ${
-            location === "/game"
-              ? "border-[#ff7043] shadow-[0_0_24px_rgba(255,91,54,0.55)]"
-              : "border-[#ff7043]/60 shadow-[0_0_15px_rgba(255,91,54,0.5)] hover:border-[#ffb184] hover:shadow-[0_0_30px_rgba(255,91,54,0.7)]"
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-10 bg-[#ff7043]/20 opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100"
-          />
-          <img
-            src={gameIcon}
-            alt={t("nav.game")}
-            className="h-full w-full bg-[#050208] object-contain p-0.5 transition-transform duration-700 group-hover:scale-110"
-          />
-          <span className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/80 to-transparent px-1 pb-2 pt-7 text-center">
-            <span className="font-creepster text-sm tracking-[0.14em] text-[#ffb184] drop-shadow-[0_0_6px_#ff7043]">
-              {t("nav.game")}
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-20 rounded-[16px] border border-white/10 transition-colors group-hover:border-white/30"
-          />
-        </motion.span>
-      </Link>
+              <span className="relative z-10 mt-1 font-creepster text-sm leading-none tracking-[0.12em] text-[#00f0ff] drop-shadow-[0_0_7px_#00f0ff]">
+                {authorsWorldCopy.world}
+              </span>
+              {authorsWorldCopy.authors && (
+                <span className="relative z-10 mt-2 border-t border-[#00f0ff]/40 pt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-white/70">
+                  {authorsWorldCopy.authors}
+                </span>
+              )}
+            </motion.span>
+          </Link>
+          <Link
+            href="/game"
+            aria-label={t("nav.game")}
+            title={t("nav.game")}
+            className="fixed right-4 top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-24 md:h-32 md:w-24"
+          >
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              style={{ transformOrigin: "top right" }}
+              className="group relative block h-full w-full overflow-hidden rounded-[18px] border-2 border-[#ff7043]/60 shadow-[0_0_15px_rgba(255,91,54,0.5)] transition-colors duration-500 hover:border-[#ffb184] hover:shadow-[0_0_30px_rgba(255,91,54,0.7)]"
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-10 bg-[#ff7043]/20 opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100"
+              />
+              <img
+                src={gameIcon}
+                alt={t("nav.game")}
+                className="h-full w-full bg-[#050208] object-contain p-0.5 transition-transform duration-700 group-hover:scale-110"
+              />
+              <span className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/80 to-transparent px-1 pb-2 pt-7 text-center">
+                <span className="font-creepster text-sm tracking-[0.14em] text-[#ffb184] drop-shadow-[0_0_6px_#ff7043]">
+                  {t("nav.game")}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-20 rounded-[16px] border border-white/10 transition-colors group-hover:border-white/30"
+              />
+            </motion.span>
+          </Link>
+        </>
+      )}
 
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
         <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20" style={{ boxShadow: "0 0 20px rgba(139,0,0,0.3), 0 0 40px rgba(255,69,0,0.1)" }}>
@@ -276,7 +307,9 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 );
               })}
             </nav>
-            <div className="flex w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5 md:w-auto md:overflow-visible md:pb-0">
+            <div className="flex w-full min-w-0 flex-nowrap items-center justify-start gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5 md:w-auto md:justify-center md:overflow-visible md:pb-0">
+              <LanguageSwitcher />
+              {isHome && <AmbientMusicControls />}
               {location !== "/" && (
                 <button
                   type="button"
@@ -309,7 +342,6 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                   </span>
                 )}
               </button>
-              <LanguageSwitcher />
             </div>
           </div>
         </header>

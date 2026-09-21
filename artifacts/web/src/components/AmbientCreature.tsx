@@ -5,14 +5,17 @@ import creaturePoster from "@assets/author-creature-poster.png";
 
 type AmbientCreatureProps = {
   className?: string;
+  staticOnMobile?: boolean;
 };
 
-export function AmbientCreature({ className = "" }: AmbientCreatureProps) {
+export function AmbientCreature({ className = "", staticOnMobile = false }: AmbientCreatureProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorVideoRef = useRef<HTMLVideoElement>(null);
   const maskVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    if (staticOnMobile) return;
+
     const canvas = canvasRef.current;
     const colorVideo = colorVideoRef.current;
     const maskVideo = maskVideoRef.current;
@@ -77,39 +80,40 @@ export function AmbientCreature({ className = "" }: AmbientCreatureProps) {
       colorVideo.pause();
       maskVideo.pause();
     };
-  }, []);
+  }, [staticOnMobile]);
 
   return (
     <div className={`pointer-events-none fixed overflow-visible ${className}`} aria-hidden="true">
-      <video
-        ref={colorVideoRef}
-        src={creatureColor}
-        muted
-        playsInline
-        loop
-        preload="auto"
-        tabIndex={-1}
-        className="absolute h-px w-px opacity-0"
-      />
-      <video
-        ref={maskVideoRef}
-        src={creatureMask}
-        muted
-        playsInline
-        loop
-        preload="auto"
-        tabIndex={-1}
-        className="absolute h-px w-px opacity-0"
-      />
+      {!staticOnMobile && (
+        <>
+          <video
+            ref={colorVideoRef}
+            src={creatureColor}
+            muted
+            playsInline
+            loop
+            preload="auto"
+            tabIndex={-1}
+            className="absolute h-px w-px opacity-0"
+          />
+          <video
+            ref={maskVideoRef}
+            src={creatureMask}
+            muted
+            playsInline
+            loop
+            preload="auto"
+            tabIndex={-1}
+            className="absolute h-px w-px opacity-0"
+          />
+        </>
+      )}
       <img
         src={creaturePoster}
         alt=""
         className="absolute inset-0 h-full w-full object-contain"
       />
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 h-full w-full object-contain"
-      />
+      {!staticOnMobile && <canvas ref={canvasRef} className="absolute inset-0 h-full w-full object-contain" />}
     </div>
   );
 }

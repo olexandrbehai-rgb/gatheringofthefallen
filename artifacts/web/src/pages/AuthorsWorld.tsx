@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { BarChart3, Bell, Check, CheckCheck, Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
+import { BarChart3, Bell, Check, CheckCheck, ImagePlus, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
-import type { IconType } from "react-icons";
-import { SiBandcamp, SiInstagram, SiSuno, SiSpotify, SiSoundcloud, SiTiktok, SiYoutube, SiYoutubemusic } from "react-icons/si";
 import { Link, useLocation } from "wouter";
 import { useT } from "@/i18n/LanguageContext";
 import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
+import { PLATFORM_OPTIONS, type PlatformKey } from "@/lib/authorPlatforms";
 import authorGardenMist from "@/assets/author-garden-mist.mp4";
 import authorGardenMistPoster from "@/assets/author-garden-mist-poster.jpg";
 
@@ -25,8 +24,6 @@ type AuthorMemory = {
   isHidden?: boolean;
   createdAt?: string;
 };
-
-type PlatformKey = "website" | "spotify" | "suno" | "youtube-music" | "youtube" | "instagram" | "tiktok" | "bandcamp" | "soundcloud" | "audio" | "other";
 
 type PlatformLinkDraft = {
   platform: PlatformKey;
@@ -249,28 +246,6 @@ function worldLayoutFor(authors: Author[], compact = false) {
       : Math.max(760, WORLD_PADDING_Y * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + WORLD_ROW_GAP * (rows - 1)),
   };
 }
-
-type PlatformOption = {
-  value: PlatformKey;
-  label: string;
-  placeholder: string;
-  icon: IconType;
-  color: string;
-};
-
-const PLATFORM_OPTIONS: PlatformOption[] = [
-  { value: "website", label: "Сайт / портфоліо", placeholder: "https://твій-сайт.com", icon: Globe2, color: "#b9f7ff" },
-  { value: "spotify", label: "Spotify", placeholder: "https://open.spotify.com/artist/...", icon: SiSpotify, color: "#1ed760" },
-  { value: "suno", label: "Suno", placeholder: "https://suno.com/song/...", icon: SiSuno, color: "#ff6bba" },
-  { value: "youtube-music", label: "YouTube Music", placeholder: "https://music.youtube.com/channel/...", icon: SiYoutubemusic, color: "#ff0033" },
-  { value: "youtube", label: "YouTube", placeholder: "https://youtube.com/@твій-канал", icon: SiYoutube, color: "#ff0033" },
-  { value: "instagram", label: "Instagram", placeholder: "https://instagram.com/твій-профіль", icon: SiInstagram, color: "#e4405f" },
-  { value: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@твій-профіль", icon: SiTiktok, color: "#69c9d0" },
-  { value: "bandcamp", label: "Bandcamp", placeholder: "https://твій-лейбл.bandcamp.com", icon: SiBandcamp, color: "#629aa9" },
-  { value: "soundcloud", label: "SoundCloud", placeholder: "https://soundcloud.com/твій-профіль", icon: SiSoundcloud, color: "#ff5500" },
-  { value: "audio", label: "MP3 / авторська музика", placeholder: "", icon: Music2, color: "#b9f7ff" },
-  { value: "other", label: "Інший майданчик", placeholder: "https://посилання-на-профіль.com", icon: Link2, color: "#d7b6ff" },
-];
 
 function emptyPlatformLink(): PlatformLinkDraft {
   return { platform: "website", url: "", customLabel: "" };
@@ -648,6 +623,7 @@ export default function AuthorsWorld() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [editingCreationId, setEditingCreationId] = useState<number | null>(null);
+  const [isCreationComposerOpen, setIsCreationComposerOpen] = useState(false);
   const [memoryDraft, setMemoryDraft] = useState<MemoryDraft>(EMPTY_MEMORY_DRAFT);
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [memorySavedNotice, setMemorySavedNotice] = useState<string | null>(null);
@@ -1355,6 +1331,7 @@ export default function AuthorsWorld() {
       setAudioFile(null);
       setAudioError(null);
       setEditingCreationId(null);
+      setIsCreationComposerOpen(false);
       setCreationSavedNotice(copy.notices.workSaved);
     } catch (error) {
       setCreationError(error instanceof Error ? error.message : copy.errors.saveWork);
@@ -1362,6 +1339,26 @@ export default function AuthorsWorld() {
       setIsUploadingAudio(false);
       setIsSavingCreation(false);
     }
+  };
+
+  const openCreationComposer = () => {
+    setCreationError(null);
+    setCreationSavedNotice(null);
+    setAudioFile(null);
+    setAudioError(null);
+    setEditingCreationId(null);
+    setCreationDraft(EMPTY_CREATION_DRAFT);
+    setIsCreationComposerOpen(true);
+  };
+
+  const closeCreationComposer = () => {
+    if (isSavingCreation || isUploadingAudio) return;
+    setEditingCreationId(null);
+    setCreationError(null);
+    setAudioFile(null);
+    setAudioError(null);
+    setCreationDraft(EMPTY_CREATION_DRAFT);
+    setIsCreationComposerOpen(false);
   };
 
   const handleSaveMemory = async (event: FormEvent<HTMLFormElement>) => {
@@ -2642,9 +2639,8 @@ export default function AuthorsWorld() {
                     ✓ {creationSavedNotice}
                   </p>
                 )}
-                 {authoredWorks.length > 0 && (
-                  <div className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-1 [scrollbar-color:#00f0ff55_#06111a]">
-                     {authoredWorks.map((creation) => (
+                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {authoredWorks.map((creation) => (
                       <div key={creation.id} className="flex items-center justify-between gap-3 border border-white/10 bg-black/20 p-3">
                         <div className="min-w-0">
                           <p className="truncate font-mono text-xs text-white">{creation.title}</p>
@@ -2654,6 +2650,7 @@ export default function AuthorsWorld() {
                           <button type="button" onClick={() => {
                             setCreationSavedNotice(null);
                             setEditingCreationId(creation.id);
+                             setIsCreationComposerOpen(true);
                             setCreationDraft({
                               platform: (creation.platform as PlatformKey) || "other",
                               kind: (creation.kind as CreationDraft["kind"]) || "card",
@@ -2673,9 +2670,15 @@ export default function AuthorsWorld() {
                         </div>
                       </div>
                     ))}
-                  </div>
-                )}
-                <form onSubmit={handleSaveCreation} className="mt-4 grid gap-3 border border-white/10 bg-black/20 p-4">
+                   <button type="button" onClick={openCreationComposer} className="group flex min-h-24 items-center justify-center gap-3 border border-dashed border-[#00f0ff]/55 bg-[#00f0ff]/[0.04] px-3 text-center transition-colors hover:border-[#ff2d95] hover:bg-[#ff2d95]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]">
+                     <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#00f0ff]/70 bg-[#00f0ff]/10 text-xl text-[#b9f7ff] shadow-[0_0_18px_rgba(0,240,255,0.16)] transition-transform group-hover:scale-110">+</span>
+                     <span className="text-left">
+                       <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff]">{copy.creations.addWork}</span>
+                       <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">{copy.creations.platform} // YouTube, Instagram, Spotify...</span>
+                     </span>
+                   </button>
+                 </div>
+                 {isCreationComposerOpen && <form onSubmit={handleSaveCreation} className="mt-4 grid gap-3 border border-[#00f0ff]/35 bg-black/20 p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
                       <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">{copy.creations.platform}</span>
@@ -2742,9 +2745,9 @@ export default function AuthorsWorld() {
                   </label>
                   <div className="flex flex-wrap gap-2">
                      <button type="submit" disabled={isSavingCreation || isUploadingAudio} className="min-h-10 border border-[#8a2be2]/70 bg-[#8a2be2]/15 px-4 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#d7b6ff] hover:border-[#00f0ff] hover:text-white disabled:opacity-50">{isUploadingAudio ? copy.creations.uploading : isSavingCreation ? copy.creations.saving : editingCreationId ? copy.creations.saveChanges : copy.creations.addWork}</button>
-                      {editingCreationId && <button type="button" onClick={() => { setEditingCreationId(null); setCreationSavedNotice(null); setAudioFile(null); setAudioError(null); setCreationDraft(EMPTY_CREATION_DRAFT); }} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white">{copy.creations.cancel}</button>}
+                       <button type="button" onClick={closeCreationComposer} disabled={isSavingCreation || isUploadingAudio} className="min-h-10 border border-white/15 px-4 font-mono text-[10px] uppercase text-white/55 hover:text-white disabled:opacity-50">{copy.creations.cancel}</button>
                   </div>
-                </form>
+                </form>}
               </section>
             )}
           </div>
