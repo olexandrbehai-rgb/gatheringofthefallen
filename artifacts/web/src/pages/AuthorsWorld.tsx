@@ -920,6 +920,7 @@ export default function AuthorsWorld() {
       setLocation("/sign-in");
       return;
     }
+    if (authorsLoading) return;
     if (!myAuthor) {
       openAuthorPortal();
       return;
@@ -1917,9 +1918,11 @@ export default function AuthorsWorld() {
                    <button
                      type="button"
                       onClick={openMyPortalWorld}
-                     className="authors-world-action-button authors-world-top-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all"
+                      disabled={authorsLoading}
+                      aria-busy={authorsLoading}
+                      className="authors-world-action-button authors-world-top-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all disabled:cursor-wait disabled:opacity-50"
                    >
-                      <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.myPortal}
+                       <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {authorsLoading ? copy.account.loading : copy.account.myPortal}
                    </button>
                    <button
                      type="button"
