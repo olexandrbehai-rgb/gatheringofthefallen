@@ -99,7 +99,7 @@ const PHRASE_PARTS: Record<HelperLanguage, {
 };
 
 function buildThoughts(language: HelperLanguage) {
-  const parts = PHRASE_PARTS[language];
+  const parts = PHRASE_PARTS[language] ?? PHRASE_PARTS.ua;
   return Array.from({ length: 1600 }, (_, index) => {
     const opening = parts.openings[index % parts.openings.length];
     const target = parts.targets[Math.floor(index / parts.openings.length) % parts.targets.length];
@@ -119,6 +119,7 @@ const HELPER_HALF_SIZE = { x: 47, y: 43 };
 const RACKET_HIT_DISTANCE = 78;
 
 export function PortalHelper({ language }: { language: HelperLanguage }) {
+  const safeLanguage: HelperLanguage = language === "en" || language === "fr" ? language : "ua";
   const [sceneIndex, setSceneIndex] = useState(0);
   const [position, setPosition] = useState<Point>({ x: 180, y: 220 });
   const [racketPosition, setRacketPosition] = useState<Point>({ x: 0, y: 0 });
@@ -126,7 +127,7 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isGameActive, setIsGameActive] = useState(false);
   const [isHit, setIsHit] = useState(false);
-  const thoughts = useMemo(() => buildThoughts(language), [language]);
+  const thoughts = useMemo(() => buildThoughts(safeLanguage), [safeLanguage]);
   const helperRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef(position);
   const racketPositionRef = useRef(racketPosition);
@@ -346,7 +347,7 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
         data-helper-side={waypoint.left > 60 ? "left" : "right"}
         role="button"
         tabIndex={0}
-        aria-label={language === "ua" ? "Схопити помічника" : language === "fr" ? "Attraper l’assistant" : "Grab the helper"}
+        aria-label={safeLanguage === "ua" ? "Схопити помічника" : safeLanguage === "fr" ? "Attraper l’assistant" : "Grab the helper"}
         onPointerDown={handleHelperPointerDown}
         onPointerMove={handleHelperPointerMove}
         onPointerUp={handleHelperPointerUp}
@@ -354,7 +355,7 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
       >
         <div className="authors-world-portal-helper-thought">
           <span className="authors-world-portal-helper-thought-tail" />
-          <span className="authors-world-portal-helper-thought-label">{scene.label[language]}</span>
+          <span className="authors-world-portal-helper-thought-label">{scene.label[safeLanguage]}</span>
           <span className="authors-world-portal-helper-thought-text">{thought}</span>
           {scene.phase === "think" && <span className="authors-world-portal-helper-thought-dots">•••</span>}
         </div>
@@ -390,8 +391,8 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
         onClick={handleRacketClick}
         onContextMenu={(event) => event.preventDefault()}
         aria-pressed={isGameActive}
-        aria-label={isGameActive ? RACKET_COPY[language].active : RACKET_COPY[language].idle}
-        title={isGameActive ? RACKET_COPY[language].active : RACKET_COPY[language].idle}
+        aria-label={isGameActive ? RACKET_COPY[safeLanguage].active : RACKET_COPY[safeLanguage].idle}
+        title={isGameActive ? RACKET_COPY[safeLanguage].active : RACKET_COPY[safeLanguage].idle}
       >
         <span className="authors-world-portal-racket-art" aria-hidden="true">
           <span className="authors-world-portal-racket-head"><span /></span>
