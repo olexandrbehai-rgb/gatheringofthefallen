@@ -721,7 +721,7 @@ export default function AuthorsWorld() {
   const worldLayout = useMemo(() => worldLayoutFor(authors, isCompactViewport), [authors, isCompactViewport]);
   const worldSize = worldLayout;
   const chatInputRef = useRef<HTMLInputElement>(null);
-  const generalChatInputRef = useRef<HTMLTextAreaElement>(null);
+  const generalChatInputRef = useRef<HTMLInputElement>(null);
   const mentionContext = useMemo(
     () => mentionContextFor(chatDraft, chatCursorPosition),
     [chatCursorPosition, chatDraft],
@@ -2044,7 +2044,7 @@ export default function AuthorsWorld() {
                       ) : notifications.length === 0 ? (
                         <p className="font-mono text-xs leading-relaxed text-white/45">{copy.notifications.empty}</p>
                       ) : (
-                        <div className="authors-world-message-scroll max-h-72 space-y-2 overflow-y-auto pr-1 sm:max-h-[52vh]">
+                        <div className="authors-world-message-scroll max-h-72 space-y-2 overflow-y-scroll pr-1 sm:max-h-[52vh]">
                           {notifications.map((notification) => (
                             <article
                               key={notification.id}
@@ -2103,7 +2103,7 @@ export default function AuthorsWorld() {
                             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.back}
                           </button>
                         </div>
-                        <div className="authors-world-message-scroll mt-3 min-h-0 max-h-72 flex-1 space-y-3 overflow-y-auto pr-1 sm:max-h-[52vh]">
+                        <div className="authors-world-message-scroll mt-3 min-h-0 max-h-72 flex-1 space-y-3 overflow-y-scroll pr-1 sm:max-h-[52vh]">
                           {chatLoading ? (
                             <p className="font-mono text-xs text-white/45">{copy.chat.loading}</p>
                           ) : chatError ? (
@@ -2140,8 +2140,9 @@ export default function AuthorsWorld() {
                         <form onSubmit={handleSendChat} className="authors-world-composer mt-3 flex shrink-0 items-end gap-2 border-t border-white/10 pt-3">
                           <label className="min-w-0 flex-1">
                             <span className="sr-only">{copy.chat.placeholder}</span>
-                            <textarea
+                             <input
                               ref={generalChatInputRef}
+                               type="text"
                               value={chatDraft}
                               onChange={(event) => {
                                 setChatDraft(event.target.value);
@@ -2149,19 +2150,20 @@ export default function AuthorsWorld() {
                               }}
                               onSelect={(event) => setChatCursorPosition(event.currentTarget.selectionStart ?? event.currentTarget.value.length)}
                               maxLength={1000}
-                              rows={1}
                               placeholder={copy.chat.placeholder}
-                              className="authors-world-composer-input min-h-11 w-full resize-none rounded-2xl border px-4 py-3 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#8a2be2]/70"
+                               enterKeyHint="send"
+                               className="authors-world-composer-input h-11 w-full rounded-2xl border px-4 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#8a2be2]/70"
                             />
                           </label>
                           <button
                             type="submit"
                             disabled={isSendingChat || !chatDraft.trim()}
-                            className="authors-world-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-[#d7b6ff] disabled:cursor-not-allowed disabled:opacity-40"
+                             className="authors-world-send-button inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[#d7b6ff] disabled:cursor-not-allowed disabled:opacity-40"
                             aria-label={isSendingChat ? copy.chat.sending : copy.chat.send}
                             title={isSendingChat ? copy.chat.sending : copy.chat.send}
                           >
                             <Send className="h-4 w-4" aria-hidden="true" />
+                             <span>{copy.chat.send}</span>
                           </button>
                         </form>
                         {chatError && <p className="mt-2 font-mono text-xs text-[#ffb184]">{chatError}</p>}
@@ -2178,7 +2180,7 @@ export default function AuthorsWorld() {
                           ) : directError && !directThread ? (
                             <p className="font-mono text-xs text-[#ffb184]">{directError}</p>
                           ) : (
-                            <div className="authors-world-message-scroll authors-world-conversation-scroll space-y-1 overflow-y-auto pr-1">
+                            <div className="authors-world-message-scroll authors-world-conversation-scroll space-y-1 overflow-y-scroll pr-1">
                                <button
                                  type="button"
                                  onClick={() => {
@@ -2248,7 +2250,7 @@ export default function AuthorsWorld() {
                                 <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffcf9e]">{copy.directMessages.privateLabel}</p>
                               </div>
                             </div>
-                            <div className="authors-world-message-scroll authors-world-thread-scroll mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                            <div className="authors-world-message-scroll authors-world-thread-scroll mt-3 min-h-0 flex-1 space-y-2 overflow-y-scroll pr-1">
                               {directThread.messages.length === 0 ? (
                                 <p className="py-4 text-center font-mono text-xs text-white/45">{copy.directMessages.empty}</p>
                               ) : directThread.messages.map((message) => {
@@ -2305,23 +2307,25 @@ export default function AuthorsWorld() {
                             <form onSubmit={sendDirectReply} className="authors-world-composer mt-3 flex shrink-0 items-end gap-2">
                               <label className="min-w-0 flex-1">
                                 <span className="sr-only">{formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: directThread.author.displayName })}</span>
-                                <textarea
+                                <input
+                                  type="text"
                                   value={directDraft}
                                   onChange={(event) => setDirectDraft(event.target.value)}
                                   maxLength={1000}
-                                  rows={1}
                                   placeholder={formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: directThread.author.displayName })}
-                                  className="authors-world-composer-input min-h-11 w-full resize-none rounded-2xl border px-4 py-3 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/70"
+                                  enterKeyHint="send"
+                                  className="authors-world-composer-input h-11 w-full rounded-2xl border px-4 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/70"
                                 />
                               </label>
                               <button
                                 type="submit"
                                 disabled={isSendingDirect || !directDraft.trim()}
-                                className="authors-world-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-[#b9f7ff] disabled:cursor-not-allowed disabled:opacity-40"
+                                 className="authors-world-send-button inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[#b9f7ff] disabled:cursor-not-allowed disabled:opacity-40"
                                  aria-label={isSendingDirect ? copy.directMessage.sending : directSendMode === "public" ? copy.directMessage.sendPublic : copy.directMessage.sendPrivate}
                                  title={isSendingDirect ? copy.directMessage.sending : directSendMode === "public" ? copy.directMessage.sendPublic : copy.directMessage.sendPrivate}
                               >
                                 <Send className="h-4 w-4" aria-hidden="true" />
+                                <span>{copy.chat.send}</span>
                               </button>
                             </form>
                              {directNotice && <p className="mt-2 font-mono text-xs leading-relaxed text-[#68f6a6]">{directNotice}</p>}
