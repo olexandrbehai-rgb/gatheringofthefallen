@@ -235,6 +235,10 @@
   position: absolute;
   width: 94px;
   height: 86px;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   transform: translate(-50%, -50%) rotate(var(--helper-tilt));
   transition:
     left 8.6s cubic-bezier(0.22, 0.72, 0.2, 1),
@@ -242,6 +246,145 @@
     transform 8.6s cubic-bezier(0.22, 0.72, 0.2, 1);
   filter: drop-shadow(0 0 11px rgba(0, 240, 255, 0.55));
   will-change: left, top, transform;
+}
+
+.authors-world-portal-helper-interactive {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: none;
+}
+
+.authors-world-portal-helper-interactive.is-dragging {
+  cursor: grabbing;
+  filter: drop-shadow(0 0 18px rgba(255, 173, 127, 0.92));
+}
+
+.authors-world-portal-helper-interactive.is-hit {
+  filter: drop-shadow(0 0 20px rgba(255, 207, 158, 0.98));
+}
+
+.authors-world-portal-racket {
+  position: absolute;
+  right: 2.8rem;
+  bottom: 4.8rem;
+  z-index: 2;
+  display: flex;
+  height: 126px;
+  width: 94px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: none;
+  transform: translate(-50%, -50%);
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+
+.authors-world-portal-racket:hover,
+.authors-world-portal-racket:focus-visible {
+  filter: drop-shadow(0 0 13px rgba(140, 238, 255, 0.8));
+  outline: none;
+}
+
+.authors-world-portal-racket-art {
+  position: relative;
+  display: block;
+  height: 116px;
+  width: 78px;
+  transform: rotate(-18deg);
+  transition: transform 220ms ease;
+}
+
+.authors-world-portal-racket-head {
+  position: absolute;
+  left: 9px;
+  top: 2px;
+  display: block;
+  height: 76px;
+  width: 58px;
+  border: 3px solid rgba(185, 247, 255, 0.94);
+  border-radius: 50%;
+  background:
+    linear-gradient(30deg, transparent 46%, rgba(140, 238, 255, 0.52) 48%, transparent 51%),
+    linear-gradient(150deg, transparent 46%, rgba(140, 238, 255, 0.52) 48%, transparent 51%),
+    repeating-linear-gradient(90deg, transparent 0 8px, rgba(140, 238, 255, 0.22) 9px 10px),
+    repeating-linear-gradient(0deg, transparent 0 8px, rgba(140, 238, 255, 0.22) 9px 10px),
+    rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.36), inset 0 0 12px rgba(138, 43, 226, 0.22);
+  transform-origin: center;
+  transition: width 260ms ease, height 260ms ease, border-radius 260ms ease, transform 260ms ease, box-shadow 260ms ease;
+}
+
+.authors-world-portal-racket-head > span {
+  position: absolute;
+  left: 50%;
+  bottom: -33px;
+  height: 38px;
+  width: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b9f7ff, #ffad7f);
+  box-shadow: 0 0 8px rgba(255, 173, 127, 0.58);
+  transform: translateX(-50%);
+}
+
+.authors-world-portal-racket-handle {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  height: 25px;
+  width: 13px;
+  border: 2px solid rgba(255, 173, 127, 0.92);
+  border-radius: 4px 4px 7px 7px;
+  background: repeating-linear-gradient(135deg, rgba(255, 173, 127, 0.75) 0 3px, rgba(87, 27, 66, 0.9) 3px 6px);
+  transform: translateX(-50%);
+}
+
+.authors-world-portal-racket.is-active {
+  height: 54px;
+  width: 148px;
+  border: 1px solid rgba(140, 238, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 240, 255, 0.04);
+  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.58));
+}
+
+.authors-world-portal-racket.is-active .authors-world-portal-racket-art {
+  height: 12px;
+  width: 132px;
+  transform: rotate(var(--racket-angle, 0deg));
+}
+
+.authors-world-portal-racket.is-active .authors-world-portal-racket-head {
+  left: 0;
+  top: 1px;
+  height: 8px;
+  width: 116px;
+  border-width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(185, 247, 255, 0.92), rgba(255, 173, 127, 0.9), rgba(185, 247, 255, 0.92));
+  box-shadow: 0 0 16px rgba(140, 238, 255, 0.95);
+}
+
+.authors-world-portal-racket.is-active .authors-world-portal-racket-head > span {
+  left: auto;
+  right: -15px;
+  bottom: 50%;
+  height: 5px;
+  width: 24px;
+  background: #ffad7f;
+  transform: translateY(50%) rotate(90deg);
+}
+
+.authors-world-portal-racket.is-active .authors-world-portal-racket-handle {
+  display: none;
+}
+
+.authors-world-portal-racket:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 207, 158, 0.72);
 }
 
 .authors-world-portal-helper-body {
