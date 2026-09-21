@@ -351,6 +351,33 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     }
   };
 
+  const helperThoughts = lang === "ua"
+    ? [
+        "Що тут сьогодні змінилося?",
+        "О, нова робота!",
+        "Цікаво, що автор хотів сказати...",
+        "Треба це запам’ятати.",
+        "Записую у свою маленьку пам’ять.",
+        "Здається, я знайшов ідею!",
+      ]
+    : lang === "fr"
+      ? [
+          "Qu’est-ce qui a changé ici ?",
+          "Oh, une nouvelle œuvre !",
+          "Je me demande ce que l’auteur voulait dire...",
+          "Je dois m’en souvenir.",
+          "Je note cette idée.",
+          "J’ai trouvé quelque chose !",
+        ]
+      : [
+          "What changed here today?",
+          "Oh, a new work!",
+          "I wonder what the author meant...",
+          "I should remember this.",
+          "Writing this little idea down.",
+          "I think I found something!",
+        ];
+
   if (loading) {
     return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">{t("ui.loadingPortal")}</main>;
   }
@@ -387,7 +414,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                 onClick={() => void handleToggleHelper()}
                 disabled={isUpdatingHelper}
                 aria-pressed={author.helperEnabled === true}
-                className={`inline-flex items-center gap-2 border px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] transition-colors disabled:cursor-wait disabled:opacity-50 ${
+                className={`author-neon-control author-neon-control-warm inline-flex items-center gap-2 border px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] transition-colors disabled:cursor-wait disabled:opacity-50 ${
                   author.helperEnabled
                     ? "border-[#ffcf9e]/70 bg-[#ffcf9e]/10 text-[#ffcf9e] hover:bg-[#ffcf9e]/20"
                     : "border-[#ffcf9e]/55 bg-[#ffcf9e]/5 text-[#ffcf9e] hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white"
@@ -396,14 +423,14 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                 {author.helperEnabled ? copy.selected.removeHelper : copy.selected.addHelper}
               </button>
-              <button type="button" onClick={() => setLocation("/authors-world?edit=1")} className="inline-flex items-center gap-2 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
+              <button type="button" onClick={() => setLocation("/authors-world?edit=1")} className="author-neon-control inline-flex items-center gap-2 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
                 <Pencil className="h-3.5 w-3.5" /> Редагувати мій портал
               </button>
             </div>
           )}
         </div>
         <header className="author-portal-hero mt-7 grid min-w-0 gap-5 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:gap-6 sm:p-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
-          <div className="author-avatar-glow mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
+          <div className="author-neon-avatar author-avatar-glow mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
             {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
           </div>
           <div className="min-w-0 text-center md:text-left">
@@ -415,7 +442,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         </header>
 
           <div className="author-neon-panel mt-6 flex max-w-full flex-wrap gap-2 rounded border border-white/15 bg-[#020811]/78 p-3 backdrop-blur-md sm:mt-8">
-          <button type="button" onClick={() => setActivePlatform("all")} className={`min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>{t("ui.allWorks")}</button>
+          <button type="button" onClick={() => setActivePlatform("all")} className={`author-neon-chip min-w-0 border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === "all" ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white" : "border-white/15 text-white/55 hover:border-[#00f0ff]/50"}`}>{t("ui.allWorks")}</button>
            {tabs.map(([platform, label, url]) => (
              url ? (
                <a
@@ -423,13 +450,13 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                  href={url}
                  target="_blank"
                  rel="noopener noreferrer"
-                 className="inline-flex min-w-0 max-w-full items-center gap-1.5 break-words border border-[#ff2d95]/70 bg-[#ff2d95]/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] text-white hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 sm:px-4 sm:tracking-[0.14em]"
+                    className="author-neon-chip author-neon-chip-pink inline-flex min-w-0 max-w-full items-center gap-1.5 break-words border border-[#ff2d95]/70 bg-[#ff2d95]/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] text-white hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 sm:px-4 sm:tracking-[0.14em]"
                >
                  <span className="break-words">{label}</span>
                  <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
                </a>
              ) : (
-               <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`min-w-0 max-w-full break-words border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === platform ? "border-[#ff2d95] bg-[#ff2d95]/15 text-white" : "border-white/15 text-white/55 hover:border-[#ff2d95]/60"}`}>
+                <button key={platform} type="button" onClick={() => setActivePlatform(platform)} className={`author-neon-chip author-neon-chip-pink min-w-0 max-w-full break-words border px-3 py-3 font-mono text-[10px] uppercase tracking-[0.11em] sm:px-4 sm:tracking-[0.14em] ${activePlatform === platform ? "border-[#ff2d95] bg-[#ff2d95]/15 text-white" : "border-white/15 text-white/55 hover:border-[#ff2d95]/60"}`}>
                  {label}
                </button>
              )
@@ -439,7 +466,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         {author.platformLinks.length > 0 && (
            <div className="mt-4 flex max-w-full flex-wrap gap-2">
             {author.platformLinks.map((link) => (
-               <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="relative z-0 inline-flex max-w-full shrink-0 items-center gap-2 whitespace-nowrap border border-white/10 bg-black/20 px-3 py-2 font-mono text-[10px] text-white/60 hover:z-10 hover:border-[#00f0ff]/50 hover:text-white">
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="author-neon-label relative z-0 inline-flex max-w-full shrink-0 items-center gap-2 whitespace-nowrap border border-white/10 bg-black/20 px-3 py-2 font-mono text-[10px] text-white/60 hover:z-10 hover:border-[#00f0ff]/50 hover:text-white">
                  <span className="min-w-0 truncate">{link.label}</span>
                  <ExternalLink className="h-3 w-3 shrink-0" />
               </a>
@@ -447,11 +474,11 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
           </div>
         )}
 
-          <section className="author-neon-panel mt-6 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:p-5">
+          <section className="author-neon-panel author-neon-panel-active mt-6 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:p-5">
             <button
               type="button"
               onClick={() => setIsMessageComposerOpen((open) => !open)}
-              className="inline-flex min-h-12 items-center border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
+               className="author-neon-control inline-flex min-h-12 items-center border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]"
               aria-expanded={isMessageComposerOpen}
             >
               {copy.directMessage.title}
@@ -470,7 +497,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                   <fieldset className="grid shrink-0 gap-2 sm:w-56">
                     <legend className="sr-only">{copy.directMessage.title}</legend>
-                    <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "public" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                    <label className={`author-neon-label flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "public" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
                       <input
                         type="radio"
                         name="author-message-mode"
@@ -485,7 +512,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                       />
                       {copy.directMessage.modePublic}
                     </label>
-                    <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "private" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                    <label className={`author-neon-label author-neon-label-warm flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "private" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
                       <input
                         type="radio"
                         name="author-message-mode"
@@ -523,7 +550,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                       <button
                         type="submit"
                         disabled={isSendingMessage || !messageDraft.trim()}
-                        className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                         className="author-neon-control min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {isSendingMessage
                           ? copy.directMessage.sending
@@ -571,7 +598,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/35">{t("ui.memoryTree")}</span>
              </div>
              <div className="relative mt-5 flex flex-wrap items-center justify-center gap-5 py-3 sm:gap-8">
-               <div className="author-memory-root relative z-10 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-xs font-bold tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_28px_rgba(0,240,255,0.25)]">
+                <div className="author-neon-icon author-memory-root relative z-10 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-xs font-bold tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_28px_rgba(0,240,255,0.25)]">
                  {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
                </div>
                {memories.map((memory) => (
@@ -579,7 +606,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                    key={memory.id}
                    type="button"
                     onClick={() => setLocation(`/author/${author.slug}/memory/${memory.id}`)}
-                   className="author-memory-card group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/65 bg-[#140d18] text-center shadow-[0_0_18px_rgba(255,207,158,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcf9e]"
+                    className="author-neon-icon author-neon-icon-warm author-memory-card group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ffcf9e]/65 bg-[#140d18] text-center shadow-[0_0_18px_rgba(255,207,158,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcf9e]"
                    title={memory.title}
                  >
                    {memory.imageUrl ? <img src={memory.imageUrl} alt="" className="h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100" /> : <span className="px-2 font-creepster text-sm leading-tight text-[#ffcf9e]">{memory.title}</span>}
@@ -592,9 +619,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
 
           <section className="author-neon-panel relative mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
            {author.helperEnabled && (
-             <div className="pointer-events-none absolute right-10 top-20 z-20 hidden sm:block">
-               <PortalHelper left={0} top={0} />
-             </div>
+             <PortalHelper thoughts={helperThoughts} />
            )}
           <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
