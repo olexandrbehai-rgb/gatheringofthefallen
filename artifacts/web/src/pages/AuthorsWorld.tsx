@@ -569,13 +569,13 @@ function AuthorNode({
        style={{ left: `${nodePosition.left}px`, top: `${nodePosition.top}px`, transformOrigin: "left center" }}
       aria-label={ariaLabel}
     >
-       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b]/95 text-left text-[#b9f7ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_36px_rgba(0,240,255,0.9)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
+       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/90 bg-[#020a12]/[.98] text-left text-[#b9f7ff] shadow-[0_0_24px_rgba(0,240,255,0.44),0_0_58px_rgba(138,43,226,0.24)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_52px_rgba(0,240,255,1),0_0_110px_rgba(138,43,226,0.42)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
           <span
             aria-hidden="true"
             className="author-avatar-neon-ring pointer-events-none absolute -inset-[3px] h-16 w-16 rounded-full"
             style={{ animationDelay: `${neonDelay}s` }}
           />
-         <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/45 bg-[#07131b]/95 font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-36 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-36 group-focus-visible:rounded-none group-focus-visible:border-0 ${
+          <span className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/75 bg-[#01060e] font-mono text-xs font-bold tracking-[0.16em] transition-[width,height,border-radius] duration-300 group-hover:h-full group-hover:w-36 group-hover:rounded-none group-hover:border-0 group-focus-visible:h-full group-focus-visible:w-36 group-focus-visible:rounded-none group-focus-visible:border-0 ${
           ""
         }`}>
           <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
