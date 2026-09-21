@@ -157,7 +157,7 @@ function MessagingAvatar({
   return (
     <span className={`authors-world-messaging-avatar ${sizeClass}`} aria-hidden="true">
       {avatarUrl ? (
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        <img src={avatarUrl} alt="" className="authors-world-avatar-image h-full w-full" />
       ) : (
         initialsFor(name)
       )}
@@ -580,7 +580,7 @@ function AuthorNode({
         }`}>
           <span aria-hidden="true" className="absolute inset-1 rounded-full border border-dashed border-[#00f0ff]/50 transition-[inset,border-radius] duration-300 group-hover:inset-2 group-hover:rounded-xl group-focus-visible:inset-2 group-focus-visible:rounded-xl" />
           {author.avatarUrl ? (
-            <img src={author.avatarUrl} alt="" className="h-full w-full bg-black/20 object-contain" />
+            <img src={author.avatarUrl} alt="" className="authors-world-avatar-image h-full w-full" />
           ) : (
             <Plus className="relative h-7 w-7 text-[#00f0ff]/80" aria-hidden="true" />
           )}
@@ -2550,7 +2550,7 @@ export default function AuthorsWorld() {
               <div className="mt-3 flex items-start gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-[#00f0ff]/50 bg-[radial-gradient(circle,rgba(0,240,255,0.24),rgba(10,5,24,0.95)_68%)] font-mono text-sm font-bold tracking-[0.14em] text-[#b9f7ff]">
                   {selectedAuthor.avatarUrl ? (
-                     <img src={selectedAuthor.avatarUrl} alt={formatAuthorsWorldCopy(copy.selected.portrait, { name: selectedAuthor.name })} className="h-full w-full bg-black/20 object-contain" />
+                     <img src={selectedAuthor.avatarUrl} alt={formatAuthorsWorldCopy(copy.selected.portrait, { name: selectedAuthor.name })} className="authors-world-avatar-image h-full w-full" />
                   ) : (
                     selectedAuthor.initials
                   )}
@@ -2873,7 +2873,7 @@ export default function AuthorsWorld() {
                   <div className="mt-3 flex items-start gap-3 border border-white/10 bg-black/20 p-3 sm:items-center sm:gap-4">
                    <label className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-[#00f0ff]/65 bg-[#00f0ff]/5 text-[#b9f7ff] transition-[border-radius,box-shadow] duration-300 hover:border-solid hover:border-[#00f0ff] hover:shadow-[0_0_24px_rgba(0,240,255,0.35)]">
                      {draft.avatarUrl ? (
-                        <img src={draft.avatarUrl} alt={copy.editor.avatarPreview} className="h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                        <img src={draft.avatarUrl} alt={copy.editor.avatarPreview} className="authors-world-avatar-image h-full w-full rounded-full transition-transform duration-300 group-hover:scale-110" />
                      ) : (
                        <Plus className="h-8 w-8" aria-hidden="true" />
                      )}
@@ -2916,7 +2916,7 @@ export default function AuthorsWorld() {
                     <img
                       src={draft.avatarUrl}
                        alt={copy.editor.photoPreview}
-                      className="h-16 w-16 rounded-full border border-[#00f0ff]/45 object-cover"
+                      className="authors-world-avatar-image h-16 w-16 rounded-full border border-[#00f0ff]/45"
                     />
                     <span className="font-mono text-[10px] leading-relaxed text-white/45">
                        {copy.editor.photoPreviewHelp}

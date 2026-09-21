@@ -616,6 +616,13 @@
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.14);
 }
 
+.authors-world-avatar-image {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  background: #01060e;
+}
+
 .authors-world-message-row {
   border-radius: 1rem;
   transition: background-color 160ms ease, transform 160ms ease;
