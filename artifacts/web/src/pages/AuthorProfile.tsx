@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, ExternalLink, Pencil, Play, Plus, X } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Pencil, Play, Plus, Sparkles, X } from "lucide-react";
 import { useUser } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { Mp3Player } from "@/components/Mp3Player";
+import { PortalHelper } from "@/components/author-world/PortalHelper";
 import { useT } from "@/i18n/LanguageContext";
 import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
 import { PLATFORM_OPTIONS, type PlatformKey } from "@/lib/authorPlatforms";
@@ -17,6 +18,7 @@ type Author = {
   bio: string;
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
+  helperEnabled?: boolean;
   platformLinks: PlatformLink[];
   slug: string;
 };
@@ -108,6 +110,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   const [author, setAuthor] = useState<Author | null>(null);
   const [creations, setCreations] = useState<Creation[]>([]);
   const [canEdit, setCanEdit] = useState(false);
+  const [isUpdatingHelper, setIsUpdatingHelper] = useState(false);
   const [activePlatform, setActivePlatform] = useState("all");
   const [creationSearch, setCreationSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(24);
@@ -323,6 +326,31 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     }
   };
 
+  const handleToggleHelper = async () => {
+    if (!author || !canEdit || isUpdatingHelper) return;
+    setIsUpdatingHelper(true);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/me/helper`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !author.helperEnabled }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        author?: Author;
+        error?: string;
+      };
+      if (!response.ok || !payload.author) {
+        throw new Error(payload.error ?? copy.errors.helperUpdate ?? copy.errors.openPortal);
+      }
+      setAuthor(payload.author);
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : copy.errors.helperUpdate ?? copy.errors.openPortal);
+    } finally {
+      setIsUpdatingHelper(false);
+    }
+  };
+
   if (loading) {
     return <main className="min-h-[calc(100dvh-82px)] bg-[#03060b] px-6 py-20 text-center font-mono text-sm text-[#8ceeff]">{t("ui.loadingPortal")}</main>;
   }
@@ -353,9 +381,25 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/authors-world" className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 hover:text-[#00f0ff]">← Сад авторів</Link>
           {canEdit && (
-            <button type="button" onClick={() => setLocation("/authors-world?edit=1")} className="inline-flex items-center gap-2 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
-              <Pencil className="h-3.5 w-3.5" /> Редагувати мій портал
-            </button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => void handleToggleHelper()}
+                disabled={isUpdatingHelper}
+                aria-pressed={author.helperEnabled === true}
+                className={`inline-flex items-center gap-2 border px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] transition-colors disabled:cursor-wait disabled:opacity-50 ${
+                  author.helperEnabled
+                    ? "border-[#ffcf9e]/70 bg-[#ffcf9e]/10 text-[#ffcf9e] hover:bg-[#ffcf9e]/20"
+                    : "border-[#ffcf9e]/55 bg-[#ffcf9e]/5 text-[#ffcf9e] hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                {author.helperEnabled ? copy.selected.removeHelper : copy.selected.addHelper}
+              </button>
+              <button type="button" onClick={() => setLocation("/authors-world?edit=1")} className="inline-flex items-center gap-2 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[#b9f7ff] hover:bg-[#00f0ff]/20">
+                <Pencil className="h-3.5 w-3.5" /> Редагувати мій портал
+              </button>
+            </div>
           )}
         </div>
         <header className="author-portal-hero mt-7 grid min-w-0 gap-5 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:gap-6 sm:p-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
@@ -546,7 +590,12 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
            </section>
          )}
 
-         <section className="author-neon-panel mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
+          <section className="author-neon-panel relative mt-8 min-w-0 rounded border border-white/15 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:p-5">
+           {author.helperEnabled && (
+             <div className="pointer-events-none absolute right-10 top-20 z-20 hidden sm:block">
+               <PortalHelper left={0} top={0} />
+             </div>
+           )}
           <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffad7f]">{PLATFORM_LABELS[activePlatform] ?? activePlatform}</p>

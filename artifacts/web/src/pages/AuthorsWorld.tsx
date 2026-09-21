@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, BarChart3, Bell, Check, CheckCheck, ImagePlus, LocateFixed, LogIn, LogOut, Mail, MessageCircle, Minus, Move, Pencil, Plus, Send, Sparkles, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, BarChart3, Bell, Check, CheckCheck, ImagePlus, LocateFixed, LogIn, LogOut, Mail, MessageCircle, Minus, Move, Pencil, Plus, Send, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { useT } from "@/i18n/LanguageContext";
 import { AUTHORS_WORLD_COPY, formatAuthorsWorldCopy } from "@/i18n/authorsWorld";
 import { PLATFORM_OPTIONS, type PlatformKey } from "@/lib/authorPlatforms";
-import { PortalHelper } from "@/components/author-world/PortalHelper";
 import authorGardenMist from "@/assets/author-garden-mist.mp4";
 import authorGardenMistPoster from "@/assets/author-garden-mist-poster.jpg";
 
@@ -42,7 +41,6 @@ type Author = {
   links: AuthorLink[];
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
-  helperEnabled: boolean;
   position: { left: number; top: number };
   memories: AuthorMemory[];
 };
@@ -493,7 +491,6 @@ function mapApiAuthor(
     bio: string;
     avatarUrl?: string | null;
     backgroundUrl?: string | null;
-    helperEnabled?: boolean;
     platformLinks?: AuthorLink[];
     slug: string;
     position?: { left: number; top: number };
@@ -510,7 +507,6 @@ function mapApiAuthor(
     links: Array.isArray(value.platformLinks) ? value.platformLinks : [],
     avatarUrl: value.avatarUrl,
     backgroundUrl: value.backgroundUrl,
-    helperEnabled: value.helperEnabled === true,
     position: value.position ?? worldPositionFor(index),
     memories: Array.isArray((value as { memories?: AuthorMemory[] }).memories)
       ? (value as unknown as { memories: Array<AuthorMemory & { poem?: unknown; links?: unknown }> }).memories.map((memory) => ({
@@ -661,7 +657,6 @@ export default function AuthorsWorld() {
   const [backgroundError, setBackgroundError] = useState<string | null>(null);
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [isUpdatingHelper, setIsUpdatingHelper] = useState(false);
   const [profileSavedNotice, setProfileSavedNotice] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatDraft, setChatDraft] = useState("");
@@ -1458,7 +1453,6 @@ export default function AuthorsWorld() {
           bio: memory,
           avatarUrl: avatarUrl || null,
           backgroundUrl: backgroundUrl || null,
-          helperEnabled: myAuthor?.helperEnabled ?? false,
           platformLinks: links,
         }),
       });
@@ -1495,37 +1489,6 @@ export default function AuthorsWorld() {
       setFormError(error instanceof Error ? error.message : copy.errors.openPortal);
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-
-  const handleToggleHelper = async () => {
-    if (!myAuthor || selectedAuthor?.id !== myAuthor.id || isUpdatingHelper) return;
-    const enabled = !myAuthor.helperEnabled;
-    setIsUpdatingHelper(true);
-    setFormError(null);
-    try {
-      const response = await fetch(`${API_ROOT}/authors-world/me/helper`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
-      });
-      const payload = await response.json().catch(() => ({})) as {
-        author?: Parameters<typeof mapApiAuthor>[0];
-        error?: string;
-      };
-      if (!response.ok || !payload.author) {
-        throw new Error(payload.error ?? copy.errors.helperUpdate ?? copy.errors.openPortal);
-      }
-      const savedAuthor = mapApiAuthor(payload.author, authors.length);
-      setMyAuthor(savedAuthor);
-      setAuthors((current) => current.map((author) =>
-        author.id === savedAuthor.id ? { ...savedAuthor, position: author.position } : author,
-      ));
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : copy.errors.helperUpdate ?? copy.errors.openPortal);
-    } finally {
-      setIsUpdatingHelper(false);
     }
   };
 
@@ -2522,12 +2485,6 @@ export default function AuthorsWorld() {
                               setLocation(`/author/${author.slug}`);
                             }}
                           />
-                          {author.helperEnabled && (
-                            <PortalHelper
-                              left={authorPosition.left + (isCompactViewport ? 62 : 82)}
-                              top={authorPosition.top - (isCompactViewport ? 58 : 72)}
-                            />
-                          )}
                         </div>
                       );
                     })}
@@ -2623,29 +2580,6 @@ export default function AuthorsWorld() {
                   ))}
                 </div>
               )}
-               {myAuthor?.id === selectedAuthor.id && (
-                 <div className="mt-5">
-                   <button
-                     type="button"
-                     aria-pressed={selectedAuthor.helperEnabled}
-                     disabled={isUpdatingHelper}
-                     onClick={() => void handleToggleHelper()}
-                     className={`inline-flex min-h-11 items-center gap-2 border px-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors disabled:cursor-wait disabled:opacity-50 sm:tracking-[0.16em] ${
-                       selectedAuthor.helperEnabled
-                         ? "border-[#ffcf9e]/70 bg-[#ffcf9e]/10 text-[#ffcf9e] hover:bg-[#ffcf9e]/20"
-                         : "border-[#ffcf9e]/55 bg-[#ffcf9e]/5 text-[#ffcf9e] hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white"
-                     }`}
-                   >
-                     <Sparkles className="h-4 w-4" aria-hidden="true" />
-                     {selectedAuthor.helperEnabled ? copy.selected.removeHelper : copy.selected.addHelper}
-                   </button>
-                   {selectedAuthor.helperEnabled && (
-                     <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-[#ffcf9e]/75">
-                       {copy.selected.helperActive}
-                     </p>
-                   )}
-                 </div>
-               )}
               <Link
                 href={`/author/${selectedAuthor.slug}`}
                 className="mt-5 inline-flex min-h-11 max-w-full items-center justify-center border border-[#00f0ff]/65 bg-[#00f0ff]/10 px-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] transition-colors hover:bg-[#00f0ff]/20 hover:text-white sm:tracking-[0.16em]"
