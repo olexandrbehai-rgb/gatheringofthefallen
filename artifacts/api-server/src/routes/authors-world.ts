@@ -744,6 +744,134 @@ router.post("/authors-world/me", async (req, res) => {
   }
 });
 
+router.get("/authors-world/me/analytics", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to view your author statistics" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const authorResult = await pool.query(
+      `SELECT id, slug, display_name
+       FROM authors
+       WHERE user_id = $1
+       LIMIT 1`,
+      [userId],
+    );
+    const author = authorResult.rows[0];
+    if (!author) {
+      res.status(404).json({ error: "Create an author portal before viewing its statistics" });
+      return;
+    }
+
+    const slug = typeof author.slug === "string" && author.slug
+      ? author.slug
+      : `author-${Number(author.id)}`;
+    const profilePath = `/author/${slug}`;
+    const [
+      summaryResult,
+      dailyResult,
+      referrerResult,
+      countryResult,
+      recentResult,
+    ] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS page_views,
+           COUNT(DISTINCT NULLIF(visitor_id, ''))::int AS unique_visitors
+         FROM activity_events
+         WHERE event_name = 'page_viewed'
+           AND path = $1
+           AND created_at >= NOW() - INTERVAL '30 days'`,
+        [profilePath],
+      ),
+      pool.query(
+        `SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS day,
+                COUNT(*)::int AS page_views,
+                COUNT(DISTINCT NULLIF(visitor_id, ''))::int AS visitors
+         FROM activity_events
+         WHERE event_name = 'page_viewed'
+           AND path = $1
+           AND created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY DATE_TRUNC('day', created_at)
+         ORDER BY day ASC`,
+        [profilePath],
+      ),
+      pool.query(
+        `SELECT COALESCE(NULLIF(metadata->>'referrer', ''), 'direct') AS referrer,
+                COUNT(*)::int AS count
+         FROM activity_events
+         WHERE event_name = 'page_viewed'
+           AND path = $1
+           AND created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY COALESCE(NULLIF(metadata->>'referrer', ''), 'direct')
+         ORDER BY count DESC, referrer ASC
+         LIMIT 12`,
+        [profilePath],
+      ),
+      pool.query(
+        `SELECT COALESCE(NULLIF(metadata->>'country', ''), 'unknown') AS country,
+                COUNT(*)::int AS count
+         FROM activity_events
+         WHERE event_name = 'page_viewed'
+           AND path = $1
+           AND created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY COALESCE(NULLIF(metadata->>'country', ''), 'unknown')
+         ORDER BY count DESC, country ASC
+         LIMIT 12`,
+        [profilePath],
+      ),
+      pool.query(
+        `SELECT created_at,
+                COALESCE(NULLIF(metadata->>'country', ''), 'unknown') AS country,
+                COALESCE(NULLIF(metadata->>'referrer', ''), 'direct') AS referrer
+         FROM activity_events
+         WHERE event_name = 'page_viewed'
+           AND path = $1
+         ORDER BY created_at DESC
+         LIMIT 50`,
+        [profilePath],
+      ),
+    ]);
+
+    res.json({
+      rangeDays: 30,
+      author: {
+        slug,
+        displayName: author.display_name,
+        profilePath,
+      },
+      summary: {
+        pageViews: Number(summaryResult.rows[0]?.page_views ?? 0),
+        uniqueVisitors: Number(summaryResult.rows[0]?.unique_visitors ?? 0),
+      },
+      daily: dailyResult.rows.map((row) => ({
+        day: row.day,
+        pageViews: Number(row.page_views ?? 0),
+        visitors: Number(row.visitors ?? 0),
+      })),
+      referrers: referrerResult.rows.map((row) => ({
+        referrer: row.referrer,
+        count: Number(row.count ?? 0),
+      })),
+      countries: countryResult.rows.map((row) => ({
+        country: row.country,
+        count: Number(row.count ?? 0),
+      })),
+      recentViews: recentResult.rows.map((row) => ({
+        createdAt: row.created_at,
+        country: row.country,
+        referrer: row.referrer,
+      })),
+    });
+  } catch (error) {
+    logger.error({ msg: "Author activity query failed", error });
+    res.status(500).json({ error: "Unable to load author statistics" });
+  }
+});
+
 router.get("/authors-world/author/:slug", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();

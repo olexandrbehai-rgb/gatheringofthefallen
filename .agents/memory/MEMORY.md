@@ -15,3 +15,4 @@
 - [Additive database schema changes](database-schema-push.md) — inspect legacy tables before Drizzle push; interactive rename suggestions may be unsafe.
 - [GitHub to Render sync](github-render-sync.md) — Render tracks GitHub main; shell push may lack auth, and oversized preview exports should stay out of deploy commits.
 - [Domovyk background placement](domovyk-background.md) — the companion belongs to the fixed author-world illustration layer, behind UI and portals, not inside the author coordinate grid.
+- [Author chat moderation](author-chat-moderation.md) — server-resolved mentions feed the inbox; owners can edit or hard-delete their own chat messages.

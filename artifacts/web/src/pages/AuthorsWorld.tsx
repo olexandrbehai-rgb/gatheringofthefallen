@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Bell, Check, CheckCheck, Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
+import { BarChart3, Bell, Check, CheckCheck, Globe2, ImagePlus, Link2, LocateFixed, LogIn, LogOut, Mail, Minus, Move, Music2, Pencil, Plus, Trash2, UploadCloud, X, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClerk, useUser } from "@clerk/react";
 import type { IconType } from "react-icons";
@@ -2268,14 +2268,28 @@ export default function AuthorsWorld() {
       {isRegistering && (
          <div className="fixed inset-0 z-[70] flex h-[100dvh] items-start justify-center overflow-hidden overscroll-none bg-[#02040a]/85 p-2 backdrop-blur-md sm:items-center sm:p-4">
            <div role="dialog" aria-modal="true" aria-labelledby="author-registration-title" className="my-2 max-h-[calc(100dvh-16px)] w-full max-w-xl touch-pan-y overflow-y-auto overscroll-contain border border-[#00f0ff]/55 bg-[#06111a]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(0,240,255,0.2)] sm:my-0 sm:max-h-[calc(100dvh-32px)] sm:p-7">
-            <div className="flex items-start justify-between gap-4">
+             <div className="flex items-start justify-between gap-4">
               <div>
                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#ffad7f]">{copy.editor.newPortal}</p>
                   <h2 id="author-registration-title" className="mt-2 font-creepster text-3xl tracking-[0.08em] text-[#00f0ff] sm:text-4xl sm:tracking-[0.1em]">{copy.editor.title}</h2>
               </div>
-               <button type="button" onClick={() => setIsRegistering(false)} className="border border-white/15 px-3 py-2 font-mono text-xs text-white/55 transition-colors hover:border-[#00f0ff] hover:text-white" aria-label={copy.editor.closeAria}>
-                 {copy.editor.close}
-              </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {myAuthor && (
+                    <Link
+                      href="/author-analytics"
+                      onClick={() => setIsRegistering(false)}
+                      className="inline-flex min-h-10 items-center gap-1.5 border border-[#ffcf9e]/55 bg-[#ffcf9e]/5 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-[#ffcf9e] transition-colors hover:border-[#ffcf9e] hover:bg-[#ffcf9e]/15 hover:text-white sm:px-3"
+                      aria-label={copy.editor.analyticsAria}
+                      title={copy.editor.analyticsAria}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="hidden sm:inline">{copy.editor.analytics}</span>
+                    </Link>
+                  )}
+                  <button type="button" onClick={() => setIsRegistering(false)} className="border border-white/15 px-3 py-2 font-mono text-xs text-white/55 transition-colors hover:border-[#00f0ff] hover:text-white" aria-label={copy.editor.closeAria}>
+                    {copy.editor.close}
+                  </button>
+                </div>
             </div>
             <p className="author-copy mt-3 font-mono text-xs leading-relaxed text-white/55">
                  {copy.editor.description}

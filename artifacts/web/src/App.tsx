@@ -22,6 +22,7 @@ import AuthorProfile from "@/pages/AuthorProfile";
 import AuthorMemoryPage from "@/pages/AuthorMemoryPage";
 import AuthorAvatarPreview from "@/pages/AuthorAvatarPreview";
 import OwnerAnalytics from "@/pages/OwnerAnalytics";
+import AuthorAnalytics from "@/pages/AuthorAnalytics";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -101,9 +102,11 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
       {authEnabled && <Route path="/sign-in/*?" component={SignInPage} />}
       {authEnabled && <Route path="/sign-up/*?" component={SignUpPage} />}
       {authEnabled && <Route path="/owner-analytics" component={OwnerAnalyticsRoute} />}
+      {authEnabled && <Route path="/author-analytics" component={AuthorAnalytics} />}
       {!authEnabled && <Route path="/sign-in/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/sign-up/*?"><Redirect to="/" /></Route>}
       {!authEnabled && <Route path="/owner-analytics"><Redirect to="/" /></Route>}
+      {!authEnabled && <Route path="/author-analytics"><Redirect to="/" /></Route>}
       <Route path="/author-avatar-preview" component={AuthorAvatarPreview} />
       <Route
         path="/game"
