@@ -18,3 +18,5 @@
 - [Author chat moderation](author-chat-moderation.md) — server-resolved mentions feed the inbox; owners can edit or hard-delete their own chat messages.
 - [Header controls](header-controls.md) — persistent music controls belong in the sticky header; hide floating launch cards in author workspaces.
 - [Private author messages](private-author-messages.md) — keep direct conversations separate from public chat and authorize every read/write by both portal participants.
+- [Clerk production proxy](clerk-production-proxy.md) — a live invalid-secret proxy response means the managed production keys are stale or mismatched; re-publish before rotating secrets.
+- [Clerk session hydration](clerk-session-hydration.md) — wait for Clerk to finish loading before user-scoped API calls, or the header and chat can disagree about login state.
