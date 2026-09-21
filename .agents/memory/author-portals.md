@@ -14,3 +14,9 @@ Large work libraries should be rendered in pages of 24 cards with search and laz
 **Why:** A single author may publish hundreds of linked videos, and a full eager grid makes the public profile and editor slow and difficult to navigate.
 
 **How to apply:** Reset the visible-card window when the platform or search changes, then offer incremental loading without deleting or hiding the remaining saved works.
+
+The portal editor and owner-facing quick-add card must use one shared platform option registry, including the same audio and external-platform values.
+
+**Why:** Authors should not have to learn different platform menus depending on where they publish a work.
+
+**How to apply:** Extend the shared platform registry first; do not create a second list in a page component.

@@ -121,6 +121,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [inlineSavedNotice, setInlineSavedNotice] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
+  const [messageMode, setMessageMode] = useState<"public" | "private">("public");
   const [isMessageComposerOpen, setIsMessageComposerOpen] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
   const [messageSent, setMessageSent] = useState(false);
@@ -295,22 +296,28 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
     setMessageSent(false);
     setIsSendingMessage(true);
     try {
-      const response = await fetch(`${API_ROOT}/authors-world/chat`, {
+      const isPrivate = messageMode === "private";
+      const response = await fetch(
+        isPrivate ? `${API_ROOT}/authors-world/direct/${encodeURIComponent(author.slug)}` : `${API_ROOT}/authors-world/chat`,
+        {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: `@${author.slug} ${text}` }),
-      });
+        body: JSON.stringify({ body: isPrivate ? text : `@${author.slug} ${text}` }),
+        },
+      );
       const payload = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) {
         if (response.status === 401) throw new Error(copy.directMessage.signIn);
         if (response.status === 403) throw new Error(copy.directMessage.portalRequired);
-        throw new Error(payload.error ?? copy.directMessage.failed);
+        throw new Error(payload.error ?? (isPrivate ? copy.directMessage.privateFailed : copy.directMessage.failed));
       }
       setMessageDraft("");
       setMessageSent(true);
     } catch (sendError) {
-      setMessageError(sendError instanceof Error ? sendError.message : copy.directMessage.failed);
+      setMessageError(sendError instanceof Error
+        ? sendError.message
+        : messageMode === "private" ? copy.directMessage.privateFailed : copy.directMessage.failed);
     } finally {
       setIsSendingMessage(false);
     }
@@ -411,10 +418,46 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                   {formatAuthorsWorldCopy(copy.directMessage.eyebrow, { name: author.displayName })}
                 </p>
                 <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-white/55">
-                  {copy.directMessage.description}
+                   {formatAuthorsWorldCopy(
+                     messageMode === "private" ? copy.directMessage.privateDescription : copy.directMessage.publicDescription,
+                     { name: author.displayName },
+                   )}
                 </p>
                 {authLoaded && isSignedIn ? (
                   <form onSubmit={handleSendAuthorMessage} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                     <fieldset className="grid shrink-0 gap-2 sm:w-56">
+                       <legend className="sr-only">{copy.directMessage.title}</legend>
+                       <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "public" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                         <input
+                           type="radio"
+                           name="author-message-mode"
+                           value="public"
+                           checked={messageMode === "public"}
+                           onChange={() => {
+                             setMessageMode("public");
+                             setMessageSent(false);
+                             setMessageError(null);
+                           }}
+                           className="accent-[#00f0ff]"
+                         />
+                         {copy.directMessage.modePublic}
+                       </label>
+                       <label className={`flex min-h-11 cursor-pointer items-center gap-2 border px-3 py-2 font-mono text-[10px] leading-tight transition-colors ${messageMode === "private" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/55 hover:border-white/35"}`}>
+                         <input
+                           type="radio"
+                           name="author-message-mode"
+                           value="private"
+                           checked={messageMode === "private"}
+                           onChange={() => {
+                             setMessageMode("private");
+                             setMessageSent(false);
+                             setMessageError(null);
+                           }}
+                           className="accent-[#ffad7f]"
+                         />
+                         {copy.directMessage.modePrivate}
+                       </label>
+                     </fieldset>
                     <label className="min-w-0 flex-1">
                       <span className="sr-only">
                         {formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: author.displayName })}
@@ -437,7 +480,9 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                       disabled={isSendingMessage || !messageDraft.trim()}
                       className="min-h-12 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {isSendingMessage ? copy.directMessage.sending : copy.directMessage.send}
+                       {isSendingMessage
+                         ? copy.directMessage.sending
+                         : messageMode === "private" ? copy.directMessage.sendPrivate : copy.directMessage.sendPublic}
                     </button>
                   </form>
                 ) : (
@@ -450,7 +495,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
                 )}
                 {messageSent && (
                   <p role="status" className="mt-3 border border-[#8effa0]/35 bg-[#8effa0]/10 px-3 py-2 font-mono text-xs text-[#c7ffd0]">
-                    {copy.directMessage.success}
+                     {messageMode === "private" ? copy.directMessage.privateSuccess : copy.directMessage.success}
                   </p>
                 )}
                 {messageError && (

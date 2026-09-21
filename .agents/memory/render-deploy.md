@@ -21,6 +21,14 @@ This project deploys to Render as a **single web service** plus a managed Postgr
 - The Render service may retain a stale DATABASE_URL after a managed database replacement; verify the live host and required activity/owner tables before diagnosing owner access.
 - Render's external PostgreSQL URL needs an explicit `sslmode=verify-full`; Node `pg` otherwise fails with `SSL/TLS required` and owner routes return 503.
 
+## Render service lookup
+
+**Rule:** When triggering a deploy through the Render API, resolve the web service by its connected GitHub repository rather than assuming the service name from `render.yaml`.
+
+**Why:** The live Render service can have a dashboard-created name that differs from the Blueprint name, while the repository is the reliable link to the intended service. A GitHub push can also create an automatic deploy, so a manual trigger may briefly appear as a second queued deploy for the same commit.
+
+**How to apply:** List Render services, select the web service whose repository matches this project, trigger at most one manual deploy when the automatic deploy is not sufficient, and verify the deploy reaches `live` on the current GitHub commit before claiming production is updated.
+
 **Rule:** Verify the active service settings in Render logs instead of assuming edits to `render.yaml` update an existing service.
 
 **Why:** The existing Render service kept its dashboard-configured build command, including `drizzle-kit push`, after `render.yaml` changed. GitHub updates also did not consistently trigger an automatic deploy.

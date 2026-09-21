@@ -82,6 +82,38 @@ type AuthorNotification = {
   };
 };
 
+type DirectMessage = {
+  id: number;
+  body: string;
+  createdAt: string;
+  readAt?: string | null;
+  sender: {
+    id: number;
+    slug: string;
+    displayName: string;
+    role: string;
+    avatarUrl?: string | null;
+  };
+};
+
+type DirectConversation = {
+  id: number;
+  author: DirectMessage["sender"];
+  lastMessage: {
+    id: number;
+    body: string;
+    createdAt: string;
+    senderId: number;
+  } | null;
+  unreadCount: number;
+};
+
+type DirectThread = {
+  id: number;
+  author: DirectMessage["sender"];
+  messages: DirectMessage[];
+};
+
 function ChatMessageBody({ message }: { message: ChatMessage }) {
   const mentions = message.mentions ?? [];
   if (mentions.length === 0) return <>{message.body}</>;
@@ -612,6 +644,15 @@ export default function AuthorsWorld() {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [notificationsError, setNotificationsError] = useState<string | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [directConversations, setDirectConversations] = useState<DirectConversation[]>([]);
+  const [directUnreadCount, setDirectUnreadCount] = useState(0);
+  const [directLoading, setDirectLoading] = useState(false);
+  const [directError, setDirectError] = useState<string | null>(null);
+  const [selectedDirectSlug, setSelectedDirectSlug] = useState<string | null>(null);
+  const [directThread, setDirectThread] = useState<DirectThread | null>(null);
+  const [directDraft, setDirectDraft] = useState("");
+  const [isSendingDirect, setIsSendingDirect] = useState(false);
+  const [inboxView, setInboxView] = useState<"mentions" | "direct">("mentions");
   const [chatCursorPosition, setChatCursorPosition] = useState(0);
   const [mentionHighlightIndex, setMentionHighlightIndex] = useState(0);
   const [creations, setCreations] = useState<AuthorCreation[]>([]);
@@ -691,6 +732,97 @@ export default function AuthorsWorld() {
       setNotificationsLoading(false);
     }
   }, [copy.notifications.failed, isSignedIn, myAuthor?.id]);
+
+  const loadDirectConversations = useCallback(async () => {
+    if (!isSignedIn || !myAuthor) {
+      setDirectConversations([]);
+      setDirectUnreadCount(0);
+      setSelectedDirectSlug(null);
+      setDirectThread(null);
+      return;
+    }
+    setDirectLoading(true);
+    setDirectError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/direct/conversations`, {
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        conversations?: DirectConversation[];
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error ?? copy.directMessages.failed);
+      const nextConversations = Array.isArray(payload.conversations) ? payload.conversations : [];
+      setDirectConversations(nextConversations);
+      setDirectUnreadCount(nextConversations.reduce((total, item) => total + item.unreadCount, 0));
+    } catch (error) {
+      setDirectError(error instanceof Error ? error.message : copy.directMessages.failed);
+    } finally {
+      setDirectLoading(false);
+    }
+  }, [copy.directMessages.failed, isSignedIn, myAuthor?.id]);
+
+  const openDirectConversation = useCallback(async (conversation: DirectConversation) => {
+    setSelectedDirectSlug(conversation.author.slug);
+    setDirectThread(null);
+    setDirectDraft("");
+    setDirectLoading(true);
+    setDirectError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/direct/${encodeURIComponent(conversation.author.slug)}`, {
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        thread?: { id: number; author: DirectMessage["sender"] } | null;
+        messages?: DirectMessage[];
+        error?: string;
+      };
+      if (!response.ok || !payload.thread) throw new Error(payload.error ?? copy.directMessages.failed);
+      setDirectThread({
+        id: payload.thread.id,
+        author: payload.thread.author,
+        messages: Array.isArray(payload.messages) ? payload.messages : [],
+      });
+      setDirectConversations((current) => current.map((item) =>
+        item.author.slug === conversation.author.slug ? { ...item, unreadCount: 0 } : item,
+      ));
+      setDirectUnreadCount((current) => Math.max(0, current - conversation.unreadCount));
+    } catch (error) {
+      setDirectError(error instanceof Error ? error.message : copy.directMessages.failed);
+    } finally {
+      setDirectLoading(false);
+    }
+  }, [copy.directMessages.failed]);
+
+  const sendDirectReply = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const body = directDraft.trim();
+    if (!selectedDirectSlug || !body || isSendingDirect) return;
+    setIsSendingDirect(true);
+    setDirectError(null);
+    try {
+      const response = await fetch(`${API_ROOT}/authors-world/direct/${encodeURIComponent(selectedDirectSlug)}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        message?: DirectMessage;
+        error?: string;
+      };
+      if (!response.ok || !payload.message) throw new Error(payload.error ?? copy.directMessages.sendFailed);
+      setDirectThread((current) => current
+        ? { ...current, messages: [...current.messages, payload.message as DirectMessage] }
+        : current);
+      setDirectDraft("");
+      void loadDirectConversations();
+    } catch (error) {
+      setDirectError(error instanceof Error ? error.message : copy.directMessages.sendFailed);
+    } finally {
+      setIsSendingDirect(false);
+    }
+  }, [copy.directMessages.sendFailed, directDraft, isSendingDirect, loadDirectConversations, selectedDirectSlug]);
 
   const selectMention = useCallback((author: Author) => {
     if (!mentionContext) return;
@@ -1146,11 +1278,13 @@ export default function AuthorsWorld() {
 
   useEffect(() => {
     void loadNotifications();
+    void loadDirectConversations();
     const refreshTimer = window.setInterval(() => {
       void loadNotifications();
+      void loadDirectConversations();
     }, 30_000);
     return () => window.clearInterval(refreshTimer);
-  }, [loadNotifications]);
+  }, [loadDirectConversations, loadNotifications]);
 
   const visibleAuthors = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1749,13 +1883,13 @@ export default function AuthorsWorld() {
                  >
                    <Bell className="h-4 w-4" aria-hidden="true" />
                    {copy.notifications.title}
-                   {unreadNotificationCount > 0 && (
+                    {unreadNotificationCount + directUnreadCount > 0 && (
                      <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-[#ffad7f]/70 bg-[#ffad7f]/15 px-1.5 py-1 text-[9px] text-[#ffd0ba]">
-                       {unreadNotificationCount}
+                        {unreadNotificationCount + directUnreadCount}
                      </span>
                    )}
                  </button>
-                 {isNotificationsOpen && unreadNotificationCount > 0 && (
+                  {isNotificationsOpen && inboxView === "mentions" && unreadNotificationCount > 0 && (
                    <button
                      type="button"
                      onClick={() => void handleMarkAllNotificationsRead()}
@@ -1767,54 +1901,160 @@ export default function AuthorsWorld() {
                </div>
                {isNotificationsOpen && (
                  <div id="authors-world-notification-list" className="mt-3 border-t border-white/10 pt-3">
-                   {notificationsLoading ? (
-                     <p className="font-mono text-xs text-white/45">{copy.notifications.loading}</p>
-                   ) : notificationsError ? (
-                     <p className="font-mono text-xs text-[#ffb184]">{notificationsError}</p>
-                   ) : notifications.length === 0 ? (
-                     <p className="font-mono text-xs leading-relaxed text-white/45">{copy.notifications.empty}</p>
-                   ) : (
-                     <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                       {notifications.map((notification) => (
-                         <article
-                           key={notification.id}
-                           className={`border-l px-3 py-2 ${notification.isRead ? "border-white/15 bg-black/15" : "border-[#ffad7f]/80 bg-[#ffad7f]/8"}`}
-                         >
-                           <div className="flex items-start justify-between gap-3">
-                             <p className="min-w-0 font-mono text-xs leading-relaxed text-white/75">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (!notification.isRead) void handleMarkNotificationRead(notification.id);
-                                    addressAuthor(notification.actor);
-                                  }}
-                                  className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/45 underline-offset-2 hover:text-white"
-                                  aria-label={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
-                                  title={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
-                                >
-                                 {notification.actor.displayName}
-                                </button>{" "}
-                               {copy.notifications.mentionedYou}
-                             </p>
-                             {!notification.isRead && (
-                               <button
-                                 type="button"
-                                 onClick={() => void handleMarkNotificationRead(notification.id)}
-                                 className="shrink-0 p-1 text-[#8ceeff] transition-colors hover:text-white"
-                                 aria-label={copy.notifications.markRead}
-                                 title={copy.notifications.markRead}
-                               >
-                                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                               </button>
-                             )}
-                           </div>
-                           <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/45">{notification.body}</p>
-                           <time className="mt-1 block font-mono text-[9px] text-white/25" dateTime={notification.createdAt}>
-                             {new Date(notification.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
-                           </time>
-                         </article>
-                       ))}
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setInboxView("mentions")}
+                        className={`min-h-9 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] transition-colors ${inboxView === "mentions" ? "border-[#ffad7f]/70 bg-[#ffad7f]/10 text-[#ffd0ba]" : "border-white/15 text-white/45 hover:border-white/35 hover:text-white"}`}
+                      >
+                        <Bell className="mr-1.5 inline h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.title}
+                        {unreadNotificationCount > 0 && <span className="ml-1.5 text-[#ffad7f]">({unreadNotificationCount})</span>}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInboxView("direct")}
+                        className={`min-h-9 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] transition-colors ${inboxView === "direct" ? "border-[#00f0ff]/70 bg-[#00f0ff]/10 text-[#b9f7ff]" : "border-white/15 text-white/45 hover:border-white/35 hover:text-white"}`}
+                      >
+                        <Mail className="mr-1.5 inline h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.title}
+                        {directUnreadCount > 0 && <span className="ml-1.5 text-[#ffad7f]">({directUnreadCount})</span>}
+                      </button>
+                    </div>
+                    {inboxView === "mentions" ? (
+                      notificationsLoading ? (
+                        <p className="font-mono text-xs text-white/45">{copy.notifications.loading}</p>
+                      ) : notificationsError ? (
+                        <p className="font-mono text-xs text-[#ffb184]">{notificationsError}</p>
+                      ) : notifications.length === 0 ? (
+                        <p className="font-mono text-xs leading-relaxed text-white/45">{copy.notifications.empty}</p>
+                      ) : (
+                        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                          {notifications.map((notification) => (
+                            <article
+                              key={notification.id}
+                              className={`border-l px-3 py-2 ${notification.isRead ? "border-white/15 bg-black/15" : "border-[#ffad7f]/80 bg-[#ffad7f]/8"}`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="min-w-0 font-mono text-xs leading-relaxed text-white/75">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (!notification.isRead) void handleMarkNotificationRead(notification.id);
+                                      addressAuthor(notification.actor);
+                                    }}
+                                    className="font-bold text-[#ffad7f] underline decoration-[#ffad7f]/45 underline-offset-2 hover:text-white"
+                                    aria-label={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
+                                    title={formatAuthorsWorldCopy(copy.chat.replyTo, { name: notification.actor.displayName })}
+                                  >
+                                    {notification.actor.displayName}
+                                  </button>{" "}
+                                  {copy.notifications.mentionedYou}
+                                </p>
+                                {!notification.isRead && (
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleMarkNotificationRead(notification.id)}
+                                    className="shrink-0 p-1 text-[#8ceeff] transition-colors hover:text-white"
+                                    aria-label={copy.notifications.markRead}
+                                    title={copy.notifications.markRead}
+                                  >
+                                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                                  </button>
+                                )}
+                              </div>
+                              <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/45">{notification.body}</p>
+                              <time className="mt-1 block font-mono text-[9px] text-white/25" dateTime={notification.createdAt}>
+                                {new Date(notification.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
+                              </time>
+                            </article>
+                          ))}
+                        </div>
+                      )
+                    ) : directThread ? (
+                      <div>
+                        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDirectThread(null);
+                              setSelectedDirectSlug(null);
+                            }}
+                            className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#8ceeff] hover:text-white"
+                          >
+                            ← {copy.directMessages.back}
+                          </button>
+                          <p className="min-w-0 truncate text-right font-mono text-[10px] uppercase tracking-[0.14em] text-[#ffcf9e]">
+                            {copy.directMessages.privateLabel} // {directThread.author.displayName}
+                          </p>
+                        </div>
+                        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+                          {directThread.messages.length === 0 ? (
+                            <p className="py-4 text-center font-mono text-xs text-white/45">{copy.directMessages.empty}</p>
+                          ) : directThread.messages.map((message) => {
+                            const isMine = message.sender.id === Number(myAuthor.id);
+                            return (
+                              <article key={message.id} className={`border-l px-3 py-2 ${isMine ? "border-[#00f0ff]/55 bg-[#00f0ff]/5" : "border-[#ffad7f]/70 bg-[#ffad7f]/7"}`}>
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className={`font-mono text-[10px] font-bold ${isMine ? "text-[#8ceeff]" : "text-[#ffad7f]"}`}>
+                                    {isMine ? copy.directMessages.you : message.sender.displayName}
+                                  </p>
+                                  <time className="font-mono text-[9px] text-white/25" dateTime={message.createdAt}>
+                                    {new Date(message.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
+                                  </time>
+                                </div>
+                                <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/65">{message.body}</p>
+                              </article>
+                            );
+                          })}
+                        </div>
+                        <form onSubmit={sendDirectReply} className="mt-3 flex flex-col gap-2 sm:flex-row">
+                          <label className="min-w-0 flex-1">
+                            <span className="sr-only">{copy.directMessages.placeholder}</span>
+                            <textarea
+                              value={directDraft}
+                              onChange={(event) => setDirectDraft(event.target.value)}
+                              maxLength={1000}
+                              rows={2}
+                              placeholder={copy.directMessages.placeholder}
+                              className="min-h-16 w-full resize-y border border-white/15 bg-black/30 px-3 py-2 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/60"
+                            />
+                          </label>
+                          <button
+                            type="submit"
+                            disabled={isSendingDirect || !directDraft.trim()}
+                            className="min-h-10 border border-[#00f0ff]/60 bg-[#00f0ff]/10 px-4 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#b9f7ff] hover:bg-[#00f0ff]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {isSendingDirect ? copy.directMessages.sending : copy.directMessages.send}
+                          </button>
+                        </form>
+                        {directError && <p className="mt-2 font-mono text-xs text-[#ffb184]">{directError}</p>}
                      </div>
+                    ) : directLoading ? (
+                      <p className="font-mono text-xs text-white/45">{copy.notifications.loading}</p>
+                    ) : directError ? (
+                      <p className="font-mono text-xs text-[#ffb184]">{directError}</p>
+                    ) : directConversations.length === 0 ? (
+                      <p className="font-mono text-xs leading-relaxed text-white/45">{copy.directMessages.empty}</p>
+                    ) : (
+                      <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                        {directConversations.map((conversation) => (
+                          <button
+                            key={conversation.id}
+                            type="button"
+                            onClick={() => void openDirectConversation(conversation)}
+                            className={`flex w-full items-start justify-between gap-3 border-l px-3 py-2 text-left transition-colors ${conversation.unreadCount > 0 ? "border-[#ffad7f]/80 bg-[#ffad7f]/8" : "border-white/15 bg-black/15"} hover:border-[#00f0ff]/70 hover:bg-[#00f0ff]/5`}
+                            aria-label={`${copy.directMessages.open}: ${conversation.author.displayName}`}
+                          >
+                            <span className="min-w-0">
+                              <span className="flex items-center gap-2 font-mono text-xs font-bold text-[#b9f7ff]">
+                                <span className="truncate">{conversation.author.displayName}</span>
+                                {conversation.unreadCount > 0 && <span className="shrink-0 text-[9px] text-[#ffad7f]">{formatAuthorsWorldCopy(copy.directMessages.unread, { count: conversation.unreadCount })}</span>}
+                              </span>
+                              <span className="mt-1 block truncate font-mono text-[10px] text-white/45">{conversation.lastMessage?.body ?? copy.directMessages.empty}</span>
+                            </span>
+                            {conversation.lastMessage && <time className="shrink-0 font-mono text-[9px] text-white/25" dateTime={conversation.lastMessage.createdAt}>{new Date(conversation.lastMessage.createdAt).toLocaleDateString(locale)}</time>}
+                          </button>
+                        ))}
+                      </div>
                    )}
                  </div>
                )}

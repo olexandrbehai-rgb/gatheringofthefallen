@@ -142,6 +142,25 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         UNIQUE (recipient_author_id, chat_message_id, kind)
       );
 
+      CREATE TABLE IF NOT EXISTS authors_world_direct_threads (
+        id SERIAL PRIMARY KEY,
+        participant_a_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        participant_b_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (participant_a_id < participant_b_id),
+        UNIQUE (participant_a_id, participant_b_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS authors_world_direct_messages (
+        id SERIAL PRIMARY KEY,
+        thread_id INTEGER NOT NULL REFERENCES authors_world_direct_threads(id) ON DELETE CASCADE,
+        sender_author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        read_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS author_creations (
         id SERIAL PRIMARY KEY,
         author_id INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
@@ -195,6 +214,15 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         ON authors_world_chat_messages (author_id);
       CREATE INDEX IF NOT EXISTS authors_world_notifications_recipient_idx
         ON authors_world_notifications (recipient_author_id, is_read, created_at DESC);
+      CREATE INDEX IF NOT EXISTS authors_world_direct_threads_participant_a_idx
+        ON authors_world_direct_threads (participant_a_id, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS authors_world_direct_threads_participant_b_idx
+        ON authors_world_direct_threads (participant_b_id, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS authors_world_direct_messages_thread_idx
+        ON authors_world_direct_messages (thread_id, created_at ASC);
+      CREATE INDEX IF NOT EXISTS authors_world_direct_messages_unread_idx
+        ON authors_world_direct_messages (thread_id, read_at)
+        WHERE read_at IS NULL;
       CREATE INDEX IF NOT EXISTS author_creations_author_id_idx
         ON author_creations (author_id);
       CREATE INDEX IF NOT EXISTS author_creations_created_at_idx
@@ -295,6 +323,32 @@ function serializeChatMentions(value: unknown): ChatMention[] {
       ? [{ id, slug, displayName }]
       : [];
   });
+}
+
+function serializeDirectAuthor(row: Record<string, unknown>) {
+  return {
+    id: Number(row.author_id ?? row.id),
+    slug: String(row.author_slug ?? row.slug ?? ""),
+    displayName: String(row.author_display_name ?? row.display_name ?? ""),
+    role: String(row.author_role ?? row.role ?? ""),
+    avatarUrl: typeof (row.author_avatar_url ?? row.avatar_url) === "string"
+      ? (row.author_avatar_url ?? row.avatar_url)
+      : null,
+  };
+}
+
+function serializeDirectMessage(row: Record<string, unknown>) {
+  return {
+    id: Number(row.id),
+    body: String(row.body),
+    createdAt: row.created_at,
+    readAt: row.read_at,
+    sender: serializeDirectAuthor(row),
+  };
+}
+
+function directParticipantIds(firstId: number, secondId: number) {
+  return firstId < secondId ? [firstId, secondId] : [secondId, firstId];
 }
 
 function isValidAvatarValue(value: string) {
@@ -1402,6 +1456,251 @@ router.post("/authors-world/chat", async (req, res) => {
   } catch (error) {
     logger.error({ msg: "Authors world chat send failed", error });
     res.status(500).json({ error: "Unable to send the message" });
+  }
+});
+
+router.get("/authors-world/direct/conversations", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to load private messages" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const ownAuthorResult = await pool.query(
+      `SELECT id FROM authors WHERE user_id = $1 LIMIT 1`,
+      [userId],
+    );
+    const ownAuthorId = ownAuthorResult.rows[0] ? Number(ownAuthorResult.rows[0].id) : null;
+    if (!ownAuthorId) {
+      res.status(403).json({ error: "Create your author portal before reading private messages" });
+      return;
+    }
+
+    const result = await pool.query(
+      `SELECT
+         threads.id AS thread_id,
+         other.id AS author_id,
+         other.slug AS author_slug,
+         other.display_name AS author_display_name,
+         other.role AS author_role,
+         other.avatar_url AS author_avatar_url,
+         last_message.id AS last_message_id,
+         last_message.body AS last_message_body,
+         last_message.created_at AS last_message_created_at,
+         last_message.sender_author_id AS last_message_sender_id,
+         COUNT(messages.id) FILTER (
+           WHERE messages.sender_author_id <> $1 AND messages.read_at IS NULL
+         )::int AS unread_count
+       FROM authors_world_direct_threads threads
+       JOIN authors other ON other.id = CASE
+         WHEN threads.participant_a_id = $1 THEN threads.participant_b_id
+         ELSE threads.participant_a_id
+       END
+       LEFT JOIN authors_world_direct_messages messages ON messages.thread_id = threads.id
+       LEFT JOIN LATERAL (
+         SELECT id, body, created_at, sender_author_id
+         FROM authors_world_direct_messages
+         WHERE thread_id = threads.id
+         ORDER BY created_at DESC, id DESC
+         LIMIT 1
+       ) last_message ON TRUE
+       WHERE threads.participant_a_id = $1 OR threads.participant_b_id = $1
+       GROUP BY threads.id, other.id, last_message.id, last_message.body,
+                last_message.created_at, last_message.sender_author_id
+       ORDER BY COALESCE(last_message.created_at, threads.updated_at) DESC, threads.id DESC`,
+      [ownAuthorId],
+    );
+
+    res.json({
+      conversations: result.rows.map((row) => ({
+        id: Number(row.thread_id),
+        author: serializeDirectAuthor(row),
+        lastMessage: row.last_message_id
+          ? {
+            id: Number(row.last_message_id),
+            body: String(row.last_message_body),
+            createdAt: row.last_message_created_at,
+            senderId: Number(row.last_message_sender_id),
+          }
+          : null,
+        unreadCount: Number(row.unread_count ?? 0),
+      })),
+    });
+  } catch (error) {
+    logger.error({ msg: "Authors world direct conversations load failed", error });
+    res.status(500).json({ error: "Unable to load private messages" });
+  }
+});
+
+router.get("/authors-world/direct/:slug", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to load private messages" });
+    return;
+  }
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  if (!slug) {
+    res.status(400).json({ error: "Author is required" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const authorsResult = await pool.query(
+      `SELECT id, user_id, slug, display_name, role, avatar_url
+       FROM authors
+       WHERE user_id = $1 OR slug = $2`,
+      [userId, slug],
+    );
+    const ownAuthor = authorsResult.rows.find((row) => row.user_id === userId);
+    const targetAuthor = authorsResult.rows.find((row) => row.slug === slug);
+    if (!ownAuthor) {
+      res.status(403).json({ error: "Create your author portal before reading private messages" });
+      return;
+    }
+    if (!targetAuthor) {
+      res.status(404).json({ error: "Author not found" });
+      return;
+    }
+    if (Number(ownAuthor.id) === Number(targetAuthor.id)) {
+      res.status(400).json({ error: "You cannot message your own portal" });
+      return;
+    }
+
+    const [participantA, participantB] = directParticipantIds(Number(ownAuthor.id), Number(targetAuthor.id));
+    const threadResult = await pool.query(
+      `SELECT id
+       FROM authors_world_direct_threads
+       WHERE participant_a_id = $1 AND participant_b_id = $2
+       LIMIT 1`,
+      [participantA, participantB],
+    );
+    const threadId = threadResult.rows[0] ? Number(threadResult.rows[0].id) : null;
+    if (threadId) {
+      await pool.query(
+        `UPDATE authors_world_direct_messages
+         SET read_at = NOW()
+         WHERE thread_id = $1 AND sender_author_id <> $2 AND read_at IS NULL`,
+        [threadId, Number(ownAuthor.id)],
+      );
+    }
+
+    const messagesResult = threadId
+      ? await pool.query(
+        `SELECT messages.id, messages.body, messages.read_at, messages.created_at,
+                sender.id AS author_id, sender.slug AS author_slug,
+                sender.display_name AS author_display_name, sender.role AS author_role,
+                sender.avatar_url AS author_avatar_url
+         FROM authors_world_direct_messages messages
+         JOIN authors sender ON sender.id = messages.sender_author_id
+         WHERE messages.thread_id = $1
+         ORDER BY messages.created_at ASC, messages.id ASC`,
+        [threadId],
+      )
+      : { rows: [] };
+
+    res.json({
+      thread: threadId
+        ? { id: threadId, author: serializeDirectAuthor(targetAuthor) }
+        : null,
+      messages: messagesResult.rows.map(serializeDirectMessage),
+    });
+  } catch (error) {
+    logger.error({ msg: "Authors world direct thread load failed", error });
+    res.status(500).json({ error: "Unable to load this private conversation" });
+  }
+});
+
+router.post("/authors-world/direct/:slug", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in and create an author portal to send private messages" });
+    return;
+  }
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const body = textField(req.body?.body, MAX_CHAT_MESSAGE_LENGTH);
+  if (!slug || !body) {
+    res.status(400).json({ error: "Message cannot be empty" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const authorsResult = await pool.query(
+      `SELECT id, user_id, slug, display_name, role, avatar_url
+       FROM authors
+       WHERE user_id = $1 OR slug = $2`,
+      [userId, slug],
+    );
+    const ownAuthor = authorsResult.rows.find((row) => row.user_id === userId);
+    const targetAuthor = authorsResult.rows.find((row) => row.slug === slug);
+    if (!ownAuthor) {
+      res.status(403).json({ error: "Create your author portal before sending private messages" });
+      return;
+    }
+    if (!targetAuthor) {
+      res.status(404).json({ error: "Author not found" });
+      return;
+    }
+    if (Number(ownAuthor.id) === Number(targetAuthor.id)) {
+      res.status(400).json({ error: "You cannot message your own portal" });
+      return;
+    }
+
+    const [participantA, participantB] = directParticipantIds(Number(ownAuthor.id), Number(targetAuthor.id));
+    const client = await pool.connect();
+    let messageId: number;
+    let threadId: number;
+    try {
+      await client.query("BEGIN");
+      const threadResult = await client.query(
+        `INSERT INTO authors_world_direct_threads (participant_a_id, participant_b_id, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (participant_a_id, participant_b_id)
+         DO UPDATE SET updated_at = NOW()
+         RETURNING id`,
+        [participantA, participantB],
+      );
+      threadId = Number(threadResult.rows[0].id);
+      const messageResult = await client.query(
+        `INSERT INTO authors_world_direct_messages (thread_id, sender_author_id, body, read_at)
+         VALUES ($1, $2, $3, NOW())
+         RETURNING id`,
+        [threadId, Number(ownAuthor.id), body],
+      );
+      messageId = Number(messageResult.rows[0].id);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const messageResult = await pool.query(
+      `SELECT messages.id, messages.body, messages.read_at, messages.created_at,
+              sender.id AS author_id, sender.slug AS author_slug,
+              sender.display_name AS author_display_name, sender.role AS author_role,
+              sender.avatar_url AS author_avatar_url
+       FROM authors_world_direct_messages messages
+       JOIN authors sender ON sender.id = messages.sender_author_id
+       WHERE messages.id = $1`,
+      [messageId],
+    );
+    const message = messageResult.rows[0] ? serializeDirectMessage(messageResult.rows[0]) : null;
+    if (!message) {
+      res.status(500).json({ error: "The private message was created but could not be loaded" });
+      return;
+    }
+    res.status(201).json({
+      thread: { id: threadId, author: serializeDirectAuthor(targetAuthor) },
+      message,
+    });
+  } catch (error) {
+    logger.error({ msg: "Authors world direct message send failed", error });
+    res.status(500).json({ error: "Unable to send the private message" });
   }
 });
 

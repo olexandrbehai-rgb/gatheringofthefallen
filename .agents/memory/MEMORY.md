@@ -16,3 +16,5 @@
 - [GitHub to Render sync](github-render-sync.md) — Render tracks GitHub main; shell push may lack auth, and oversized preview exports should stay out of deploy commits.
 - [Domovyk background placement](domovyk-background.md) — the companion belongs to the fixed author-world illustration layer, behind UI and portals, not inside the author coordinate grid.
 - [Author chat moderation](author-chat-moderation.md) — server-resolved mentions feed the inbox; owners can edit or hard-delete their own chat messages.
+- [Header controls](header-controls.md) — persistent music controls belong in the sticky header; hide floating launch cards in author workspaces.
+- [Private author messages](private-author-messages.md) — keep direct conversations separate from public chat and authorize every read/write by both portal participants.
