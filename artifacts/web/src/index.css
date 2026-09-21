@@ -834,6 +834,12 @@
   }
 }
 
+@media (max-width: 767px) {
+  .authors-world-portal-racket {
+    display: none;
+  }
+}
+
 .domovyk-layer {
   position: fixed;
   inset: 0;
