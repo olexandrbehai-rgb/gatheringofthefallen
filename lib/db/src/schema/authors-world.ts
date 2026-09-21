@@ -26,6 +26,7 @@ export const authorsTable = pgTable(
     bio: text("bio").notNull(),
     avatarUrl: text("avatar_url"),
     backgroundUrl: text("background_url"),
+    helperEnabled: boolean("helper_enabled").notNull().default(false),
     slug: text("slug").notNull().unique(),
     worldLeft: integer("world_left").notNull(),
     worldTop: integer("world_top").notNull(),

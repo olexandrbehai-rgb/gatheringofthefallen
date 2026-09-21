@@ -226,6 +226,121 @@
   animation: author-node-locate 1.35s ease-out;
 }
 
+.authors-world-portal-helper {
+  z-index: 160;
+  width: 74px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  animation: authors-world-portal-helper-flight 8s ease-in-out infinite;
+  filter: drop-shadow(0 0 9px rgba(0, 240, 255, 0.42));
+  will-change: transform;
+}
+
+.authors-world-portal-helper-body {
+  position: absolute;
+  left: 21px;
+  top: 12px;
+  width: 34px;
+  height: 32px;
+  border: 2px solid rgba(185, 247, 255, 0.95);
+  border-radius: 48% 52% 56% 44%;
+  background: radial-gradient(circle at 34% 26%, #fff3c7 0 8%, #ffcf9e 25%, #ff5ca8 68%, #5a1d71 100%);
+  box-shadow: 0 0 10px rgba(255, 92, 168, 0.68), inset -5px -6px 0 rgba(47, 16, 69, 0.34);
+}
+
+.authors-world-portal-helper-eye {
+  position: absolute;
+  top: 10px;
+  width: 5px;
+  height: 7px;
+  border-radius: 50%;
+  background: #07121f;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.authors-world-portal-helper-eye-left { left: 9px; }
+.authors-world-portal-helper-eye-right { right: 9px; }
+
+.authors-world-portal-helper-smile {
+  position: absolute;
+  left: 13px;
+  top: 20px;
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid #07121f;
+  border-radius: 50%;
+}
+
+.authors-world-portal-helper-wing {
+  position: absolute;
+  top: 21px;
+  width: 18px;
+  height: 12px;
+  border: 2px solid rgba(117, 239, 244, 0.85);
+  border-radius: 80% 20% 80% 20%;
+  background: rgba(0, 240, 255, 0.2);
+  animation: authors-world-portal-helper-wing-flutter 0.8s ease-in-out infinite alternate;
+}
+
+.authors-world-portal-helper-wing-left {
+  left: 7px;
+  transform: rotate(24deg);
+}
+
+.authors-world-portal-helper-wing-right {
+  right: 7px;
+  transform: scaleX(-1) rotate(24deg);
+  animation-delay: -0.35s;
+}
+
+.authors-world-portal-helper-trail {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #75eff4;
+  box-shadow: 0 0 9px #75eff4;
+  animation: authors-world-portal-helper-trail-pulse 1.8s ease-in-out infinite;
+}
+
+.authors-world-portal-helper-trail-one { left: 12px; top: 44px; }
+.authors-world-portal-helper-trail-two { left: 5px; top: 51px; width: 3px; height: 3px; animation-delay: -0.7s; }
+
+.authors-world-portal-helper-spark {
+  position: absolute;
+  color: #ffcf9e;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 207, 158, 0.9);
+  animation: authors-world-portal-helper-spark-twinkle 2.2s ease-in-out infinite;
+}
+
+.authors-world-portal-helper-spark-one { right: 1px; top: 3px; }
+.authors-world-portal-helper-spark-two { left: 2px; top: 10px; animation-delay: -1.1s; }
+
+@keyframes authors-world-portal-helper-flight {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-5deg); }
+  25% { transform: translate(calc(-50% + 18px), calc(-50% - 10px)) rotate(7deg); }
+  50% { transform: translate(calc(-50% + 5px), calc(-50% - 23px)) rotate(-2deg); }
+  75% { transform: translate(calc(-50% - 17px), calc(-50% - 7px)) rotate(8deg); }
+}
+
+@keyframes authors-world-portal-helper-wing-flutter {
+  from { transform: rotate(18deg) scaleY(0.8); }
+  to { transform: rotate(34deg) scaleY(1.12); }
+}
+
+@keyframes authors-world-portal-helper-trail-pulse {
+  0%, 100% { opacity: 0.35; transform: translate(0, 0) scale(0.7); }
+  50% { opacity: 1; transform: translate(-4px, 5px) scale(1.2); }
+}
+
+@keyframes authors-world-portal-helper-spark-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(-10deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(12deg); }
+}
+
 .domovyk-layer {
   position: fixed;
   inset: 0;
@@ -328,6 +443,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .authors-world-portal-helper,
+  .authors-world-portal-helper-wing,
+  .authors-world-portal-helper-trail,
+  .authors-world-portal-helper-spark {
+    animation: none;
+  }
+
   .domovyk-patrol,
   .domovyk-body-bob,
   .domovyk-head-sway {

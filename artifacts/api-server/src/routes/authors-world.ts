@@ -97,6 +97,7 @@ function ensureAuthorsWorldSchema(): Promise<void> {
         bio TEXT NOT NULL,
         avatar_url TEXT,
         background_url TEXT,
+        helper_enabled BOOLEAN NOT NULL DEFAULT FALSE,
         platform_links JSONB NOT NULL DEFAULT '[]'::jsonb,
         slug TEXT,
         world_left INTEGER,
@@ -107,6 +108,7 @@ function ensureAuthorsWorldSchema(): Promise<void> {
 
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS avatar_url TEXT;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS background_url TEXT;
+      ALTER TABLE authors ADD COLUMN IF NOT EXISTS helper_enabled BOOLEAN NOT NULL DEFAULT FALSE;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS platform_links JSONB NOT NULL DEFAULT '[]'::jsonb;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS slug TEXT;
       ALTER TABLE authors ADD COLUMN IF NOT EXISTS world_left INTEGER;
@@ -382,6 +384,7 @@ function serializeAuthor(row: Record<string, unknown>) {
     bio: row.bio,
     avatarUrl: row.avatar_url,
     backgroundUrl: row.background_url,
+    helperEnabled: row.helper_enabled === true,
     platformLinks: Array.isArray(row.platform_links) ? row.platform_links : [],
     slug: typeof row.slug === "string" && row.slug ? row.slug : `author-${Number(row.id)}`,
     position: {
@@ -646,7 +649,7 @@ router.get("/authors-world/authors", async (_req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(`
-      SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at,
+       SELECT id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top, created_at,
              COALESCE((
                SELECT json_agg(json_build_object(
                  'id', memories.id,
@@ -680,7 +683,7 @@ router.get("/authors-world/me", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-      `SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at,
+       `SELECT id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top, created_at,
               COALESCE((
                 SELECT json_agg(json_build_object(
                   'id', memories.id,
@@ -722,6 +725,9 @@ router.post("/authors-world/me", async (req, res) => {
   const backgroundUrl = req.body?.backgroundUrl
     ? textField(req.body.backgroundUrl)
     : null;
+  const helperEnabled = typeof req.body?.helperEnabled === "boolean"
+    ? req.body.helperEnabled
+    : null;
   const platformLinks = normalizeLinks(req.body?.platformLinks);
 
   if (!displayName || !role || !bio) {
@@ -755,9 +761,9 @@ router.post("/authors-world/me", async (req, res) => {
         await client.query(
           `UPDATE authors
             SET display_name = $1, role = $2, bio = $3, avatar_url = $4, background_url = $5,
-                platform_links = $6::jsonb, updated_at = NOW()
-            WHERE id = $7`,
-          [displayName, role, bio, avatarUrl, backgroundUrl, JSON.stringify(platformLinks), authorId],
+                helper_enabled = COALESCE($6, helper_enabled), platform_links = $7::jsonb, updated_at = NOW()
+            WHERE id = $8`,
+          [displayName, role, bio, avatarUrl, backgroundUrl, helperEnabled, JSON.stringify(platformLinks), authorId],
         );
       } else {
         const countResult = await client.query(`SELECT COUNT(*)::int AS count FROM authors`);
@@ -771,15 +777,15 @@ router.post("/authors-world/me", async (req, res) => {
         }
         const inserted = await client.query(
           `INSERT INTO authors
-             (user_id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)
+             (user_id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11)
            RETURNING id`,
-          [userId, displayName, role, bio, avatarUrl, backgroundUrl, JSON.stringify(platformLinks), slug, position.left, position.top],
+          [userId, displayName, role, bio, avatarUrl, backgroundUrl, helperEnabled ?? false, JSON.stringify(platformLinks), slug, position.left, position.top],
         );
         authorId = Number(inserted.rows[0].id);
       }
       const result = await client.query(
-        `SELECT id, display_name, role, bio, avatar_url, background_url, platform_links, slug, world_left, world_top, created_at
+         `SELECT id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links, slug, world_left, world_top, created_at
          FROM authors
          WHERE id = $1`,
         [authorId],
@@ -795,6 +801,38 @@ router.post("/authors-world/me", async (req, res) => {
   } catch (error) {
     logger.error({ msg: "Author profile save failed", error });
     res.status(500).json({ error: "Unable to save your author profile" });
+  }
+});
+
+router.patch("/authors-world/me/helper", async (req, res) => {
+  const userId = currentUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to add a portal helper" });
+    return;
+  }
+  if (typeof req.body?.enabled !== "boolean") {
+    res.status(400).json({ error: "Helper state must be true or false" });
+    return;
+  }
+
+  try {
+    await ensureAuthorsWorldSchema();
+    const result = await pool.query(
+      `UPDATE authors
+       SET helper_enabled = $1, updated_at = NOW()
+       WHERE user_id = $2
+       RETURNING id, display_name, role, bio, avatar_url, background_url, helper_enabled,
+                 platform_links, slug, world_left, world_top, created_at`,
+      [req.body.enabled, userId],
+    );
+    if (!result.rows[0]) {
+      res.status(404).json({ error: "Create your author portal before adding a helper" });
+      return;
+    }
+    res.json({ author: serializeAuthor(result.rows[0]) });
+  } catch (error) {
+    logger.error({ msg: "Portal helper update failed", error });
+    res.status(500).json({ error: "Unable to update your portal helper" });
   }
 });
 
@@ -930,7 +968,7 @@ router.get("/authors-world/author/:slug", async (req, res) => {
   try {
     await ensureAuthorsWorldSchema();
     const result = await pool.query(
-      `SELECT id, user_id, display_name, role, bio, avatar_url, background_url, platform_links,
+       `SELECT id, user_id, display_name, role, bio, avatar_url, background_url, helper_enabled, platform_links,
              slug, world_left, world_top, created_at,
              COALESCE((
                SELECT json_agg(json_build_object(
