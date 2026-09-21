@@ -679,7 +679,9 @@ export default function AuthorsWorld() {
   const [directThread, setDirectThread] = useState<DirectThread | null>(null);
   const [directDraft, setDirectDraft] = useState("");
   const [isSendingDirect, setIsSendingDirect] = useState(false);
-  const [inboxView, setInboxView] = useState<"mentions" | "direct" | "general">("mentions");
+  const [directNotice, setDirectNotice] = useState<string | null>(null);
+  const [directSendMode, setDirectSendMode] = useState<"private" | "public">("private");
+  const [inboxView, setInboxView] = useState<"mentions" | "direct" | "general">("direct");
   const [chatCursorPosition, setChatCursorPosition] = useState(0);
   const [mentionHighlightIndex, setMentionHighlightIndex] = useState(0);
   const [creations, setCreations] = useState<AuthorCreation[]>([]);
@@ -718,8 +720,8 @@ export default function AuthorsWorld() {
   const panAnimationRef = useRef<number | null>(null);
   const worldLayout = useMemo(() => worldLayoutFor(authors, isCompactViewport), [authors, isCompactViewport]);
   const worldSize = worldLayout;
-  const accountEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? "";
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const generalChatInputRef = useRef<HTMLTextAreaElement>(null);
   const mentionContext = useMemo(
     () => mentionContextFor(chatDraft, chatCursorPosition),
     [chatCursorPosition, chatDraft],
@@ -793,6 +795,8 @@ export default function AuthorsWorld() {
     setSelectedDirectSlug(conversation.author.slug);
     setDirectThread(null);
     setDirectDraft("");
+    setDirectNotice(null);
+    setDirectSendMode("private");
     setDirectLoading(true);
     setDirectError(null);
     try {
@@ -827,29 +831,51 @@ export default function AuthorsWorld() {
     if (!selectedDirectSlug || !body || isSendingDirect) return;
     setIsSendingDirect(true);
     setDirectError(null);
+    setDirectNotice(null);
     try {
-      const response = await fetch(`${API_ROOT}/authors-world/direct/${encodeURIComponent(selectedDirectSlug)}`, {
+      const isPublicReply = directSendMode === "public";
+      const publicBody = directThread && body.toLowerCase().startsWith(`@${directThread.author.slug.toLowerCase()}`)
+        ? body
+        : directThread
+          ? `@${directThread.author.slug} ${body}`
+          : body;
+      const response = await fetch(
+        isPublicReply
+          ? `${API_ROOT}/authors-world/chat`
+          : `${API_ROOT}/authors-world/direct/${encodeURIComponent(selectedDirectSlug)}`,
+        {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body }),
-      });
+        body: JSON.stringify({ body: isPublicReply ? publicBody : body }),
+        },
+      );
       const payload = await response.json().catch(() => ({})) as {
-        message?: DirectMessage;
+        message?: DirectMessage | ChatMessage;
         error?: string;
       };
-      if (!response.ok || !payload.message) throw new Error(payload.error ?? copy.directMessages.sendFailed);
-      setDirectThread((current) => current
-        ? { ...current, messages: [...current.messages, payload.message as DirectMessage] }
-        : current);
+      if (!response.ok || !payload.message) throw new Error(payload.error ?? (isPublicReply ? copy.chat.failed : copy.directMessages.sendFailed));
+      if (isPublicReply) {
+        setChatMessages((current) =>
+          current.some((item) => item.id === payload.message?.id)
+            ? current
+            : [...current, payload.message as ChatMessage].slice(-100),
+        );
+        setDirectNotice(copy.directMessage.success);
+      } else {
+        setDirectThread((current) => current
+          ? { ...current, messages: [...current.messages, payload.message as DirectMessage] }
+          : current);
+        setDirectNotice(copy.directMessage.privateSuccess);
+      }
       setDirectDraft("");
-      void loadDirectConversations();
+      if (!isPublicReply) void loadDirectConversations();
     } catch (error) {
-      setDirectError(error instanceof Error ? error.message : copy.directMessages.sendFailed);
+      setDirectError(error instanceof Error ? error.message : directSendMode === "public" ? copy.chat.failed : copy.directMessages.sendFailed);
     } finally {
       setIsSendingDirect(false);
     }
-  }, [copy.directMessages.sendFailed, directDraft, isSendingDirect, loadDirectConversations, selectedDirectSlug]);
+  }, [copy.chat.failed, copy.directMessage.privateSuccess, copy.directMessage.success, copy.directMessages.sendFailed, directDraft, directSendMode, directThread, isSendingDirect, loadDirectConversations, selectedDirectSlug]);
 
   const selectMention = useCallback((author: Author) => {
     if (!mentionContext) return;
@@ -1872,21 +1898,15 @@ export default function AuthorsWorld() {
                   aria-live="polite"
                 >
                   <span className="authors-world-session-dot" aria-hidden="true" />
-                  <div className="authors-world-session-identity min-w-0 overflow-x-auto">
-                    <p className="flex min-w-max items-baseline gap-2 whitespace-nowrap font-mono">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
-                        {!authLoaded ? copy.account.sessionChecking : isSignedIn ? copy.account.signedInAs : copy.account.signedOut}
-                      </span>
-                      {isSignedIn && (
-                        <span className="text-xs font-semibold text-white">
-                          {accountEmail || copy.account.verified}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.1em]">
-                    {!authLoaded ? copy.account.loading : isSignedIn ? (myAuthor ? copy.account.portalReady : copy.account.portalNeeded) : copy.account.description}
-                  </span>
+                  {!authLoaded && (
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em]">{copy.account.sessionChecking}</span>
+                  )}
+                  {authLoaded && !isSignedIn && (
+                    <>
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em]">{copy.account.signedOut}</span>
+                      <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.1em]">{copy.account.description}</span>
+                    </>
+                  )}
                 </div>
               </div>
              <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
@@ -1897,14 +1917,14 @@ export default function AuthorsWorld() {
                    <button
                      type="button"
                       onClick={openMyPortalWorld}
-                     className="authors-world-action-button authors-world-compact-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all"
+                     className="authors-world-action-button authors-world-top-action authors-world-control-cyan inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#d9fbff] transition-all"
                    >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.myPortal}
                    </button>
                    <button
                      type="button"
                      onClick={() => void handleAuthorSignOut()}
-                     className="authors-world-action-button authors-world-compact-action authors-world-control-orange inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all"
+                     className="authors-world-action-button authors-world-top-action authors-world-control-orange inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 border px-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffd0ba] transition-all"
                    >
                       <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> {copy.account.signOut}
                    </button>
@@ -2077,13 +2097,10 @@ export default function AuthorsWorld() {
                           <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#d7b6ff]">{copy.notifications.generalChat}</p>
                           <button
                             type="button"
-                            onClick={() => {
-                              setIsNotificationsOpen(false);
-                              window.requestAnimationFrame(() => document.getElementById("authors-world-chat")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-                            }}
+                            onClick={() => setInboxView("direct")}
                             className="inline-flex min-h-9 items-center gap-1.5 border border-[#8a2be2]/45 px-2.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#d7b6ff] transition-colors hover:border-[#00f0ff]/70 hover:text-white"
                           >
-                            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> {copy.notifications.openGeneralChat}
+                            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {copy.directMessages.back}
                           </button>
                         </div>
                         <div className="authors-world-message-scroll mt-3 min-h-0 max-h-72 flex-1 space-y-3 overflow-y-auto pr-1 sm:max-h-[52vh]">
@@ -2120,6 +2137,34 @@ export default function AuthorsWorld() {
                              </article>
                           ))}
                         </div>
+                        <form onSubmit={handleSendChat} className="authors-world-composer mt-3 flex shrink-0 items-end gap-2 border-t border-white/10 pt-3">
+                          <label className="min-w-0 flex-1">
+                            <span className="sr-only">{copy.chat.placeholder}</span>
+                            <textarea
+                              ref={generalChatInputRef}
+                              value={chatDraft}
+                              onChange={(event) => {
+                                setChatDraft(event.target.value);
+                                setChatCursorPosition(event.target.selectionStart ?? event.target.value.length);
+                              }}
+                              onSelect={(event) => setChatCursorPosition(event.currentTarget.selectionStart ?? event.currentTarget.value.length)}
+                              maxLength={1000}
+                              rows={1}
+                              placeholder={copy.chat.placeholder}
+                              className="authors-world-composer-input min-h-11 w-full resize-none rounded-2xl border px-4 py-3 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#8a2be2]/70"
+                            />
+                          </label>
+                          <button
+                            type="submit"
+                            disabled={isSendingChat || !chatDraft.trim()}
+                            className="authors-world-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-[#d7b6ff] disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label={isSendingChat ? copy.chat.sending : copy.chat.send}
+                            title={isSendingChat ? copy.chat.sending : copy.chat.send}
+                          >
+                            <Send className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </form>
+                        {chatError && <p className="mt-2 font-mono text-xs text-[#ffb184]">{chatError}</p>}
                       </div>
                     ) : (
                       <div className={`authors-world-direct-layout ${directThread ? "has-thread" : ""}`}>
@@ -2132,10 +2177,28 @@ export default function AuthorsWorld() {
                             <p className="font-mono text-xs text-white/45">{copy.notifications.loading}</p>
                           ) : directError && !directThread ? (
                             <p className="font-mono text-xs text-[#ffb184]">{directError}</p>
-                          ) : directConversations.length === 0 ? (
-                            <p className="font-mono text-xs leading-relaxed text-white/45">{copy.directMessages.empty}</p>
                           ) : (
                             <div className="authors-world-message-scroll authors-world-conversation-scroll space-y-1 overflow-y-auto pr-1">
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   setDirectThread(null);
+                                   setSelectedDirectSlug(null);
+                                   setInboxView("general");
+                                 }}
+                                 className="authors-world-conversation-row authors-world-general-conversation-row"
+                                 aria-label={`${copy.notifications.openGeneralChat}: ${copy.notifications.generalChat}`}
+                               >
+                                 <MessagingAvatar name={copy.notifications.generalChat} size="lg" />
+                                 <span className="min-w-0 flex-1 text-left">
+                                   <span className="block whitespace-nowrap font-mono text-xs font-bold text-[#d7b6ff]">{copy.notifications.generalChat}</span>
+                                   <span className="mt-1 block whitespace-normal break-words font-mono text-[10px] leading-relaxed text-white/45">{copy.directMessage.modePublic}</span>
+                                 </span>
+                                 <MessageCircle className="h-4 w-4 shrink-0 text-[#d7b6ff]/70" aria-hidden="true" />
+                               </button>
+                               {directConversations.length === 0 && (
+                                 <p className="px-2 py-3 font-mono text-xs leading-relaxed text-white/45">{copy.directMessages.empty}</p>
+                               )}
                               {directConversations.map((conversation) => (
                                 <button
                                   key={conversation.id}
@@ -2209,15 +2272,45 @@ export default function AuthorsWorld() {
                                 );
                               })}
                             </div>
-                            <form onSubmit={sendDirectReply} className="authors-world-composer mt-3 flex shrink-0 items-end gap-2 border-t border-white/10 pt-3">
+                            <div className="authors-world-reply-mode mt-3 border-t border-white/10 pt-3">
+                              <div className="flex flex-wrap gap-2" role="group" aria-label={copy.directMessage.title}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDirectSendMode("private");
+                                    setDirectNotice(null);
+                                  }}
+                                  className={`authors-world-reply-mode-button ${directSendMode === "private" ? "is-active is-private" : ""}`}
+                                >
+                                  {copy.directMessage.modePrivate}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDirectSendMode("public");
+                                    setDirectNotice(null);
+                                  }}
+                                  className={`authors-world-reply-mode-button ${directSendMode === "public" ? "is-active is-public" : ""}`}
+                                >
+                                  {copy.directMessage.modePublic}
+                                </button>
+                              </div>
+                              <p className="mt-2 font-mono text-[10px] leading-relaxed text-white/45">
+                                {formatAuthorsWorldCopy(
+                                  directSendMode === "public" ? copy.directMessage.publicDescription : copy.directMessage.privateDescription,
+                                  { name: directThread.author.displayName },
+                                )}
+                              </p>
+                            </div>
+                            <form onSubmit={sendDirectReply} className="authors-world-composer mt-3 flex shrink-0 items-end gap-2">
                               <label className="min-w-0 flex-1">
-                                <span className="sr-only">{copy.directMessages.placeholder}</span>
+                                <span className="sr-only">{formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: directThread.author.displayName })}</span>
                                 <textarea
                                   value={directDraft}
                                   onChange={(event) => setDirectDraft(event.target.value)}
                                   maxLength={1000}
                                   rows={1}
-                                  placeholder={copy.directMessages.placeholder}
+                                  placeholder={formatAuthorsWorldCopy(copy.directMessage.placeholder, { name: directThread.author.displayName })}
                                   className="authors-world-composer-input min-h-11 w-full resize-none rounded-2xl border px-4 py-3 font-mono text-xs text-white outline-none placeholder:text-white/25 focus:border-[#00f0ff]/70"
                                 />
                               </label>
@@ -2225,12 +2318,13 @@ export default function AuthorsWorld() {
                                 type="submit"
                                 disabled={isSendingDirect || !directDraft.trim()}
                                 className="authors-world-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-[#b9f7ff] disabled:cursor-not-allowed disabled:opacity-40"
-                                aria-label={isSendingDirect ? copy.directMessages.sending : copy.directMessages.send}
-                                title={isSendingDirect ? copy.directMessages.sending : copy.directMessages.send}
+                                 aria-label={isSendingDirect ? copy.directMessage.sending : directSendMode === "public" ? copy.directMessage.sendPublic : copy.directMessage.sendPrivate}
+                                 title={isSendingDirect ? copy.directMessage.sending : directSendMode === "public" ? copy.directMessage.sendPublic : copy.directMessage.sendPrivate}
                               >
                                 <Send className="h-4 w-4" aria-hidden="true" />
                               </button>
                             </form>
+                             {directNotice && <p className="mt-2 font-mono text-xs leading-relaxed text-[#68f6a6]">{directNotice}</p>}
                             {directError && <p className="mt-2 font-mono text-xs text-[#ffb184]">{directError}</p>}
                           </div>
                         )}

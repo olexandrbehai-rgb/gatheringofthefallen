@@ -692,6 +692,49 @@
   background: rgba(0, 240, 255, 0.11);
 }
 
+.authors-world-general-conversation-row {
+  border-color: rgba(138, 43, 226, 0.3);
+  background: rgba(138, 43, 226, 0.08);
+}
+
+.authors-world-general-conversation-row:hover {
+  border-color: rgba(138, 43, 226, 0.65);
+  background: rgba(138, 43, 226, 0.16);
+}
+
+.authors-world-reply-mode-button {
+  min-height: 2.25rem;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.7rem;
+  padding: 0.45rem 0.7rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.authors-world-reply-mode-button:hover,
+.authors-world-reply-mode-button.is-active {
+  color: #fff;
+}
+
+.authors-world-reply-mode-button.is-private {
+  border-color: rgba(0, 240, 255, 0.64);
+  background: rgba(0, 240, 255, 0.12);
+  color: #b9f7ff;
+}
+
+.authors-world-reply-mode-button.is-public {
+  border-color: rgba(255, 173, 127, 0.7);
+  background: rgba(255, 173, 127, 0.12);
+  color: #ffd0ba;
+}
+
 .authors-world-unread-badge {
   display: inline-flex;
   min-height: 1.3rem;
