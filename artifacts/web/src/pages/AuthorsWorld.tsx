@@ -1950,11 +1950,13 @@ export default function AuthorsWorld() {
             {isSignedIn && myAuthor && (
               <section
                 id="authors-world-notifications"
+                 role={isNotificationsOpen && isMobileViewport ? "dialog" : undefined}
+                 aria-modal={isNotificationsOpen && isMobileViewport ? true : undefined}
                 data-open={isNotificationsOpen ? "true" : "false"}
                 onMouseEnter={() => {
                   if (!isMobileViewport) setIsNotificationsOpen(true);
                 }}
-                 className={`authors-world-inbox-shell authors-world-telegram-inbox authors-world-account-panel mt-3 border p-3 sm:mt-4 ${isNotificationsOpen ? "authors-world-inbox-open" : ""}`}
+                  className={`authors-world-inbox-shell authors-world-telegram-inbox authors-world-account-panel mt-3 border p-3 sm:mt-4 ${isNotificationsOpen ? "authors-world-inbox-open" : ""} ${isNotificationsOpen && isMobileViewport ? "authors-world-inbox-mobile-fullscreen" : ""}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
@@ -3218,13 +3220,6 @@ export default function AuthorsWorld() {
                         </div>
                       </div>
                     ))}
-                   <button type="button" onClick={openCreationComposer} className="group flex min-h-24 items-center justify-center gap-3 border border-dashed border-[#00f0ff]/55 bg-[#00f0ff]/[0.04] px-3 text-center transition-colors hover:border-[#ff2d95] hover:bg-[#ff2d95]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff]">
-                     <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#00f0ff]/70 bg-[#00f0ff]/10 text-xl text-[#b9f7ff] shadow-[0_0_18px_rgba(0,240,255,0.16)] transition-transform group-hover:scale-110">+</span>
-                     <span className="text-left">
-                       <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b9f7ff]">{copy.creations.addWork}</span>
-                       <span className="mt-1 block font-mono text-[9px] leading-relaxed text-white/40">{copy.creations.platform} // YouTube, Instagram, Spotify...</span>
-                     </span>
-                   </button>
                  </div>
                  {isCreationComposerOpen && <form onSubmit={handleSaveCreation} className="mt-4 grid gap-3 border border-[#00f0ff]/35 bg-black/20 p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
