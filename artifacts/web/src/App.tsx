@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ClerkProvider, SignIn, SignUp, useUser } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -34,6 +34,7 @@ const clerkPubKey = publishableKeyFromHost(
 );
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const API_ROOT = `${basePath}/api`;
+const PRIVACY_NOTICE_STORAGE_KEY = "gtf-privacy-notice-accepted-v1";
 
 const clerkAppearance = {
   theme: "simple" as const,
@@ -83,6 +84,15 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  const [privacyChecked, setPrivacyChecked] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(() => {
+    try {
+      return window.localStorage.getItem(PRIVACY_NOTICE_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
   return (
     <div className="auth-shell flex min-h-[100dvh] flex-col items-center justify-center bg-[#050208] px-4 py-10">
       <div className="mb-5 flex w-full max-w-md justify-between gap-3">
@@ -93,7 +103,85 @@ function SignUpPage() {
           Уже маю акаунт
         </Link>
       </div>
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} appearance={clerkAppearance} />
+      {privacyAccepted && (
+        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} appearance={clerkAppearance} />
+      )}
+      {!privacyAccepted && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="privacy-notice-title"
+        >
+          <section className="flex max-h-[calc(100dvh-1rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[#00f0ff]/45 bg-[#0b0614] shadow-[0_0_35px_rgba(0,240,255,0.2),0_0_90px_rgba(138,43,226,0.18)] sm:max-h-[calc(100dvh-3rem)]">
+            <div className="shrink-0 border-b border-white/10 px-3 py-3 sm:px-7 sm:py-5">
+              <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#ffcf9e]">
+                Повідомлення про конфіденційність · Privacy notice
+              </p>
+              <h1 id="privacy-notice-title" className="mt-1.5 font-creepster text-xl tracking-[0.08em] text-[#00f0ff] sm:mt-2 sm:text-3xl">
+                Вхід через Google / Sign in with Google
+              </h1>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto px-3 py-3 sm:px-7 sm:py-5">
+              <div className="space-y-3 font-mono text-[10px] leading-[1.45] text-white/75 sm:space-y-4 sm:text-xs sm:leading-relaxed">
+                <div>
+                  <p className="mb-1.5 font-bold uppercase tracking-[0.12em] text-[#b9f7ff] sm:mb-2">Українською</p>
+                  <p>
+                    Для входу на сайт ви можете використати свій Google-акаунт. Авторизація проходить через Google та захищений сервіс Clerk. Ми не отримуємо і не зберігаємо ваш пароль Google. Сайт отримує лише необхідні дані профілю — ім’я, email та, за наявності, фото профілю — для створення й обслуговування вашого акаунта.
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-1.5 font-bold uppercase tracking-[0.12em] text-[#b9f7ff] sm:mb-2">English</p>
+                  <p>
+                    You may use your Google account to sign in to this website. Authentication is handled by Google and the secure Clerk service. We do not receive or store your Google password. The site receives only the profile information needed to create and operate your account — your name, email address and, if available, profile photo.
+                  </p>
+                </div>
+                <div className="grid gap-1.5 rounded-lg border border-[#ffcf9e]/25 bg-[#ffcf9e]/[.06] p-2.5 text-[#ffcf9e] sm:gap-2 sm:p-3">
+                  <p>Не вводьте в профілі, чатах або повідомленнях паролі, платіжні реквізити чи інші конфіденційні дані.</p>
+                  <p>Do not enter passwords, payment details or other confidential information in profiles, chats or messages.</p>
+                </div>
+              </div>
+
+              <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border border-white/15 bg-black/25 p-2.5 font-mono text-[11px] leading-[1.4] text-white transition-colors hover:border-[#00f0ff]/60 sm:mt-5 sm:gap-3 sm:p-4 sm:text-xs sm:leading-relaxed">
+                <input
+                  type="checkbox"
+                  checked={privacyChecked}
+                  onChange={(event) => setPrivacyChecked(event.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-[#00f0ff]"
+                />
+                <span>
+                  Я прочитав(ла) повідомлення та погоджуюся продовжити реєстрацію.
+                  <span className="mt-1 block text-white/65">
+                    I have read this notice and agree to continue registration.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-2 border-t border-white/10 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5">
+              <Link href="/" className="text-center font-mono text-[10px] uppercase tracking-[0.14em] text-white/50 transition-colors hover:text-white sm:text-left">
+                ← Повернутися / Go back
+              </Link>
+              <button
+                type="button"
+                disabled={!privacyChecked}
+                onClick={() => {
+                  try {
+                    window.localStorage.setItem(PRIVACY_NOTICE_STORAGE_KEY, "true");
+                  } catch {
+                    // Continue even when browser storage is unavailable.
+                  }
+                  setPrivacyAccepted(true);
+                }}
+                className="w-full rounded border border-[#00f0ff]/70 bg-[#00f0ff]/10 px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#b9f7ff] transition-all hover:bg-[#00f0ff]/20 hover:text-white disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-white/[.04] disabled:text-white/35 sm:w-auto sm:py-3"
+              >
+                Продовжити / Continue
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
