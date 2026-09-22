@@ -2004,9 +2004,6 @@ export default function AuthorsWorld() {
                  role={isNotificationsOpen && isMobileViewport ? "dialog" : undefined}
                  aria-modal={isNotificationsOpen && isMobileViewport ? true : undefined}
                 data-open={isNotificationsOpen ? "true" : "false"}
-                onMouseEnter={() => {
-                  if (!isMobileViewport) setIsNotificationsOpen(true);
-                }}
                   className={`authors-world-inbox-shell authors-world-telegram-inbox authors-world-account-panel mt-3 border p-3 sm:mt-4 ${isNotificationsOpen ? "authors-world-inbox-open" : ""} ${isNotificationsOpen && isMobileViewport ? "authors-world-inbox-mobile-fullscreen" : ""}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
