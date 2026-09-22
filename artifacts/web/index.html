@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="google" content="notranslate" />
     <title>Gathering Of The Fallen — Український рок/метал гурт</title>
     <meta name="description" content="Gathering Of The Fallen — український рок/метал гурт. Слухай нашу музику, дивись кліпи, купуй мерч та слідкуй за нами в соцмережах." />
     <meta property="og:title" content="Gathering Of The Fallen" />
@@ -44,35 +45,25 @@
       #root {
         min-height: 100vh;
       }
-      replit-badge,
-      replit-badge-v2,
-      replit-badge-v3,
-      [data-replit-badge],
-      [data-replit-feedback],
-      [data-replit-widget],
-      [data-replit],
-      .replit-badge,
-      .replit-badge-v2,
-      .replit-badge-v3,
-      .replit-feedback,
-      .replit-widget,
-      #replit-badge,
-      #replit-badge-iframe,
-      #replit-feedback,
-      #replit-feedback-widget,
-      .replit-watermark,
-      div[class*="replit-badge"],
-      div[id*="replit-badge"],
-      div[class*="replit-feedback"],
-      div[id*="replit-feedback"],
-      div[class*="replit-widget"],
-      div[id*="replit-widget"],
-      iframe[src*="replit.com"],
-      iframe[src*="replit.dev"],
-      iframe[src*="replit.app"],
-      a[href*="replit.com"],
-      a[href*="replit.dev"],
-      a[href*="replit.app"] {
+      body > replit-badge,
+      body > replit-badge-v2,
+      body > replit-badge-v3,
+      body > [data-replit-badge],
+      body > [data-replit-feedback],
+      body > [data-replit-widget],
+      body > .replit-badge,
+      body > .replit-badge-v2,
+      body > .replit-badge-v3,
+      body > .replit-feedback,
+      body > .replit-widget,
+      body > #replit-badge,
+      body > #replit-badge-iframe,
+      body > #replit-feedback,
+      body > #replit-feedback-widget,
+      body > .replit-watermark,
+      body > iframe[src*="replit.com"],
+      body > iframe[src*="replit.dev"],
+      body > iframe[src*="replit.app"] {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -82,157 +73,8 @@
       }
     </style>
   </head>
-  <body>
+  <body translate="no" class="notranslate">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      (function () {
-        var TEXT_PATTERNS = [
-          'made on replit',
-          'made with replit',
-          'built on replit',
-          'powered by replit',
-          'share your feedback',
-          'help improve this app',
-          'sharing your feedback with the creator',
-          'this app is built on replit'
-        ];
-        var ATTR_PATTERNS = [
-          'replit-badge',
-          'replit-feedback',
-          'replit-widget',
-          'replit-inbox',
-          'replit.com/badge',
-          'replit.com/feedback',
-          'replit.com/widget',
-          'replit.com/inbox',
-          'replit.dev/badge',
-          'replit.dev/feedback',
-          'replit.dev/widget',
-          'replit.dev/inbox'
-        ];
-        function looksLikeReplitWidget(el) {
-          if (!el || el.nodeType !== 1) return false;
-          if (el.id === 'root' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK' || el.tagName === 'META') return false;
-          var tag = (el.tagName || '').toLowerCase();
-          if (tag.indexOf('replit-') === 0) return true;
-          var html = (el.outerHTML || '').toLowerCase();
-          for (var a = 0; a < ATTR_PATTERNS.length; a++) {
-            if (html.indexOf(ATTR_PATTERNS[a]) !== -1) return true;
-          }
-          var text = (el.textContent || '').toLowerCase();
-          if (text.length > 0 && text.length < 400) {
-            for (var t = 0; t < TEXT_PATTERNS.length; t++) {
-              if (text.indexOf(TEXT_PATTERNS[t]) !== -1) return true;
-            }
-          }
-          return false;
-        }
-        function nukeFixedCorner() {
-          var all = document.body ? document.body.querySelectorAll('*') : [];
-          for (var i = 0; i < all.length; i++) {
-            var el = all[i];
-            if (!el || el.id === 'root' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
-            var cs;
-            try { cs = window.getComputedStyle(el); } catch (e) { continue; }
-            if (!cs || (cs.position !== 'fixed' && cs.position !== 'sticky')) continue;
-            var r;
-            try { r = el.getBoundingClientRect(); } catch (e) { continue; }
-            if (!r || r.width === 0 || r.height === 0) continue;
-            if (r.width > 250 || r.height > 120) continue;
-            var nearBottom = (window.innerHeight - r.bottom) < 70;
-            var nearRight = (window.innerWidth - r.right) < 70;
-            if (!(nearBottom && nearRight)) continue;
-            var probe = ((el.outerHTML || '') + ' ' + (el.shadowRoot ? (el.shadowRoot.innerHTML || '') : '')).toLowerCase();
-            if (probe.indexOf('replit') !== -1 || probe.indexOf('badge') !== -1 || probe.indexOf('feedback') !== -1) {
-              try { el.remove(); } catch (e) {
-                el.style.setProperty('display', 'none', 'important');
-              }
-            }
-          }
-        }
-        function isOurUI(el) {
-          var n = el;
-          for (var depth = 0; depth < 8 && n; depth++) {
-            if (n.id === 'root') return true;
-            n = n.parentElement;
-          }
-          return false;
-        }
-        function nukeAnyCornerBadge() {
-          var all = document.querySelectorAll('body > *, body > * *');
-          for (var i = 0; i < all.length; i++) {
-            var el = all[i];
-            if (!el) continue;
-            var tag = (el.tagName || '').toLowerCase();
-            if (tag === 'script' || tag === 'style' || tag === 'link' || tag === 'meta' || tag === 'noscript') continue;
-            if (isOurUI(el)) continue;
-            var cs;
-            try { cs = window.getComputedStyle(el); } catch (e) { continue; }
-            if (!cs) continue;
-            if (cs.position !== 'fixed' && cs.position !== 'sticky' && cs.position !== 'absolute') continue;
-            var r;
-            try { r = el.getBoundingClientRect(); } catch (e) { continue; }
-            if (!r || r.width === 0 || r.height === 0) continue;
-            if (r.width > 300 || r.height > 160) continue;
-            var nearBottom = (window.innerHeight - r.bottom) < 100;
-            var nearRight = (window.innerWidth - r.right) < 100;
-            if (!nearBottom || !nearRight) continue;
-            try { el.remove(); } catch (e) {
-              try {
-                el.style.setProperty('display', 'none', 'important');
-                el.style.setProperty('visibility', 'hidden', 'important');
-                el.style.setProperty('opacity', '0', 'important');
-                el.style.setProperty('pointer-events', 'none', 'important');
-                el.style.setProperty('width', '0', 'important');
-                el.style.setProperty('height', '0', 'important');
-              } catch (e2) {}
-            }
-          }
-        }
-        function nuke() {
-          var bodyKids = document.body ? document.body.children : [];
-          for (var i = bodyKids.length - 1; i >= 0; i--) {
-            var n = bodyKids[i];
-            if (n.id === 'root' || n.tagName === 'SCRIPT') continue;
-            if (looksLikeReplitWidget(n)) {
-              n.remove();
-              continue;
-            }
-            var inner = n.querySelectorAll ? n.querySelectorAll('*') : [];
-            for (var k = 0; k < inner.length; k++) {
-              if (looksLikeReplitWidget(inner[k])) {
-                try { inner[k].remove(); } catch (e) {}
-              }
-            }
-          }
-          var iframes = document.querySelectorAll('iframe');
-          for (var j = 0; j < iframes.length; j++) {
-            var src = (iframes[j].getAttribute('src') || '').toLowerCase();
-            for (var p = 0; p < ATTR_PATTERNS.length; p++) {
-              if (src.indexOf(ATTR_PATTERNS[p]) !== -1) {
-                iframes[j].remove();
-                break;
-              }
-            }
-          }
-        }
-        function safeNuke() {
-          try { nuke(); } catch (e) {}
-          try { nukeFixedCorner(); } catch (e) {}
-          try { nukeAnyCornerBadge(); } catch (e) {}
-        }
-        safeNuke();
-        if (window.MutationObserver) {
-          var obs = new MutationObserver(safeNuke);
-          if (document.documentElement) {
-            obs.observe(document.documentElement, { childList: true, subtree: true });
-          }
-        }
-        document.addEventListener('DOMContentLoaded', safeNuke);
-        window.addEventListener('load', safeNuke);
-        setInterval(safeNuke, 1500);
-      })();
-    </script>
   </body>
 </html>
