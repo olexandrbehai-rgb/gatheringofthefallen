@@ -587,13 +587,12 @@ function AuthorNode({
           ) : (
             <Plus className="relative h-7 w-7 text-[#00f0ff]/80" aria-hidden="true" />
           )}
-           {author.isOnline && (
-             <span
-               className="authors-world-presence-dot"
-               title="Автор зараз на сайті"
-               aria-label="Автор зараз на сайті"
-             />
-           )}
+           <span
+             className={`authors-world-presence-dot ${author.isOnline ? "" : "authors-world-presence-dot-offline"}`}
+             title={author.isOnline ? "Автор зараз на сайті" : undefined}
+             aria-label={author.isOnline ? "Автор зараз на сайті" : undefined}
+             aria-hidden={!author.isOnline}
+           />
         </span>
         <span className="relative z-20 hidden min-w-0 flex-1 flex-col justify-center px-4 py-2 opacity-0 transition-opacity duration-200 group-hover:flex group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
            <span className="truncate font-creepster text-2xl tracking-[0.08em] text-[#00f0ff] antialiased">{author.name}</span>
@@ -1260,13 +1259,21 @@ export default function AuthorsWorld() {
         const payload = await response.json().catch(() => ({})) as { onlineAuthorIds?: unknown };
         if (!active || !Array.isArray(payload.onlineAuthorIds)) return;
         const onlineIds = new Set(payload.onlineAuthorIds.map((id) => String(id)));
-        setAuthors((current) => current.map((author) => ({
-          ...author,
-          isOnline: onlineIds.has(author.id),
-        })));
-        setMyAuthor((current) => current
-          ? { ...current, isOnline: onlineIds.has(current.id) }
-          : current);
+        setAuthors((current) => {
+          let changed = false;
+          const nextAuthors = current.map((author) => {
+            const isOnline = onlineIds.has(author.id);
+            if (author.isOnline === isOnline) return author;
+            changed = true;
+            return { ...author, isOnline };
+          });
+          return changed ? nextAuthors : current;
+        });
+        setMyAuthor((current) => {
+          if (!current) return current;
+          const isOnline = onlineIds.has(current.id);
+          return current.isOnline === isOnline ? current : { ...current, isOnline };
+        });
       } catch {
         // The initial author payload remains usable when presence is unavailable.
       }

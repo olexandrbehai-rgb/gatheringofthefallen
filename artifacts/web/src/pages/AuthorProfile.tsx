@@ -431,8 +431,15 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
         </div>
         <header className="author-portal-hero mt-7 grid min-w-0 gap-5 rounded border border-[#00f0ff]/30 bg-[#020811]/78 p-4 backdrop-blur-md sm:mt-10 sm:gap-6 sm:p-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
            <div className="author-neon-avatar author-avatar-glow relative mx-auto flex h-24 w-24 items-center justify-center overflow-visible rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-2xl font-bold text-[#b9f7ff] sm:h-28 sm:w-28 md:mx-0">
-            {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
-             {author.isOnline && <span className="authors-world-presence-dot" title="Автор зараз на сайті" aria-label="Автор зараз на сайті" />}
+            <span className="relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-full">
+              {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-cover object-center" /> : initialsFor(author.displayName)}
+            </span>
+              <span
+                className={`authors-world-presence-dot ${author.isOnline ? "" : "authors-world-presence-dot-offline"}`}
+                title={author.isOnline ? "Автор зараз на сайті" : undefined}
+                aria-label={author.isOnline ? "Автор зараз на сайті" : undefined}
+                aria-hidden={!author.isOnline}
+              />
           </div>
           <div className="min-w-0 text-center md:text-left">
             <p className="break-all font-mono text-[9px] uppercase tracking-[0.16em] text-[#ffad7f] sm:text-[10px] sm:tracking-[0.28em]">Авторський портал // {author.slug}</p>
@@ -600,7 +607,7 @@ export default function AuthorProfile({ params }: { params: { slug: string } }) 
              </div>
              <div className="relative mt-5 flex flex-wrap items-center justify-center gap-5 py-3 sm:gap-8">
                 <div className="author-neon-icon author-memory-root relative z-10 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00f0ff]/70 bg-[#07131b] font-mono text-xs font-bold tracking-[0.14em] text-[#b9f7ff] shadow-[0_0_28px_rgba(0,240,255,0.25)]">
-                 {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-contain" /> : initialsFor(author.displayName)}
+                 {author.avatarUrl ? <img src={author.avatarUrl} alt="" className="h-full w-full object-cover object-center" /> : initialsFor(author.displayName)}
                </div>
                {memories.map((memory) => (
                  <button

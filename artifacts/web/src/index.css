@@ -1108,7 +1108,7 @@
 
 .authors-world-avatar-image {
   display: block;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   background: #01060e;
 }
@@ -1471,6 +1471,12 @@
     0 0 5px rgba(142, 255, 160, 0.95),
     0 0 15px rgba(142, 255, 160, 0.62);
   animation: authors-world-presence-sparkle 5s linear infinite;
+}
+
+.authors-world-presence-dot-offline {
+  visibility: hidden;
+  opacity: 0;
+  animation: none;
 }
 
 .authors-world-presence-dot::after {

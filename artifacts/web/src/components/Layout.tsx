@@ -61,13 +61,13 @@ function AmbientMusicControls() {
   const [volumeOpen, setVolumeOpen] = useState(false);
 
   return (
-    <div className="site-header-music flex shrink-0 items-center gap-1 rounded-xl border border-primary/40 bg-black/75 p-1 shadow-[0_0_18px_rgba(0,240,255,0.22)] backdrop-blur-md sm:gap-1.5 sm:p-1.5">
+    <div className="site-header-music flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-black/75 p-1.5 shadow-[0_0_18px_rgba(0,240,255,0.22)] backdrop-blur-md">
       <button
         type="button"
         onClick={toggle}
         aria-label={playing ? t("ui.muteMusic") : t("ui.unmuteMusic")}
         title={playing ? t("ui.muteMusic") : t("ui.unmuteMusic")}
-        className={`neon-control inline-flex h-7 shrink-0 items-center gap-1 px-1.5 font-mono text-[9px] uppercase tracking-[0.06em] transition-colors sm:h-8 sm:gap-1.5 sm:px-2 sm:text-[10px] sm:tracking-[0.1em] ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
+        className={`neon-control inline-flex h-8 shrink-0 items-center gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${playing ? "text-[#b9f7ff]" : enabled ? "text-white/75" : "text-white/45"}`}
       >
         {playing && volume > 0 ? <Volume2 className="h-3.5 w-3.5" aria-hidden="true" /> : enabled ? <Music2 className="h-3.5 w-3.5" aria-hidden="true" /> : <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />}
         <span className="hidden sm:inline">{t("ui.music")}</span>
@@ -78,7 +78,7 @@ function AmbientMusicControls() {
         aria-label={`${t("ui.openVolume")}: ${Math.round(volume * 100)}%`}
         aria-expanded={volumeOpen}
         aria-controls="ambient-volume-inline"
-        className="neon-control inline-flex h-7 shrink-0 items-center gap-1 px-1.5 text-[#b9f7ff] sm:hidden"
+        className="neon-control inline-flex h-8 shrink-0 items-center gap-1 px-2 text-[#b9f7ff] sm:hidden"
       >
         <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="font-mono text-[9px]">{Math.round(volume * 100)}%</span>
@@ -144,7 +144,7 @@ function AuthControls() {
   return (
     <div className="flex items-center gap-2">
        <span
-         className="authors-world-header-email hidden min-w-0 items-center gap-1.5 rounded-full border border-[#68f6a6]/30 bg-[#68f6a6]/[0.06] px-2.5 py-1.5 font-mono text-[9px] text-[#b9f7ff] lg:inline-flex"
+          className="authors-world-header-email hidden min-w-0 items-center gap-1.5 rounded-full border border-[#68f6a6]/30 bg-[#68f6a6]/[0.06] px-2.5 py-1.5 font-mono text-[9px] text-[#b9f7ff] min-[1800px]:inline-flex"
          title={`${copy.signedInAs}: ${user?.primaryEmailAddress?.emailAddress ?? ""}`}
        >
          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#68f6a6] shadow-[0_0_8px_rgba(104,246,166,0.9)]" aria-hidden="true" />
@@ -222,7 +222,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
             href="/authors-world"
             aria-label={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
             title={`${authorsWorldCopy.other} ${authorsWorldCopy.world} — ${authorsWorldCopy.authors}`}
-            className="fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-24 md:h-32 md:w-24"
+            className="fixed right-[7.25rem] top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-[9.25rem] md:top-40 md:h-32 md:w-24 2xl:top-24"
           >
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
@@ -257,7 +257,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
             href="/game"
             aria-label={t("nav.game")}
             title={t("nav.game")}
-            className="fixed right-4 top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-24 md:h-32 md:w-24"
+            className="fixed right-4 top-48 z-50 h-24 w-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7043] focus-visible:ring-offset-2 focus-visible:ring-offset-black md:right-8 md:top-40 md:h-32 md:w-24 2xl:top-24"
           >
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
@@ -292,11 +292,11 @@ export function Layout({ children, authEnabled = true }: { children: React.React
 
       <div className="relative flex flex-col min-h-screen text-foreground" style={{ zIndex: 2 }}>
         <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-primary/20" style={{ boxShadow: "0 0 20px rgba(139,0,0,0.3), 0 0 40px rgba(255,69,0,0.1)" }}>
-          <div className="site-header-inner container mx-auto flex w-full min-w-0 flex-col items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 md:flex-row md:gap-4">
-            <Link href="/" className="site-header-brand glitch-text whitespace-nowrap font-creepster text-base tracking-[0.1em] text-primary transition-colors hover:text-white sm:text-xl sm:tracking-[0.18em] md:text-2xl md:tracking-widest">
+          <div className="site-header-inner flex w-full min-w-0 flex-col items-center justify-between gap-2 px-3 py-2.5 sm:px-5 sm:py-3 lg:px-7 2xl:flex-row 2xl:gap-5">
+            <Link href="/" className="site-header-brand glitch-text whitespace-nowrap font-creepster text-lg tracking-[0.14em] text-primary transition-colors hover:text-white sm:text-xl sm:tracking-[0.18em] 2xl:text-2xl 2xl:tracking-widest">
               GATHERING OF THE FALLEN
             </Link>
-            <nav className="order-3 flex w-full min-w-0 shrink-0 flex-nowrap items-center justify-center gap-x-2 overflow-x-auto whitespace-nowrap pb-0.5 text-[10px] font-mono uppercase tracking-[0.1em] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:text-sm sm:tracking-widest md:order-none md:w-auto md:overflow-visible md:pb-0">
+            <nav className="order-3 flex w-full min-w-0 shrink-0 flex-nowrap items-center justify-between gap-x-3 overflow-x-auto whitespace-nowrap pb-0.5 font-mono text-[11px] uppercase tracking-[0.12em] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 sm:text-sm sm:tracking-widest 2xl:order-none 2xl:w-auto 2xl:justify-start 2xl:overflow-visible 2xl:pb-0">
               {links.map((link) => {
                 const isMerch = link.href === "/merch";
                 return (
@@ -316,7 +316,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
                 );
               })}
             </nav>
-            <div className="site-header-actions flex w-full min-w-0 flex-nowrap items-center justify-center gap-1 overflow-visible whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5 md:w-auto md:justify-center md:overflow-visible md:pb-0">
+            <div className="site-header-actions flex w-full min-w-0 flex-nowrap items-center justify-between gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 2xl:w-auto 2xl:justify-end 2xl:overflow-visible 2xl:pb-0">
               <LanguageSwitcher />
               {isHome && <AmbientMusicControls />}
               {pathname !== "/" && (
@@ -331,7 +331,7 @@ export function Layout({ children, authEnabled = true }: { children: React.React
               {authEnabled && <AuthControls />}
               <Link
                 href="/owner-analytics"
-                  className="site-header-owner-stats neon-control inline-flex shrink-0 items-center px-1.5 py-1.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[#ffb49a] sm:px-3 sm:py-2 sm:text-[10px] sm:tracking-[0.14em]"
+                  className="site-header-owner-stats neon-control inline-flex shrink-0 items-center px-2 py-2 font-mono text-[9px] uppercase tracking-[0.1em] text-[#ffb49a] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]"
                 style={{ borderRadius: "12px" }}
               >
                 {t("home.ownerStats")}
