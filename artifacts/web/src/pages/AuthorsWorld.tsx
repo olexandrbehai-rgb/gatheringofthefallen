@@ -601,7 +601,7 @@ function AuthorNode({
            <span className="mt-3 line-clamp-3 font-mono text-[11px] leading-relaxed text-white/70 antialiased">{author.memory}</span>
         </span>
       </span>
-       <span className="authors-world-author-label max-w-40 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-white transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white">
+        <span className="authors-world-author-label w-max font-mono text-[10px] uppercase tracking-[0.16em] text-white transition-colors group-hover:hidden group-focus-visible:hidden group-hover:text-white">
         {author.name}
       </span>
     </motion.button>

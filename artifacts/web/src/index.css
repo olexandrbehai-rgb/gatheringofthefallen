@@ -1507,6 +1507,14 @@
   animation: authors-world-presence-star 5s linear infinite;
 }
 
+.authors-world-author-label {
+  width: max-content;
+  max-width: min(28rem, calc(100vw - 2rem));
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 @keyframes authors-world-presence-star {
   0%, 84%, 100% {
     opacity: 0;
