@@ -1566,13 +1566,13 @@
 .authors-world-garden-video,
 .authors-world-garden-poster {
   z-index: 0;
-  opacity: 0.62;
+  opacity: 0.56;
   mix-blend-mode: screen;
-  filter: saturate(1.02) contrast(1.3) brightness(1.06);
+  filter: saturate(1.08) contrast(1.46) brightness(0.94);
 }
 
 .authors-world-garden-poster {
-  opacity: 0.42;
+  opacity: 0.4;
 }
 
 .authors-world-surface-glow {
