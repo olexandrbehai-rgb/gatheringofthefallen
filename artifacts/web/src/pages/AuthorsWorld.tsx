@@ -568,11 +568,11 @@ function AuthorNode({
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className={`group absolute isolate flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 overflow-visible text-center transition-[filter] duration-300 focus-visible:outline-none ${
         expanded ? "z-[1200]" : active ? "z-[210]" : "z-[100]"
-      } ${locating ? "author-node-locating" : ""}`}
+       } ${locating ? "author-node-locating" : ""} ${author.isOnline ? "author-node-online" : ""}`}
        style={{ left: `${nodePosition.left}px`, top: `${nodePosition.top}px`, transformOrigin: "left center" }}
       aria-label={ariaLabel}
     >
-       <span className="relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/90 bg-[#020a12]/[.98] text-left text-[#b9f7ff] shadow-[0_0_24px_rgba(0,240,255,0.44),0_0_58px_rgba(138,43,226,0.24)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_52px_rgba(0,240,255,1),0_0_110px_rgba(138,43,226,0.42)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
+       <span className="authors-world-author-icon relative flex h-16 w-16 items-center overflow-visible rounded-full border border-[#00f0ff]/90 bg-[#020a12]/[.98] text-left text-[#b9f7ff] shadow-[0_0_24px_rgba(0,240,255,0.44),0_0_58px_rgba(138,43,226,0.24)] transition-[width,height,border-radius,box-shadow] duration-300 group-hover:h-44 group-hover:w-96 group-hover:rounded-2xl group-hover:border-white group-hover:shadow-[0_0_52px_rgba(0,240,255,1),0_0_110px_rgba(138,43,226,0.42)] group-focus-visible:h-44 group-focus-visible:w-96 group-focus-visible:rounded-2xl">
           <span
             aria-hidden="true"
             className="author-avatar-neon-ring pointer-events-none absolute -inset-[3px] h-16 w-16 rounded-full"
