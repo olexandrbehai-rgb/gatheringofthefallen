@@ -227,8 +227,9 @@
 }
 
 .authors-world-portal-helper-layer {
-  z-index: 70;
-  overflow: hidden;
+  z-index: 2147483647;
+  overflow: visible;
+  isolation: isolate;
 }
 
 .authors-world-portal-helper {

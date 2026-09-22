@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
 
 type HelperLanguage = "ua" | "en" | "fr";
 type HelperPhase =
@@ -252,7 +253,7 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
     top: isPhysicsActive ? `${position.y}px` : `${waypoint.top}%`,
     "--helper-tilt": `${waypoint.tilt}deg`,
   } as CSSProperties;
-  return (
+  return createPortal(
     <div className="authors-world-portal-helper-layer pointer-events-none fixed inset-0">
       <div
         ref={helperRef}
@@ -299,6 +300,7 @@ export function PortalHelper({ language }: { language: HelperLanguage }) {
         <span className="authors-world-portal-helper-orbit authors-world-portal-helper-orbit-one">·</span>
         <span className="authors-world-portal-helper-orbit authors-world-portal-helper-orbit-two">✦</span>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
