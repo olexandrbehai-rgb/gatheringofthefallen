@@ -15,6 +15,8 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Music from "@/pages/Music";
 import Merch from "@/pages/Merch";
+import GotfLiveAi from "@/pages/GotfLiveAi";
+import GotfLiveAiReset from "@/pages/GotfLiveAiReset";
 import Contacts from "@/pages/Contacts";
 import Game from "@/pages/Game";
 import AuthorsWorld from "@/pages/AuthorsWorld";
@@ -23,6 +25,7 @@ import AuthorMemoryPage from "@/pages/AuthorMemoryPage";
 import MyPortal from "@/pages/MyPortal";
 import AuthorAvatarPreview from "@/pages/AuthorAvatarPreview";
 import OwnerAnalytics from "@/pages/OwnerAnalytics";
+import { LicenseStatsCard } from "@/components/LicenseStatsCard";
 import AuthorAnalytics from "@/pages/AuthorAnalytics";
 import NotFound from "@/pages/not-found";
 
@@ -222,7 +225,19 @@ function AuthorPresence() {
 }
 
 function OwnerAnalyticsRoute() {
-  return <OwnerAnalytics />;
+  const { isSignedIn } = useUser();
+  return (
+    <>
+      <OwnerAnalytics />
+      {isSignedIn && (
+        <div className="bg-[#050208] px-4 pb-8 md:px-8">
+          <div className="mx-auto max-w-6xl">
+            <LicenseStatsCard />
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
@@ -258,6 +273,8 @@ function SiteRouter({ authEnabled = true }: { authEnabled?: boolean }) {
             <Route path="/about" component={About} />
             <Route path="/music" component={Music} />
             <Route path="/merch" component={Merch} />
+            <Route path="/gotf-live-ai/reset" component={GotfLiveAiReset} />
+            <Route path="/gotf-live-ai" component={GotfLiveAi} />
             <Route path="/contacts" component={Contacts} />
             <Route path="/authors-world" component={AuthorsWorld} />
             <Route path="/my-portal" component={MyPortal} />

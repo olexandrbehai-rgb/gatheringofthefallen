@@ -36,5 +36,26 @@ services:
         sync: false
       - key: AI_INTEGRATIONS_OPENAI_API_KEY
         sync: false
+      # GOTF LIVE AI sales + license server (see DEPLOY.md)
+      - key: LICENSE_SIGNING_KEY
+        sync: false
+      - key: LICENSE_IP_SALT
+        sync: false
+      - key: PUBLIC_SITE_URL
+        sync: false
+      - key: GOTF_PRICE_ID
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: GOTF_SETUP_OBJECT_KEY
+        value: GOTF-LIVE-AI-Setup.exe
+      - key: GOTF_DOWNLOAD_URL
+        sync: false
       - key: ORACLE_FALLBACK_URL
         value: https://gathering-of-the-fallen.replit.app/api/oracle/chat
